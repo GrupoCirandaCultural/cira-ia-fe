@@ -85,6 +85,7 @@ function App() {
             <Registration 
               idEstande={estandeViaURL} 
               initialPhone={prefilledPhone}
+              onBack={() => setStep(0)}
               onComplete={(userData, res) => {
                 setPrefilledPhone('');
                 handleRegistrationComplete(userData, res);
@@ -105,6 +106,7 @@ function App() {
             <ChatInterface 
               userName={userLead?.nome} 
               cupom={userLead?.cupom} 
+              onBack={() => setStep(0)}
             />
           )}
           
