@@ -1,45 +1,106 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Send, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw } from 'lucide-react';
+import { Send, Search, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw } from 'lucide-react';
 import bgChat from '../assets/background-chat.png';
 
 const generateSessionId = () => Math.random().toString(36).substring(7);
 
-// --- MODAL DE CUPOM (PARA PRINT) ---
 const CouponModal = ({ code, isOpen, onClose }) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-pink-900/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white w-full max-w-sm rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300">
-        <div className="bg-gradient-to-r from-pink-500 to-rose-400 p-8 text-center text-white relative">
-          <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-white/20 rounded-full hover:bg-white/40"><X size={20} /></button>
-          <div className="bg-white w-16 h-16 rounded-2xl mx-auto flex items-center justify-center shadow-lg mb-4 rotate-3">
-            <Ticket size={32} className="text-pink-500 -rotate-12" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl p-6 w-full max-w-sm relative shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
+        <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors">
+          <X size={20} />
+        </button>
+        <div className="flex flex-col items-center text-center space-y-4 pt-2">
+          <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center text-pink-500 mb-2 shadow-inner">
+            <Ticket size={32} />
           </div>
-          <h2 className="text-xl font-black italic">SEU PRESENTE!</h2>
-        </div>
-        <div className="p-8 text-center bg-white">
-          <div className="border-4 border-dashed border-pink-100 rounded-2xl py-6 px-4 bg-pink-50/30">
-            <span className="text-4xl font-black text-gray-800 tracking-[0.2em] font-mono uppercase">{code} BR403KTJ</span>
-          </div>
-          <div className="mt-6 space-y-3">
-            <div className="flex items-center justify-center gap-2 text-pink-600 font-bold animate-pulse">
-              <Camera size={18} /> <span className="text-sm">Tire um print da tela!</span>
+          <h3 className="text-xl font-black text-gray-800">Seu Cupom Especial!</h3>
+          <p className="text-gray-500 text-sm px-4">Apresente este código no caixa para ganhar um brinde exclusivo.</p>
+          
+          <div className="w-full bg-gradient-to-r from-pink-500 to-rose-500 p-1 rounded-2xl shadow-lg mt-2">
+            <div className="bg-white rounded-xl py-4 border-2 border-dashed border-pink-200 flex flex-col items-center justify-center gap-1">
+              <span className="text-xs font-bold text-pink-400 uppercase tracking-[0.2em]">Código</span>
+              <span className="text-3xl font-black text-gray-800 tracking-wider font-mono selection:bg-pink-100">{code}</span>
             </div>
-            <button onClick={() => window.print()} className="w-full bg-gray-900 text-white py-4 rounded-2xl font-black flex items-center justify-center gap-2 shadow-xl">
-              <Download size={20} /> SALVAR CUPOM
-            </button>
           </div>
+          
+          <p className="text-[10px] text-gray-400 font-medium pt-2">Válido apenas para hoje. Um uso por pessoa.</p>
         </div>
       </div>
     </div>
   );
 };
 
-export default function ChatInterface({ userName, cupom, onBack }) {
+// --- MOCK E FUNÇÕES AUXILIARES DE ESTOQUE ---
+
+const getStockCardStyle = (status) => {
+  if (status === 'available_here') return 'border-l-4 border-l-green-500 bg-green-50';
+  if (status === 'available_elsewhere') return 'border-l-4 border-l-yellow-500 bg-yellow-50';
+  if (status === 'unavailable') return 'border-l-4 border-l-red-500 bg-red-50 opacity-75';
+  return 'bg-white/95 border border-pink-100'; // Default do chat normal
+};
+
+export default function ChatInterface({ userName, cupom, onBack, initialMode = 'chat', idEstande = 'geral' }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // ESTADOS DO MODO ESTOQUE
+  const [genres, setGenres] = useState([]);
+  const [stockFilterGenre, setStockFilterGenre] = useState(null);
+  const [stockOnlyBooth, setStockOnlyBooth] = useState(false);
+  
+  // Refs para controle de drag sem re-renderização
+  const filtersRef = useRef(null);
+  const isDown = useRef(false);
+  const startX = useRef(0);
+  const scrollLeft = useRef(0);
+  const isDragging = useRef(false);
+
+  const startDragging = (e) => {
+    isDown.current = true;
+    isDragging.current = false;
+    startX.current = e.pageX - filtersRef.current.offsetLeft;
+    scrollLeft.current = filtersRef.current.scrollLeft;
+  };
+
+  const stopDragging = () => {
+    isDown.current = false;
+    // O flag isDragging será usado no click para prevenir seleção acidental
+    setTimeout(() => { isDragging.current = false; }, 0);
+  };
+
+  const onDrag = (e) => {
+    if (!isDown.current) return;
+    e.preventDefault();
+    const x = e.pageX - filtersRef.current.offsetLeft;
+    const walk = (x - startX.current) * 2; // Velocidade do scroll
+    
+    // Se moveu mais que 5 pixels, considera que está arrastando
+    if (Math.abs(walk) > 5) {
+      isDragging.current = true;
+    }
+    
+    filtersRef.current.scrollLeft = scrollLeft.current - walk;
+  };
+
+  useEffect(() => {
+    if (initialMode === 'stock') {
+      const fetchGenres = async () => {
+        try {
+          const response = await axios.get('http://localhost:8008/api/genres');
+          setGenres(response.data);
+        } catch (error) {
+          console.error("Erro ao buscar gêneros:", error);
+        }
+      };
+      fetchGenres();
+    }
+  }, [initialMode]);
+
   const scrollRef = useRef(null);
+  const lastMessageRef = useRef(null);
   
   const ageOptions = [
     { label: "0 a 3 anos", value: "Tenho um bebê de 0 a 3 anos" },
@@ -58,13 +119,21 @@ export default function ChatInterface({ userName, cupom, onBack }) {
         hasCupom: true
       });
     }
-    msgs.push({
-      role: 'Cira IA',
-      content: cupom 
-        ? `Comece digitando algo, ou selecione a idade do leitor para eu te indicar o livro perfeito!`
-        : `Olá ${userName}! Que alegria ter você aqui. 🐑💖\n\nSou a Cira, sua curadora. Para eu te dar as melhores dicas, qual a idade do leitor hoje?`,
-      options: ageOptions
-    });
+
+    if (initialMode === 'stock') {
+      msgs.push({
+        role: 'Cira IA',
+        content: `Olá ${userName}! Estou pronta para consultar nosso estoque. 📚\n\nUse os filtros abaixo ou digite o nome do livro.`
+      });
+    } else {
+      msgs.push({
+        role: 'Cira IA',
+        content: cupom 
+          ? `Comece digitando algo, ou selecione a idade do leitor para eu te indicar o livro perfeito!`
+          : `Olá ${userName}! Que alegria ter você aqui. 🐑💖\n\nSou a Cira, sua curadora. Para eu te dar as melhores dicas, qual a idade do leitor hoje?`,
+        options: ageOptions
+      });
+    }
     return msgs;
   };
 
@@ -75,7 +144,11 @@ export default function ChatInterface({ userName, cupom, onBack }) {
   const [selectedAge, setSelectedAge] = useState(null);
 
   useEffect(() => {
-    scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (loading) {
+      scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      lastMessageRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }, [messages, loading]);
 
   const handleResetChat = () => {
@@ -83,12 +156,83 @@ export default function ChatInterface({ userName, cupom, onBack }) {
     setInput('');
     setSessionId(generateSessionId());
     setSelectedAge(null);
+    setStockFilterGenre(null);
+    setStockOnlyBooth(false);
+  };
+
+  // Lógica de busca de estoque REAL
+  const performStockSearch = async (term, genre, onlyBooth) => {
+    setLoading(true);
+    
+    try {
+      // 1. Resolver ID do Gênero (se houver filtro de nome selecionado)
+      let genreId = null;
+      if (genre) {
+        const found = genres.find(g => g.nome === genre);
+        if (found) genreId = found.id;
+      }
+
+      // 2. Parâmetros da Requisição
+      const params = {
+        q: term,
+        //booth_id: idEstande,
+        only_local: onlyBooth,
+        genre_id: genreId
+      };
+
+      const { data } = await axios.get('http://localhost:8008/api/books/search', { params });
+      
+      // 3. Mapear resposta para o formato esperado pelo componente
+      const results = data.map(book => ({
+        titulo: book.title,
+        barras: book.isbn,
+        sinopse: book.synopsis || `Autor: ${book.author}`, // Fallback se não vier sinopse
+        preco_capa: book.price,
+        capa_url: book.cover_url,
+        genre: book.genre_name, // Opcional, apenas para display se precisar
+        status: book.status, 
+        location: book.location_hint || (book.status === 'available_here' ? `Estande ${idEstande}` : 'Outro Estande')
+      }));
+
+      const responseMsg = results.length > 0 
+        ? `Encontrei ${results.length} livros correspondentes:` 
+        : `Não encontrei livros com esses critérios.`;
+
+      setMessages(prev => [...prev, {
+        role: 'Cira IA',
+        content: responseMsg,
+        dados: results 
+      }]);
+
+    } catch (error) {
+      console.error("Erro na busca de estoque:", error);
+      setMessages(prev => [...prev, {
+        role: 'Cira IA',
+        content: "Ops! Não consegui consultar o estoque no momento. Tente novamente em instantes.",
+      }]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSend = async (overrideMessage = null) => {
     const messageToSend = overrideMessage || input; 
-    if (!messageToSend.trim()) return;
+    
+    // Se for modo STOCK e não for mensagem de sistema (override), apenas faz a busca
+    if (initialMode === 'stock' && !overrideMessage && !messageToSend.trim() && !stockFilterGenre) return;
+    if (initialMode !== 'stock' && !messageToSend.trim()) return;
 
+    if (initialMode === 'stock') {
+      // MODO ESTOQUE
+      const displayMsg = messageToSend || `Filtro: ${stockFilterGenre || 'Todos'}`;
+      setMessages(prev => [...prev, { role: 'user', content: displayMsg }]);
+      setInput('');
+      // Chama a busca mockada
+      performStockSearch(messageToSend, stockFilterGenre, stockOnlyBooth);
+      return;
+    }
+
+    // MODO CHAT NORMAL (Cira)
     const userMsg = { role: 'user', content: messageToSend };
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
@@ -140,6 +284,10 @@ export default function ChatInterface({ userName, cupom, onBack }) {
       }]);
     } catch (error) {
       console.error("Erro na API:", error);
+      setMessages((prev) => [...prev, { 
+        role: 'Cira IA', 
+        content: "Ops! Tive um pequeno problema de conexão ou não entendi bem. Poderia tentar perguntar novamente? 😓",
+      }]);
     } finally {
       setLoading(false);
     }
@@ -159,7 +307,12 @@ export default function ChatInterface({ userName, cupom, onBack }) {
             </button>
           )}
           <div className="bg-pink-500 p-2 rounded-xl text-white shadow-lg"><BookOpen size={20} /></div>
-          <h1 className="font-black text-lg text-gray-800">Cira IA</h1>
+          <div>
+            <h1 className="font-black text-lg text-gray-800 leading-none">Cira IA</h1>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+              {initialMode === 'stock' ? 'Consulta de Estoque' : 'Recomendador Literário'}
+            </p>
+          </div>
         </div>
         <button onClick={handleResetChat} className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors" title="Novo Chat">
           <RotateCcw size={20} />
@@ -168,11 +321,27 @@ export default function ChatInterface({ userName, cupom, onBack }) {
 
       <main className="relative z-10 flex-1 overflow-y-auto p-4 space-y-6">
         {messages.map((msg, idx) => (
-          <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+          <div 
+            key={idx} 
+            ref={idx === messages.length - 1 ? lastMessageRef : null}
+            className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+          >
             <div className={`max-w-[90%] p-5 rounded-[24px] shadow-lg ${
               msg.role === 'user' ? 'bg-pink-500 text-white rounded-tr-none' : 'bg-white/95 text-gray-800 rounded-tl-none border border-white/40'
             }`}>
-              <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">{msg.content}</p>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">
+                {userName && msg.content.includes(userName) ? (
+                  msg.content.split(userName).map((part, i, arr) => (
+                    <React.Fragment key={i}>
+                      {part}
+                      {i < arr.length - 1 && <strong className={msg.role === 'user' ? 'font-black' : 'font-black text-pink-500'}>{userName}</strong>}
+                    </React.Fragment>
+                  ))
+                ) : (
+                  msg.content
+                )}
+              </p>
+
               {/* BOTÕES DE OPÇÕES (IDADE / TEMAS) */}
               {msg.options && msg.options.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-4">
@@ -205,7 +374,7 @@ export default function ChatInterface({ userName, cupom, onBack }) {
               {msg.dados && msg.dados.length > 0 && (
                 <div className="grid grid-cols-1 gap-3 mt-4">
                   {msg.dados.map((item, iIdx) => (
-                    <div key={iIdx} className="bg-white/95 rounded-xl overflow-hidden flex border border-pink-100 hover:shadow-md transition-all">
+                    <div key={iIdx} className={`rounded-xl overflow-hidden flex shadow-sm transition-all ${item.status ? getStockCardStyle(item.status) : 'bg-white/95 border border-pink-100'}`}>
                       <div className="w-24 min-w-[96px] bg-gray-300 flex items-center justify-center overflow-hidden">
                         {item.capa_url && (
                           <img 
@@ -221,16 +390,26 @@ export default function ChatInterface({ userName, cupom, onBack }) {
                         <h4 className="font-bold text-gray-800 text-[12px] line-clamp-1 leading-tight mb-1">
                           {item.titulo}
                         </h4>
-                        <p className="text-[9px] text-gray-400 mb-1 font-bold">ISBN: {item.barras}</p>
+                        
+                        {/* Exibe Localização se for busca de estoque */}
+                        <div className="mb-2">
+                            {item.status === 'available_here' && <p className="text-[10px] font-black text-green-700 uppercase bg-green-100 inline-block px-1 rounded">Disponível Aqui</p>}
+                            {item.status === 'available_elsewhere' && <p className="text-[10px] font-black text-yellow-700 uppercase bg-yellow-100 inline-block px-1 rounded">{item.location}</p>}
+                            {item.status === 'unavailable' && <p className="text-[10px] font-black text-red-700 uppercase bg-red-100 inline-block px-1 rounded">Esgotado</p>}
+                            <p className="text-[9px] text-gray-400 mb-1 ml-1 font-bold">ISBN: {item.barras}</p>
+                        </div>
+
                         
                         <p className="text-[11px] text-gray-600 line-clamp-2 leading-snug mb-2">
                           {item.sinopse || "Explore esta incrível obra da Ciranda Cultural."}
                         </p>
 
                         <div className="mt-auto flex justify-between items-center">
-                          <span className="text-sm font-black text-pink-600">
-                            R$ {item.preco_capa?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                          </span>
+                          {item.status !== 'unavailable' && (
+                            <span className="text-sm font-black text-pink-600">
+                              R$ {item.preco_capa?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </span>
+                          )}
                           <button className="p-2 bg-pink-500 text-white rounded-lg shadow-sm active:scale-90 transition-transform">
                             <ShoppingCart size={14} />
                           </button>
@@ -256,18 +435,73 @@ export default function ChatInterface({ userName, cupom, onBack }) {
       </main>
 
       <footer className="relative z-10 p-4 bg-white/80 backdrop-blur-xl border-t border-white/20">
-        <div className="max-w-4xl mx-auto flex gap-3">
-          <input
-            type="text"
-            className="flex-1 bg-white border border-pink-100 rounded-2xl px-5 py-4 text-sm focus:ring-4 focus:ring-pink-100 outline-none shadow-sm"
-            placeholder="Qual livro vamos encontrar hoje?"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-          />
-          <button onClick={handleSend} disabled={loading} className="bg-pink-500 text-white p-4 rounded-2xl shadow-lg active:scale-90 disabled:opacity-50 transition-all">
-            <Send size={22} />
-          </button>
+        <div className="max-w-4xl mx-auto flex flex-col gap-3">
+          
+          {/* CONTROLES DE ESTOQUE (Se ativo) */}
+          {initialMode === 'stock' && (
+            <div className="w-full flex flex-col gap-2 animate-in slide-in-from-bottom-5 fade-in duration-300">
+               <div 
+                 ref={filtersRef}
+                 onMouseDown={startDragging}
+                 onMouseLeave={stopDragging}
+                 onMouseUp={stopDragging}
+                 onMouseMove={onDrag}
+                 className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide cursor-grab active:cursor-grabbing select-none"
+               >
+                 {genres.length === 0 && <span className="text-xs text-gray-400 p-2">Carregando filtros...</span>}
+                 {genres.map(genre => {
+                   const isSelected = stockFilterGenre === genre.nome;
+                   return (
+                    <button 
+                      key={genre.id}
+                      type="button"
+                      // Se estiver arrastando (flag isDragging.current true), não executa o filtro
+                      onClick={(e) => {
+                         if (isDragging.current) {
+                           e.preventDefault();
+                           e.stopPropagation();
+                           return;
+                         }
+                         setStockFilterGenre(prev => prev === genre.nome ? null : genre.nome);
+                      }}
+                      className={`px-3 py-1 font-bold text-[10px] uppercase tracking-wide rounded-full whitespace-nowrap transition-colors border shadow-sm ${
+                        isSelected 
+                          ? 'bg-pink-600 text-white border-pink-600 ring-2 ring-pink-200' 
+                          : 'bg-white text-slate-600 border-slate-200 hover:bg-pink-50 hover:text-pink-600'
+                      }`}
+                    >
+                      {genre.nome}
+                    </button>
+                 )})}
+               </div>
+               <div className="flex items-center gap-2 pl-1">
+                 <input
+                   type="checkbox"
+                   id="footerBoothFilter"
+                   checked={stockOnlyBooth}
+                   onChange={(e) => setStockOnlyBooth(e.target.checked)}
+                   className="rounded text-pink-600 focus:ring-pink-500 w-4 h-4 cursor-pointer"
+                 />
+                 <label htmlFor="footerBoothFilter" className="text-xs text-slate-700 cursor-pointer select-none font-bold flex items-center gap-1">
+                   Apenas neste estande <span className="text-[10px] font-normal bg-pink-100 text-pink-700 px-1 rounded uppercase tracking-wider">{idEstande}</span>
+                 </label>
+               </div>
+            </div>
+          )}
+
+          <div className="flex gap-3 w-full">
+            <input
+              type="text"
+              className="flex-1 bg-white border border-pink-100 rounded-2xl px-5 py-4 text-sm focus:ring-4 focus:ring-pink-100 outline-none shadow-sm"
+              placeholder={initialMode === 'stock' ? "Busque por título, autor ou ISBN..." : "Qual livro vamos encontrar hoje?"}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+            />
+            <button onClick={() => handleSend()} disabled={loading} className="bg-pink-500 text-white p-4 rounded-2xl shadow-lg active:scale-90 disabled:opacity-50 transition-all">
+              {initialMode === 'stock' ? <Search size={22} /> : <Send size={22} />}
+            </button>
+          </div>
         </div>
       </footer>
     </div>

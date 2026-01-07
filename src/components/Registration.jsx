@@ -1,12 +1,13 @@
 // src/components/Registration.jsx
 import React, { useState } from 'react';
 import axios from 'axios'; // Importe o axios
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, AlertCircle, X } from 'lucide-react';
 
 export default function Registration({ onComplete, idEstande, initialPhone, onBack }) {
   const [formData, setFormData] = useState({ nome: '', telefone: initialPhone || '', email: '', aceito: false });
   const [loading, setLoading] = useState(false);
   const [isLoginMode, setIsLoginMode] = useState(false);
+  const [customAlert, setCustomAlert] = useState(null);
 
   const handlePhoneChange = (e) => {
     let value = e.target.value;
@@ -14,6 +15,13 @@ export default function Registration({ onComplete, idEstande, initialPhone, onBa
     value = value.replace(/^(\d{2})(\d)/g, "($1) $2");
     value = value.replace(/(\d)(\d{4})$/, "$1-$2");
     setFormData({...formData, telefone: value});
+  };
+
+  const closeAlert = () => {
+    if (customAlert?.onConfirm) {
+       customAlert.onConfirm();
+    }
+    setCustomAlert(null);
   };
 
   const handleSubmit = async (e) => {
@@ -28,8 +36,11 @@ export default function Registration({ onComplete, idEstande, initialPhone, onBa
         });
 
         if (data.status === 'nao_encontrado') {
-          alert("Cadastro não encontrado. Por favor, preencha seus dados para continuar.");
-          setIsLoginMode(false);
+          setCustomAlert({
+             title: "Cadastro não encontrado",
+             message: "Não encontramos este número. Por favor, preencha seus dados para continuar.",
+             onConfirm: () => setIsLoginMode(false)
+          });
         } else {
           let nomeUsuario = data.nome;
           
@@ -56,7 +67,11 @@ export default function Registration({ onComplete, idEstande, initialPhone, onBa
       }
     } catch (error) {
       console.error("Erro ao processar:", error);
-      alert("Houve um erro. Tente novamente!");
+      setCustomAlert({
+        title: "Ops, algo deu errado!",
+        message: "Ocorreu um erro ao processar sua solicitação. Verifique sua conexão e tente novamente.",
+        type: "error"
+      });
     } finally {
       setLoading(false);
     }
@@ -92,6 +107,34 @@ export default function Registration({ onComplete, idEstande, initialPhone, onBa
           </button>
         </div>
         
+        {customAlert && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl p-6 w-full max-w-sm relative shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
+              <button 
+                onClick={() => setCustomAlert(null)} 
+                className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
+                type="button"
+              >
+                <X size={20} />
+              </button>
+              <div className="flex flex-col items-center text-center space-y-3 pt-2">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-2 shadow-inner ${customAlert.type === 'error' ? 'bg-red-100 text-red-500' : 'bg-pink-100 text-pink-500'}`}>
+                  <AlertCircle size={32} />
+                </div>
+                <h3 className="text-xl font-black text-gray-800">{customAlert.title}</h3>
+                <p className="text-gray-500 text-sm font-medium px-2">{customAlert.message}</p>
+                
+                <button 
+                  onClick={closeAlert}
+                  className={`w-full text-white font-black py-3 rounded-xl shadow-lg mt-4 active:scale-95 transition-all ${customAlert.type === 'error' ? 'bg-red-500 hover:bg-red-600' : 'bg-pink-500 hover:bg-pink-600'}`}
+                >
+                  {customAlert.type === 'error' ? 'Tentar Novamente' : 'Continuar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLoginMode && (
             <input 
@@ -145,7 +188,7 @@ export default function Registration({ onComplete, idEstande, initialPhone, onBa
               loading ? 'bg-gray-400' : 'bg-pink-500 hover:bg-pink-600'
             }`}
           >
-            {loading ? 'Processando...' : (isLoginMode ? 'Entrar' : 'Ir para a Roleta')}
+            {loading ? 'Processando...' : (isLoginMode ? 'Entrar' : 'Cadastrar')}
           </button>
         </form>
       </div>

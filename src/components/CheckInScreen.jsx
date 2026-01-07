@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import QRCode from 'react-qr-code';
 import axios from 'axios';
-import { ArrowLeft, MapPin, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, MapPin, CheckCircle2, AlertCircle, X } from 'lucide-react';
 
 export default function CheckInScreen({ onBack, idEstande, onUserNotFound }) {
   const [phone, setPhone] = useState('');
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [customAlert, setCustomAlert] = useState(null);
 
   // Formata o ID do estande para exibição (ex: ciranda_bienal -> CIRANDA BIENAL)
   const estandeNome = idEstande ? idEstande.replace(/_/g, ' ').toUpperCase() : "GERAL";
@@ -31,20 +32,34 @@ export default function CheckInScreen({ onBack, idEstande, onUserNotFound }) {
     try {
       const { data } = await axios.post('http://localhost:8008/leads/check-in', {
         telefone: phone,
-        id_estande: idEstande // Envia o ID técnico capturado da URL
+        id_estande: idEstande 
       });
 
       if (data.status === 'nao_encontrado') {
-        alert("Ops! Não te encontramos. Vamos fazer seu cadastro rapidinho?");
-        onUserNotFound(phone); // Redireciona para o cadastro enviando o número
+        setCustomAlert({
+          title: "Visitante não encontrado",
+          message: "Ainda não temos seu cadastro. Vamos resolver isso rapidinho?",
+          onConfirm: () => onUserNotFound(phone)
+        });
       } else {
         setStatus(data);
       }
     } catch (err) {
-      alert("Erro na conexão: " + err.message);
+      setCustomAlert({
+        title: "Erro na conexão",
+        message: "Não foi possível verificar seu check-in. Tente novamente." + err.message,
+        type: "error"
+      });
     } finally {
       setLoading(false);
     }
+  };
+
+  const closeAlert = () => {
+    if (customAlert?.onConfirm) {
+       customAlert.onConfirm();
+    }
+    setCustomAlert(null);
   };
 
   return (
@@ -57,6 +72,34 @@ export default function CheckInScreen({ onBack, idEstande, onUserNotFound }) {
 
       <div className="flex-1 flex flex-col items-center text-center">
         
+        {customAlert && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl p-6 w-full max-w-sm relative shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
+              <button 
+                onClick={() => setCustomAlert(null)} 
+                className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
+                type="button"
+              >
+                <X size={20} />
+              </button>
+              <div className="flex flex-col items-center text-center space-y-3 pt-2">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-2 shadow-inner ${customAlert.type === 'error' ? 'bg-red-100 text-red-500' : 'bg-pink-100 text-pink-500'}`}>
+                  <AlertCircle size={32} />
+                </div>
+                <h3 className="text-xl font-black text-gray-800">{customAlert.title}</h3>
+                <p className="text-gray-500 text-sm font-medium px-2">{customAlert.message}</p>
+                
+                <button 
+                  onClick={closeAlert}
+                  className={`w-full text-white font-black py-3 rounded-xl shadow-lg mt-4 active:scale-95 transition-all ${customAlert.type === 'error' ? 'bg-red-500 hover:bg-red-600' : 'bg-pink-500 hover:bg-pink-600'}`}
+                >
+                  {customAlert.type === 'error' ? 'Tentar Novamente' : 'Continuar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* IDENTIFICAÇÃO DO ESTANDE ATUAL */}
         <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full mb-6 border border-white/30 text-[15px] font-black tracking-widest">
           <MapPin size={28} />

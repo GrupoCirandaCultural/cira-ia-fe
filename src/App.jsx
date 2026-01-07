@@ -5,6 +5,7 @@ import PrizeWheel from './components/PrizeWheel';
 import ChatInterface from './components/ChatInterface';
 // ADICIONADO: Importação da nova tela de Check-in
 import CheckInScreen from './components/CheckInScreen';
+// import StockConsultation from './components/StockConsultation'; // REMOVIDO/DESATIVADO
 
 function App() {
   // Passos: 0: Welcome, 1: Registration, 2: Wheel, 3: Chat, 'checkin': CheckIn
@@ -45,7 +46,11 @@ function App() {
     }
 
     // Navega conforme escolha inicial
-    target === 'wheel' ? setStep(2) : setStep(3);
+    if (target === 'wheel') {
+      setStep(2);
+    } else {
+      setStep(3); 
+    }
   };
 
   const handleWheelFinish = (prize) => {
@@ -71,6 +76,8 @@ function App() {
               }}
             />
           )}
+
+          {/* TELA DE CONSULTA DE ESTOQUE - INTEGRADA NO CHAT AGORA, REMOVIDA DAQUI */}
 
           {/* PASSO 0: BOAS-VINDAS (COM ESCOLHA) */}
           {step === 0 && (
@@ -106,6 +113,8 @@ function App() {
             <ChatInterface 
               userName={userLead?.nome} 
               cupom={userLead?.cupom} 
+              initialMode={target === 'chat_stock' ? 'stock' : 'chat'}
+              idEstande={estandeViaURL}
               onBack={() => setStep(0)}
             />
           )}

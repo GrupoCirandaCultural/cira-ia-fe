@@ -37,7 +37,7 @@ export default function WelcomeScreen({ onStart, qrLink }) {
 
         {/* NOVO - OPÇÃO 3: Consulta de Estoque */}
         <button
-          onClick={() => onStart('chat')}
+          onClick={() => onStart('chat_stock')}
           className="w-full py-4 bg-white/90 backdrop-blur-sm text-pink-600 border-2 border-pink-500 font-black text-xl rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
         >
           <Search size={24} />
