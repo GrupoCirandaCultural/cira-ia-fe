@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../api';
 import bgImage from '../assets/background-roleta.png';
 
 const getRandomExtraDegrees = () => Math.floor(Math.random() * 360);
@@ -35,7 +35,7 @@ export default function PrizeWheel({ userId, onFinish }) {
 
       try {
         if (userId) {
-          await axios.put('http://localhost:8008/leads/update-coupon', {
+          await api.put('/leads/update-coupon', {
             id: userId,
             cupom: wonPrize
           });

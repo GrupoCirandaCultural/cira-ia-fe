@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import QRCode from 'react-qr-code';
-import axios from 'axios';
+import api from '../api';
 import { ArrowLeft, MapPin, CheckCircle2, AlertCircle, X } from 'lucide-react';
 
 export default function CheckInScreen({ onBack, idEstande, onUserNotFound }) {
@@ -30,7 +30,7 @@ export default function CheckInScreen({ onBack, idEstande, onUserNotFound }) {
   const handleCheckIn = async () => {
     setLoading(true);
     try {
-      const { data } = await axios.post('http://localhost:8008/leads/check-in', {
+      const { data } = await api.post('/leads/check-in', {
         telefone: phone,
         id_estande: idEstande 
       });

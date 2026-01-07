@@ -59,9 +59,15 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-blue-400 to-pink-300 flex items-center justify-center p-0 sm:p-4 md:p-8">
+    // Container externo:
+    // - Mobile/Tablet: Ocupa 100% da tela (w-full h-[100dvh]), fundo branco padrão.
+    // - PC (lg+): Fundo cinza, centralizado, simulando ambiente de "estande" ou "desktop".
+    <div className="w-full h-[100dvh] lg:min-h-screen lg:bg-gradient-to-br from-blue-400 to-pink-300  lg:flex lg:items-center lg:justify-center overflow-hidden">
       
-      <div className="w-full max-w-md h-[100dvh] sm:h-[90vh] md:aspect-[9/16] bg-white sm:rounded-[2.5rem] shadow-2xl overflow-hidden relative sm:border-[4px] border-gray-800 ring-4 ring-black/10">
+      {/* Container da Aplicação:
+          - Mobile/Tablet: 100% de largura e altura.
+          - PC: Fixo (max-w-md), altura limitada, bordas arredondadas e sombra. */}
+      <div className="relative w-full h-full lg:w-full lg:max-w-md lg:h-[90vh] lg:max-h-[850px] lg:rounded-2xl lg:shadow-2xl bg-white overflow-hidden">
         
         <div className="h-full w-full overflow-y-auto overflow-x-hidden relative bg-[#87CEEB]">
           

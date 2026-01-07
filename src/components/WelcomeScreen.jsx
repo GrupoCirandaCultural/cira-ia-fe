@@ -8,12 +8,16 @@ export default function WelcomeScreen({ onStart, qrLink }) {
     <div className="relative h-full w-full flex flex-col items-center overflow-hidden">
       {/* Imagem de Fundo Limpa */}
       <div 
-        className="absolute inset-0 z-0 bg-no-repeat bg-center"
+        className="absolute inset-0 z-0 bg-no-repeat"
         style={{ 
           backgroundImage: `url(${ciraWelcomeLimpa})`,
-          backgroundSize: 'cover'
+          backgroundSize: 'cover',
+          backgroundPosition: 'center top' // Garante que o rosto/topo não seja cortado no tablet
         }}
       />
+      
+      {/* Overlay gradiente branco na base para melhor leitura */}
+      <div className="absolute inset-0 z-0 bg-gradient-to-t from-white/90 via-transparent to-transparent pointer-events-none" />
 
       <div className="relative z-10 flex flex-col items-center justify-center h-full w-full pb-12 px-8 gap-4">
         
@@ -48,9 +52,10 @@ export default function WelcomeScreen({ onStart, qrLink }) {
       <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20">
         <button 
           onClick={() => onStart('checkin')}
-          className="bg-white/20 backdrop-blur-md border border-white/40 text-white text-[12px] font-black px-10 py-2 rounded-full flex items-center gap-2 hover:bg-white/40 transition-all animate-[bounce_3s_infinite]"
+          // Ajustado para Rosa/Branco para ter contraste com o fade branco do fundo
+          className="bg-white/80 backdrop-blur-md border-2 border-pink-400 text-pink-600 text-[12px] font-black px-10 py-2 rounded-full flex items-center gap-2 shadow-lg hover:bg-white transition-all animate-[bounce_3s_infinite]"
         >
-          <MapPin size={40} /> CHECK-IN (ROTA DE BRINDES)
+          <MapPin size={24} /> CHECK-IN (ROTA DE BRINDES)
         </button>
       </div>
 

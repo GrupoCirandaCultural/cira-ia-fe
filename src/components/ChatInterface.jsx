@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { Send, Search, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw } from 'lucide-react';
 import bgChat from '../assets/background-chat.png';
 
@@ -89,7 +89,7 @@ export default function ChatInterface({ userName, cupom, onBack, initialMode = '
     if (initialMode === 'stock') {
       const fetchGenres = async () => {
         try {
-          const response = await axios.get('http://localhost:8008/api/genres');
+          const response = await api.get('/api/genres');
           setGenres(response.data);
         } catch (error) {
           console.error("Erro ao buscar gêneros:", error);
@@ -101,6 +101,7 @@ export default function ChatInterface({ userName, cupom, onBack, initialMode = '
 
   const scrollRef = useRef(null);
   const lastMessageRef = useRef(null);
+  const inputRef = useRef(null); // Ref para o input de busca
   
   const ageOptions = [
     { label: "0 a 3 anos", value: "Tenho um bebê de 0 a 3 anos" },
@@ -180,7 +181,7 @@ export default function ChatInterface({ userName, cupom, onBack, initialMode = '
         genre_id: genreId
       };
 
-      const { data } = await axios.get('http://localhost:8008/api/books/search', { params });
+      const { data } = await api.get('/api/books/search', { params });
       
       // 3. Mapear resposta para o formato esperado pelo componente
       const results = data.map(book => ({
@@ -254,7 +255,7 @@ export default function ChatInterface({ userName, cupom, onBack, initialMode = '
     }
 
     try {
-      const { data } = await axios.post('http://localhost:8008/chat', {
+      const { data } = await api.post('/chat', {
         session_id: sessionId, message: apiMessage,
       });
       
@@ -463,6 +464,8 @@ export default function ChatInterface({ userName, cupom, onBack, initialMode = '
                            return;
                          }
                          setStockFilterGenre(prev => prev === genre.nome ? null : genre.nome);
+                         // Foca no input para abrir o teclado no mobile e facilitar a busca
+                         setTimeout(() => inputRef.current?.focus(), 50);
                       }}
                       className={`px-3 py-1 font-bold text-[10px] uppercase tracking-wide rounded-full whitespace-nowrap transition-colors border shadow-sm ${
                         isSelected 
@@ -491,6 +494,7 @@ export default function ChatInterface({ userName, cupom, onBack, initialMode = '
 
           <div className="flex gap-3 w-full">
             <input
+              ref={inputRef}
               type="text"
               className="flex-1 bg-white border border-pink-100 rounded-2xl px-5 py-4 text-sm focus:ring-4 focus:ring-pink-100 outline-none shadow-sm"
               placeholder={initialMode === 'stock' ? "Busque por título, autor ou ISBN..." : "Qual livro vamos encontrar hoje?"}

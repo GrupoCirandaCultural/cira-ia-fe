@@ -1,6 +1,6 @@
 // src/components/Registration.jsx
 import React, { useState } from 'react';
-import axios from 'axios'; // Importe o axios
+import api from '../api'; // Importe o api
 import { ArrowLeft, AlertCircle, X } from 'lucide-react';
 
 export default function Registration({ onComplete, idEstande, initialPhone, onBack }) {
@@ -30,7 +30,7 @@ export default function Registration({ onComplete, idEstande, initialPhone, onBa
 
     try {
       if (isLoginMode) {
-        const { data } = await axios.post('http://localhost:8008/leads/check-in', {
+        const { data } = await api.post('/leads/check-in', {
           telefone: formData.telefone,
           id_estande: idEstande
         });
@@ -47,7 +47,7 @@ export default function Registration({ onComplete, idEstande, initialPhone, onBa
           // Se não veio o nome, tenta buscar pelo telefone
           if (!nomeUsuario) {
             try {
-              const resBusca = await axios.get(`http://localhost:8008/leads?telefone=${formData.telefone}`);
+              const resBusca = await api.get(`/leads?telefone=${formData.telefone}`);
               // Assume que retorna um array ou o objeto direto
               const leadEncontrado = Array.isArray(resBusca.data) ? resBusca.data[0] : resBusca.data;
               if (leadEncontrado && leadEncontrado.nome) {
@@ -62,7 +62,7 @@ export default function Registration({ onComplete, idEstande, initialPhone, onBa
         }
       } else {
         const payload = { ...formData, id_estande: idEstande };
-        const res = await axios.post('http://localhost:8008/leads', payload);
+        const res = await api.post('/leads', payload);
         onComplete(formData, res.data);
       }
     } catch (error) {
