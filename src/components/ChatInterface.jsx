@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import api from '../api';
-import { Send, Search, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw } from 'lucide-react';
+import api, { getBookByIsbn } from '../api';
+import { Send, Search, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw, Trash2, MessageCircle, CheckCircle, AlertCircle } from 'lucide-react';
 import bgChat from '../assets/background-chat.png';
 
 const generateSessionId = () => Math.random().toString(36).substring(7);
@@ -34,6 +34,220 @@ const CouponModal = ({ code, isOpen, onClose }) => {
   );
 };
 
+const BookDetailsModal = ({ book, isOpen, onClose, onConfirm }) => {
+  if (!isOpen || !book) return null;
+
+  const isChecking = book.checkingStock;
+  const status = book.stockStatus;
+  const searchUrl = `https://www.cirandacultural.com.br/busca?busca=${book.barras || book.titulo}`;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl p-6 w-full max-w-sm relative shadow-2xl scale-100 animate-in zoom-in-95 duration-200 flex flex-col gap-4">
+        <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors z-10">
+          <X size={20} />
+        </button>
+        
+        <div className="w-full aspect-[2/3] max-h-60 bg-gray-100 rounded-xl overflow-hidden mx-auto shadow-md relative">
+           {book.capa_url ? (
+             <img src={book.capa_url} alt={book.titulo} className="w-full h-full object-cover" />
+           ) : (
+             <div className="flex items-center justify-center h-full text-gray-400"><BookOpen size={48} /></div>
+           )}
+           
+           {/* Overlay de carregamento */}
+           {isChecking && (
+             <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center gap-2 backdrop-blur-sm">
+               <Loader2 className="animate-spin text-pink-500" size={32} />
+               <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Verificando Estoque...</span>
+             </div>
+           )}
+        </div>
+
+        <div className="text-center">
+            <h3 className="text-lg font-black text-gray-800 leading-tight mb-1">{book.titulo}</h3>
+            {book.preco_capa && <p className="text-xl font-bold text-pink-600">R$ {book.preco_capa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>}
+        </div>
+        
+        <div className="max-h-24 overflow-y-auto text-sm text-gray-600 text-center px-2 scrollbar-thin">
+            {book.sinopse}
+        </div>
+
+        <div className="pt-2">
+            {isChecking ? (
+               <p className="text-xs text-center text-gray-400 mb-3 font-medium">Aguarde, verificando disponibilidade...</p>
+            ) : status === 'unavailable' ? (
+               <div className="bg-red-50 border border-red-100 p-3 rounded-xl text-center">
+                 <p className="text-sm font-bold text-red-600 mb-1">Esgotado no evento</p>
+                 <p className="text-xs text-gray-600 mb-3">Você pode adicionar à lista ou comprar online.</p>
+                 
+                 <div className="flex flex-col gap-2">
+                    <button onClick={() => onConfirm(book)} className="w-full py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 shadow-md active:scale-95 transition-all flex items-center justify-center gap-2">
+                        <ShoppingCart size={18} />
+                        Adicionar à Lista
+                    </button>
+                    <a href={searchUrl} target="_blank" rel="noopener noreferrer" className="w-full py-3 border border-red-200 text-red-700 rounded-xl font-bold hover:bg-red-100 transition-colors flex items-center justify-center gap-2">
+                        <Search size={18} />
+                        Comprar no Site
+                    </a>
+                 </div>
+               </div>
+            ) : status === 'available_elsewhere' ? (
+                <div className="bg-yellow-50 border border-yellow-100 p-3 rounded-xl text-center">
+                  <p className="text-sm font-bold text-yellow-700 mb-1">Disponível em Outro Estande</p>
+                  <p className="text-xs text-yellow-600 mb-3">Localização: <strong>{book.location || 'Consultar Atendente'}</strong></p>
+                  <div className="flex gap-2">
+                    <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-colors">
+                        Agora não
+                    </button>
+                    <button onClick={() => onConfirm(book)} className="flex-1 py-3 rounded-xl bg-yellow-500 text-white font-bold hover:bg-yellow-600 shadow-md active:scale-95 transition-all flex items-center justify-center gap-2">
+                        <ShoppingCart size={18} />
+                        Eu quero!
+                    </button>
+                  </div>
+                </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-center gap-2 mb-3 bg-green-50 p-2 rounded-lg border border-green-100">
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                    <span className="text-xs font-bold text-green-700 uppercase tracking-wide">Disponível no Estande</span>
+                </div>
+                <div className="flex gap-2">
+                    <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-colors">
+                        Talvez depois
+                    </button>
+                    <button onClick={() => onConfirm(book)} className="flex-1 py-3 rounded-xl bg-pink-500 text-white font-bold hover:bg-pink-600 shadow-md active:scale-95 transition-all flex items-center justify-center gap-2">
+                        <ShoppingCart size={18} />
+                        Sim, eu quero!
+                    </button>
+                </div>
+              </>
+            )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const CartModal = ({ isOpen, onClose, cart, onRemove, userPhone, sessionId }) => {
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState(null); // null, 'success', 'error'
+  
+  if (!isOpen) return null;
+
+  const total = cart.reduce((acc, item) => acc + (item.preco_capa || 0), 0);
+
+  const handleCheckout = async () => {
+    setLoading(true);
+    try {
+        const payload = {
+            session_id: sessionId,
+            user_phone: userPhone,
+            total_price: total,
+            items: cart.map(item => ({
+                isbn: item.barras,
+                title: item.titulo,
+                price: item.preco_capa
+            }))
+        };
+        
+        // Dispara para o backend que processa e envia via WhatsApp Cloud API
+        await api.post('/api/checkout', payload);
+        setFeedback('success');
+    } catch (error) {
+        console.error("Erro no checkout:", error);
+        setFeedback('error');
+    } finally {
+        setLoading(false);
+    }
+  };
+  
+  // TELA DE SUCESSO / ERRO (SUBSTITUI O CARRINHO QUANDO HÁ FEEDBACK)
+  if (feedback) {
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-2xl scale-100 animate-in zoom-in-95 duration-200 flex flex-col items-center text-center space-y-4">
+            <div className={`w-20 h-20 rounded-full flex items-center justify-center ${feedback === 'success' ? 'bg-green-100 text-green-500' : 'bg-red-100 text-red-500'}`}>
+                {feedback === 'success' ? <CheckCircle size={48} /> : <AlertCircle size={48} />}
+            </div>
+            
+            <h2 className="text-2xl font-black text-gray-800">
+                {feedback === 'success' ? 'Tudo Pronto!' : 'Algo deu errado'}
+            </h2>
+            
+            <p className="text-gray-500">
+                {feedback === 'success' 
+                    ? 'A lista de livros e os links de compra foram enviados para o seu WhatsApp. 📱' 
+                    : 'Não conseguimos enviar a lista agora. Tente novamente mais tarde.'}
+            </p>
+
+            <button 
+                onClick={onClose}
+                className="w-full py-4 bg-gray-100 text-gray-700 font-bold rounded-2xl hover:bg-gray-200 transition-colors mt-4"
+            >
+                Fechar
+            </button>
+          </div>
+        </div>
+      );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl p-6 w-full max-w-md h-[80vh] flex flex-col relative shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
+        <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-2 text-pink-600">
+                <ShoppingCart size={24} />
+                <h2 className="text-xl font-black text-gray-800">Seu Carrinho</h2>
+            </div>
+            <button onClick={onClose} className="p-2 bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors">
+                <X size={20} />
+            </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin">
+            {cart.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-gray-400 gap-4">
+                    <ShoppingCart size={48} className="opacity-20" />
+                    <p className="text-center font-medium">Seu carrinho está vazio.<br/>Que tal procurar alguns livros?</p>
+                </div>
+            ) : (
+                cart.map((item, idx) => (
+                    <div key={idx} className="flex gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 items-center">
+                        <div className="w-12 h-16 bg-white rounded-lg overflow-hidden shrink-0 border border-gray-200">
+                            {item.capa_url && <img src={item.capa_url} alt={item.titulo} className="w-full h-full object-cover" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-sm text-gray-800 line-clamp-2 leading-tight">{item.titulo}</h4>
+                            <p className="text-pink-600 font-bold text-sm mt-1">R$ {item.preco_capa?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                        </div>
+                        <button onClick={() => onRemove(idx)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                            <Trash2 size={18} />
+                        </button>
+                    </div>
+                ))
+            )}
+        </div>
+
+        <div className="pt-4 mt-4 border-t border-gray-100">
+            <div className="flex justify-between items-end mb-4">
+                <span className="text-gray-500 font-medium">Total ({cart.length} itens)</span>
+                <span className="text-2xl font-black text-gray-800">R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+            </div>
+            <button 
+                disabled={cart.length === 0 || loading}
+                className="w-full py-4 bg-green-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-2xl font-black text-lg shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-green-600"
+                onClick={handleCheckout}
+            >
+                {loading ? <Loader2 className="animate-spin" size={24} /> : <MessageCircle size={24} />}
+                {loading ? "Enviando..." : "Receber no WhatsApp"}
+            </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- MOCK E FUNÇÕES AUXILIARES DE ESTOQUE ---
 
 const getStockCardStyle = (status) => {
@@ -43,8 +257,73 @@ const getStockCardStyle = (status) => {
   return 'bg-white/95 border border-pink-100'; // Default do chat normal
 };
 
-export default function ChatInterface({ userName, cupom, onBack, initialMode = 'chat', idEstande = 'geral' }) {
+export default function ChatInterface({ userName, userPhone, cupom, onBack, initialMode = 'chat', idEstande = 'geral' }) { // <--- Função principal começa aqui
   const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // CART & BOOK DETAILS STATES
+  const [cart, setCart] = useState([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [selectedBook, setSelectedBook] = useState(null);
+
+  const addToCart = (book) => {
+    setCart([...cart, book]);
+    setSelectedBook(null);
+  };
+
+  const removeFromCart = (index) => {
+    setCart(prev => prev.filter((_, i) => i !== index));
+  };
+  
+  const handleBookSelection = async (book) => {
+    // 1. Abre o modal imediatamente com estado de 'verificando'
+    setSelectedBook({ ...book, checkingStock: true, stockStatus: null });
+    
+    try {
+        let found = null;
+
+        // OTIMIZAÇÃO: Se tiver ISBN/Barras, usa o novo endpoint direto
+        if (book.barras) {
+            const { data } = await getBookByIsbn(book.barras);
+            found = data; 
+        } else {
+            // BACKUP: Busca textual antiga
+            const term = book.titulo;
+            const { data } = await api.get('/api/books/search', { 
+              params: { q: term } 
+            });
+            
+            // Tenta match pelo título
+            found = data.find(b => 
+              b.title.toLowerCase().trim() === book.titulo.toLowerCase().trim()
+            );
+        }
+
+        // 4. Atualiza o modal com o resultado real
+        if (found) {
+           setSelectedBook(prev => ({
+               ...prev,
+               stockStatus: found.status,
+               location: found.location_hint, // <--- Importante: Pega a localização da API
+               checkingStock: false
+           }));
+        } else {
+           // Se não achou na busca, assume indisponível
+           setSelectedBook(prev => ({
+               ...prev,
+               stockStatus: 'unavailable',
+               checkingStock: false
+           }));
+        }
+    } catch (error) {
+        console.error("Erro ao checar estoque:", error);
+        // Em caso de erro, define como indisponível para não travar
+        setSelectedBook(prev => ({
+            ...prev,
+            stockStatus: 'unavailable',
+            checkingStock: false
+        }));
+    }
+  };
   
   // ESTADOS DO MODO ESTOQUE
   const [genres, setGenres] = useState([]);
@@ -161,80 +440,19 @@ export default function ChatInterface({ userName, cupom, onBack, initialMode = '
     setStockOnlyBooth(false);
   };
 
-  // Lógica de busca de estoque REAL
-  const performStockSearch = async (term, genre, onlyBooth) => {
-    setLoading(true);
-    
-    try {
-      // 1. Resolver ID do Gênero (se houver filtro de nome selecionado)
-      let genreId = null;
-      if (genre) {
-        const found = genres.find(g => g.nome === genre);
-        if (found) genreId = found.id;
-      }
-
-      // 2. Parâmetros da Requisição
-      const params = {
-        q: term,
-        //booth_id: idEstande,
-        only_local: onlyBooth,
-        genre_id: genreId
-      };
-
-      const { data } = await api.get('/api/books/search', { params });
-      
-      // 3. Mapear resposta para o formato esperado pelo componente
-      const results = data.map(book => ({
-        titulo: book.title,
-        barras: book.isbn,
-        sinopse: book.synopsis || `Autor: ${book.author}`, // Fallback se não vier sinopse
-        preco_capa: book.price,
-        capa_url: book.cover_url,
-        genre: book.genre_name, // Opcional, apenas para display se precisar
-        status: book.status, 
-        location: book.location_hint || (book.status === 'available_here' ? `Estande ${idEstande}` : 'Outro Estande')
-      }));
-
-      const responseMsg = results.length > 0 
-        ? `Encontrei ${results.length} livros correspondentes:` 
-        : `Não encontrei livros com esses critérios.`;
-
-      setMessages(prev => [...prev, {
-        role: 'Cira IA',
-        content: responseMsg,
-        dados: results 
-      }]);
-
-    } catch (error) {
-      console.error("Erro na busca de estoque:", error);
-      setMessages(prev => [...prev, {
-        role: 'Cira IA',
-        content: "Ops! Não consegui consultar o estoque no momento. Tente novamente em instantes.",
-      }]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleSend = async (overrideMessage = null) => {
-    const messageToSend = overrideMessage || input; 
+    let messageToSend = overrideMessage || input; 
     
-    // Se for modo STOCK e não for mensagem de sistema (override), apenas faz a busca
-    if (initialMode === 'stock' && !overrideMessage && !messageToSend.trim() && !stockFilterGenre) return;
-    if (initialMode !== 'stock' && !messageToSend.trim()) return;
+    if (!messageToSend.trim() && !stockFilterGenre) return;
 
-    if (initialMode === 'stock') {
-      // MODO ESTOQUE
-      const displayMsg = messageToSend || `Filtro: ${stockFilterGenre || 'Todos'}`;
-      setMessages(prev => [...prev, { role: 'user', content: displayMsg }]);
-      setInput('');
-      // Chama a busca mockada
-      performStockSearch(messageToSend, stockFilterGenre, stockOnlyBooth);
-      return;
+    // Adaptação para filtros de estoque interagirem com a IA
+    let displayMsg = messageToSend;
+    if (initialMode === 'stock' && stockFilterGenre && !messageToSend.trim()) {
+       messageToSend = `Gostaria de ver opções de livros sobre ${stockFilterGenre}`;
+       displayMsg = `Categoria: ${stockFilterGenre}`;
     }
 
-    // MODO CHAT NORMAL (Cira)
-    const userMsg = { role: 'user', content: messageToSend };
+    const userMsg = { role: 'user', content: displayMsg };
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
     setLoading(true);
@@ -250,9 +468,9 @@ export default function ChatInterface({ userName, cupom, onBack, initialMode = '
     }
 
     let apiMessage = messageToSend;
-    if (currentAge && !isAgeSelection) {
-      apiMessage += ` [Contexto: O usuário já informou a faixa etária: ${currentAge}. Não pergunte a idade novamente, apenas recomende livros.]`;
-    }
+    // if (currentAge && !isAgeSelection) {
+    //   apiMessage += ` [Contexto: O usuário já informou a faixa etária: ${currentAge}. Não pergunte a idade novamente, apenas recomende livros.]`;
+    // }
 
     try {
       const { data } = await api.post('/chat', {
@@ -298,6 +516,21 @@ export default function ChatInterface({ userName, cupom, onBack, initialMode = '
     <div className="flex flex-col h-full bg-[#87CEEB] relative overflow-hidden">
       {cupom && <CouponModal code={cupom} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />}
       
+      <BookDetailsModal 
+        book={selectedBook} 
+        isOpen={!!selectedBook} 
+        onClose={() => setSelectedBook(null)} 
+        onConfirm={addToCart}
+      />
+      <CartModal 
+        cart={cart}
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        onRemove={removeFromCart}
+        userPhone={userPhone}
+        sessionId={sessionId}
+      />
+
       <div className="absolute inset-0 z-0" style={{ backgroundImage: `url(${bgChat})`, backgroundSize: 'cover', backgroundPosition: 'center top' }} />
 
       <header className="relative z-10 bg-white/90 backdrop-blur-md border-b border-pink-100 p-4 flex justify-between items-center shadow-sm">
@@ -315,9 +548,15 @@ export default function ChatInterface({ userName, cupom, onBack, initialMode = '
             </p>
           </div>
         </div>
-        <button onClick={handleResetChat} className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors" title="Novo Chat">
-          <RotateCcw size={20} />
-        </button>
+        <div className="flex gap-1">
+          <button onClick={() => setIsCartOpen(true)} className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors relative" title="Carrinho">
+            <ShoppingCart size={20} />
+            {cart.length > 0 && <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold animate-pulse">{cart.length}</span>}
+          </button>
+          <button onClick={handleResetChat} className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors" title="Novo Chat">
+            <RotateCcw size={20} />
+          </button>
+        </div>
       </header>
 
       <main className="relative z-10 flex-1 overflow-y-auto p-4 space-y-6">
@@ -392,12 +631,11 @@ export default function ChatInterface({ userName, cupom, onBack, initialMode = '
                           {item.titulo}
                         </h4>
                         
-                        {/* Exibe Localização se for busca de estoque */}
                         <div className="mb-2">
-                            {item.status === 'available_here' && <p className="text-[10px] font-black text-green-700 uppercase bg-green-100 inline-block px-1 rounded">Disponível Aqui</p>}
-                            {item.status === 'available_elsewhere' && <p className="text-[10px] font-black text-yellow-700 uppercase bg-yellow-100 inline-block px-1 rounded">{item.location}</p>}
-                            {item.status === 'unavailable' && <p className="text-[10px] font-black text-red-700 uppercase bg-red-100 inline-block px-1 rounded">Esgotado</p>}
-                            <p className="text-[9px] text-gray-400 mb-1 ml-1 font-bold">ISBN: {item.barras}</p>
+                           {item.status === 'available_here' && <p className="text-[10px] font-black text-green-700 uppercase bg-green-100 inline-block px-1 rounded">Disponível Aqui</p>}
+                           {item.status === 'available_elsewhere' && <p className="text-[10px] font-black text-yellow-700 uppercase bg-yellow-100 inline-block px-1 rounded">{item.location}</p>}
+                           {item.status === 'unavailable' && <p className="text-[10px] font-black text-red-700 uppercase bg-red-100 inline-block px-1 rounded">Esgotado</p>}
+                           <p className="text-[9px] text-gray-400 mb-1 ml-1 font-bold">ISBN: {item.barras}</p>
                         </div>
 
                         
@@ -406,12 +644,10 @@ export default function ChatInterface({ userName, cupom, onBack, initialMode = '
                         </p>
 
                         <div className="mt-auto flex justify-between items-center">
-                          {item.status !== 'unavailable' && (
-                            <span className="text-sm font-black text-pink-600">
-                              R$ {item.preco_capa?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                            </span>
-                          )}
-                          <button className="p-2 bg-pink-500 text-white rounded-lg shadow-sm active:scale-90 transition-transform">
+                          <span className="text-sm font-black text-pink-600">
+                            R$ {item.preco_capa?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          </span>
+                          <button onClick={() => handleBookSelection(item)} className="p-2 bg-pink-500 text-white rounded-lg shadow-sm active:scale-90 transition-transform">
                             <ShoppingCart size={14} />
                           </button>
                         </div>
@@ -493,6 +729,9 @@ export default function ChatInterface({ userName, cupom, onBack, initialMode = '
           )}
 
           <div className="flex gap-3 w-full">
+            <button onClick={() => handleSend()} disabled={loading} className="bg-pink-500 text-white p-4 rounded-2xl shadow-lg active:scale-90 disabled:opacity-50 transition-all">
+              {initialMode === 'stock' ? <Search size={22} /> : <Send size={22} />}
+            </button>
             <input
               ref={inputRef}
               type="text"
@@ -502,9 +741,6 @@ export default function ChatInterface({ userName, cupom, onBack, initialMode = '
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
             />
-            <button onClick={() => handleSend()} disabled={loading} className="bg-pink-500 text-white p-4 rounded-2xl shadow-lg active:scale-90 disabled:opacity-50 transition-all">
-              {initialMode === 'stock' ? <Search size={22} /> : <Send size={22} />}
-            </button>
           </div>
         </div>
       </footer>

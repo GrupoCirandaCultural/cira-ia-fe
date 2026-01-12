@@ -118,6 +118,7 @@ function App() {
           {step === 3 && (
             <ChatInterface 
               userName={userLead?.nome} 
+              userPhone={userLead?.telefone}
               cupom={userLead?.cupom} 
               initialMode={target === 'chat_stock' ? 'stock' : 'chat'}
               idEstande={estandeViaURL}
