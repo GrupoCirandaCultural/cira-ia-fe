@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import QRCode from 'react-qr-code';
 import api from '../api';
 import { ArrowLeft, MapPin, CheckCircle2, AlertCircle, X } from 'lucide-react';
+import EventMap from './EventMap';
 
 export default function CheckInScreen({ onBack, idEstande, onUserNotFound }) {
   const [phone, setPhone] = useState('');
@@ -42,7 +43,21 @@ export default function CheckInScreen({ onBack, idEstande, onUserNotFound }) {
           onConfirm: () => onUserNotFound(phone)
         });
       } else {
-        setStatus(data);
+         const visitadosBackend = Array.isArray(data.visitados) ? data.visitados : [];
+         let listaCombinada = [...visitadosBackend];
+         if (idEstande) {
+             listaCombinada.push(idEstande);
+         }
+         
+         const visitadosVisual = [...new Set(listaCombinada)];
+
+         setStatus({
+            loading: false,
+            progresso: data.progresso || "1/3",
+            concluido: data.concluido || false,
+            visitados: visitadosVisual, 
+            cupom: data.cupom
+         });
       }
     } catch (err) {
       setCustomAlert({
@@ -106,9 +121,11 @@ export default function CheckInScreen({ onBack, idEstande, onUserNotFound }) {
           ESTANDE: {estandeNome}
         </div>
 
-        <div className="bg-white p-4 rounded-3xl shadow-2xl mb-6">
-          <QRCode size={120} value={window.location.href} fgColor="#a855f7" />
-        </div>
+        {/* MAPA INTERATIVO */}
+        <EventMap 
+            visitados={status?.visitados || []} 
+            idEstandeAtual={idEstande} 
+        />
 
         <h2 className="text-2xl font-black mb-2">Passaporte Ciranda 🎁</h2>
         <p className="text-sm opacity-90 mb-8 px-4 leading-tight">

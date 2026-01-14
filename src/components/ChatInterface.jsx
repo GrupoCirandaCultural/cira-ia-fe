@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api, { getBookByIsbn } from '../api';
-import { Send, Search, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw, Trash2, MessageCircle, CheckCircle, AlertCircle } from 'lucide-react';
+import { Send, Search, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw, Trash2, MessageCircle, CheckCircle, AlertCircle, ChevronUp, ChevronDown } from 'lucide-react';
 import bgChat from '../assets/background-chat.png';
 
 const generateSessionId = () => Math.random().toString(36).substring(7);
@@ -248,6 +248,204 @@ const CartModal = ({ isOpen, onClose, cart, onRemove, userPhone, sessionId }) =>
   );
 };
 
+
+const CartDrawer = ({ cart, onRemove, onClear, userPhone, sessionId }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState(null); // null, 'success', 'error'
+  const [isConfirmingClear, setIsConfirmingClear] = useState(false);
+  
+  if (!cart || cart.length === 0) return null;
+
+  const total = cart.reduce((acc, item) => acc + (item.preco_capa || 0), 0);
+
+  const handleCheckout = async () => {
+    setLoading(true);
+    try {
+        const payload = {
+            session_id: sessionId,
+            user_phone: userPhone,
+            total_price: total,
+            items: cart.map(item => ({
+                isbn: item.barras,
+                title: item.titulo,
+                price: item.preco_capa
+            }))
+        };
+        
+        await api.post('/api/checkout', payload);
+        setFeedback('success');
+    } catch (error) {
+        console.error("Erro no checkout:", error);
+        setFeedback('error');
+    } finally {
+        setLoading(false);
+    }
+  };
+  // RENDERIZAÇÃO DO MODAL DE CONFIRMAÇÃO
+  if (isConfirmingClear) {
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-xs shadow-2xl scale-100 animate-in zoom-in-95 duration-200 flex flex-col items-center text-center space-y-4">
+            <div className="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center text-red-500 mb-2">
+                <Trash2 size={32} />
+            </div>
+            
+            <h3 className="text-xl font-black text-gray-800 leading-tight">Limpar Carrinho?</h3>
+            <p className="text-sm text-gray-500">Tem certeza que deseja remover todos os itens? Essa ação não pode ser desfeita.</p>
+
+            <div className="flex gap-3 w-full mt-2">
+                <button 
+                    onClick={() => setIsConfirmingClear(false)}
+                    className="flex-1 py-3 bg-gray-100 text-gray-700 font-bold rounded-2xl hover:bg-gray-200 transition-colors"
+                >
+                    Cancelar
+                </button>
+                <button 
+                    onClick={() => {
+                        onClear();
+                        setIsConfirmingClear(false);
+                    }}
+                    className="flex-1 py-3 bg-red-500 text-white font-bold rounded-2xl hover:bg-red-600 shadow-md transition-all active:scale-95"
+                >
+                    Sim, Limpar
+                </button>
+            </div>
+          </div>
+        </div>
+    );
+  }
+
+  if (feedback) {
+     return (
+        <div className={`absolute bottom-full left-0 right-0 bg-white rounded-t-[32px] shadow-[0_-8px_30px_rgba(0,0,0,0.12)] border-t border-pink-100 flex flex-col z-30 animate-in slide-in-from-bottom-5 duration-300 pb-2 mx-2 mb-2`}>
+           <div className="w-full p-2 flex justify-end px-4">
+              <button 
+                onClick={() => {
+                   setFeedback(null);
+                   setIsOpen(false); // fecha o drawer ao fechar o feedback
+                }} 
+                className="p-1 bg-gray-100 rounded-full text-gray-400"
+              >
+                  <X size={16} />
+              </button>
+           </div>
+           <div className="p-6 flex flex-col items-center text-center space-y-4">
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center ${feedback === 'success' ? 'bg-green-100 text-green-500' : 'bg-red-100 text-red-500'}`}>
+                    {feedback === 'success' ? <CheckCircle size={32} /> : <AlertCircle size={32} />}
+                </div>
+                <h3 className="text-xl font-black text-gray-800">
+                    {feedback === 'success' ? 'Enviado!' : 'Erro'}
+                </h3>
+                <p className="text-sm text-gray-500">
+                    {feedback === 'success' ? 'Sua lista foi enviada para o WhatsApp!' : 'Não conseguimos enviar agora.'}
+                </p>
+           </div>
+        </div>
+     );
+  }
+
+  return (
+    <div 
+        className={`absolute bottom-full left-0 right-0 bg-white shadow-[0_-8px_40px_rgba(0,0,0,0.15)] border-t border-pink-100 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] z-30 flex flex-col rounded-t-[32px] ${isOpen ? 'h-[75vh] rounded-t-[32px]' : 'h-auto rounded-t-[24px]'} mx-0 mb-0`}
+    >
+        {/* Handle */}
+        <div 
+            className="w-full flex items-center justify-center py-3 cursor-pointer active:bg-gray-50 rounded-t-[32px] touch-none"
+            onClick={() => setIsOpen(!isOpen)}
+        >
+            <div className={`w-12 h-1.5 rounded-full transition-colors ${isOpen ? 'bg-gray-300' : 'bg-gray-200'}`} />
+        </div>
+
+        {/* Content Container */}
+        <div className="flex-1 flex flex-col px-5 pb-2">
+            
+            <div className={`flex items-center justify-between transition-all duration-300 ${isOpen ? 'mb-4 py-5' : 'mb-1'}`}>
+                 <div className="flex items-center gap-3 cursor-pointer" onClick={() => !isOpen && setIsOpen(true)}>
+                      <div className="relative">
+                           <div className="bg-gradient-to-br from-pink-100 to-pink-50 p-2.5 rounded-2xl text-pink-600 shadow-sm border border-pink-100">
+                               <ShoppingCart size={24} />
+                           </div>
+                           <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm">{cart.length}</span>
+                      </div>
+                      <div className="flex flex-col">
+                           <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Total do carrinho</span>
+                           <span className="text-xl font-black text-gray-800">R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                      </div>
+                 </div>
+
+                 {!isOpen && (
+                     <button 
+                        onClick={(e) => { e.stopPropagation(); handleCheckout(); }}
+                        disabled={loading}
+                        className="bg-green-500 text-white pl-4 pr-5 py-2.5 rounded-xl font-bold shadow-lg shadow-green-200 active:scale-95 transition-all text-sm flex items-center gap-2 hover:bg-green-600"
+                    >
+                        {loading ? <Loader2 className="animate-spin" size={18} /> : <MessageCircle size={20} />}
+                        <span>Receber</span>
+                    </button>
+                 )}
+                 
+                 {isOpen && (
+                     <button onClick={() => setIsOpen(false)} className="p-2 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 transition-colors">
+                         <ChevronDown size={20} />
+                     </button>
+                 )}
+            </div>
+
+            {/* Expanded Content */}
+            {isOpen && (
+                <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-300 slide-in-from-bottom-2">
+                     <div className="h-px w-full bg-gray-100 mb-4" />
+
+                     <div className="flex items-center justify-between mb-3">
+                        <h3 className="font-bold text-gray-400 text-xs uppercase tracking-wider">Itens selecionados ({cart.length})</h3>
+                        {cart.length > 0 && (
+                            <button 
+                                onClick={() => setIsConfirmingClear(true)}
+                                className="text-[10px] font-bold text-red-400 hover:text-red-600 bg-red-50 px-2 py-1 rounded-md transition-colors uppercase tracking-wide"
+                            >
+                                Limpar Carrinho
+                            </button>
+                        )}
+                     </div>
+                     
+                     <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-thin pb-4">
+                        {cart.map((item, idx) => (
+                            <div key={idx} className="flex gap-3 p-3 bg-white rounded-2xl border border-gray-100 items-center shadow-sm">
+                                <div className="w-14 h-[84px] bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200 shadow-inner">
+                                    {item.capa_url && <img src={item.capa_url} alt={item.titulo} className="w-full h-full object-cover" />}
+                                </div>
+                                <div className="flex-1 min-w-0 py-1">
+                                    <h4 className="font-bold text-sm text-gray-800 line-clamp-2 leading-tight mb-1">{item.titulo}</h4>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-pink-600 font-black text-sm">R$ {item.preco_capa?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                        <span className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full font-bold">ISBN: {item.barras}</span>
+                                    </div>
+                                </div>
+                                <button onClick={() => onRemove(idx)} className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                                    <Trash2 size={18} />
+                                </button>
+                            </div>
+                        ))}
+                     </div>
+                     
+                     <div className="mt-auto pt-4 border-t border-gray-100">
+                        <button 
+                            onClick={handleCheckout}
+                            disabled={loading}
+                            className="w-full py-4 bg-green-500 text-white rounded-2xl font-black text-lg shadow-xl shadow-green-200 active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {loading ? <Loader2 className="animate-spin" size={24} /> : <MessageCircle size={24} />}
+                            {loading ? "Enviando lista..." : "Receber no WhatsApp"}
+                        </button>
+                     </div>
+                </div>
+            )}
+        </div>
+    </div>
+  );
+};
+
 // --- MOCK E FUNÇÕES AUXILIARES DE ESTOQUE ---
 
 const getStockCardStyle = (status) => {
@@ -273,6 +471,8 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
   const removeFromCart = (index) => {
     setCart(prev => prev.filter((_, i) => i !== index));
   };
+
+  const clearCart = () => setCart([]);
   
   const handleBookSelection = async (book) => {
     // 1. Abre o modal imediatamente com estado de 'verificando'
@@ -671,6 +871,8 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
         <div ref={scrollRef} />
       </main>
 
+      <div className="relative z-20">
+      <CartDrawer cart={cart} onRemove={removeFromCart} onClear={clearCart} userPhone={userPhone} sessionId={sessionId} />
       <footer className="relative z-10 p-4 bg-white/80 backdrop-blur-xl border-t border-white/20">
         <div className="max-w-4xl mx-auto flex flex-col gap-3">
           
@@ -744,6 +946,7 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
           </div>
         </div>
       </footer>
+      </div>
     </div>
   );
 }
