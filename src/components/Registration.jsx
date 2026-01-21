@@ -61,7 +61,21 @@ export default function Registration({ onComplete, idEstande, initialPhone, onBa
           onComplete({ nome: nomeUsuario, telefone: formData.telefone, cupom: data.cupom }, data);
         }
       } else {
-        const payload = { ...formData, id_estande: idEstande };
+        if (formData.nome.trim().length < 3) {
+             setCustomAlert({
+                title: "Nome muito curto",
+                message: "Por favor, digite seu nome completo.",
+                type: "error"
+             });
+             setLoading(false);
+             return;
+        }
+
+        const payload = { 
+          ...formData, 
+          nome: (formData.nome || '').replace(/[\n\t\r]/g, ' ').replace(/\s{2,}/g, ' ').trim(),
+          id_estande: idEstande 
+        };
         const res = await api.post('/leads', payload);
         onComplete(formData, res.data);
       }

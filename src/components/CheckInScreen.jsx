@@ -51,9 +51,11 @@ export default function CheckInScreen({ onBack, idEstande, onUserNotFound }) {
          
          const visitadosVisual = [...new Set(listaCombinada)];
 
+         const contagemExibicao = Math.min(visitadosVisual.length, 3);
+
          setStatus({
             loading: false,
-            progresso: data.progresso || "1/3",
+            progresso: `${contagemExibicao}/3`,
             concluido: data.concluido || false,
             visitados: visitadosVisual, 
             cupom: data.cupom

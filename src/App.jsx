@@ -1,25 +1,32 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import WelcomeScreen from './components/WelcomeScreen';
 import Registration from './components/Registration';
 import PrizeWheel from './components/PrizeWheel';
 import ChatInterface from './components/ChatInterface';
 // ADICIONADO: Importação da nova tela de Check-in
 import CheckInScreen from './components/CheckInScreen';
-// import StockConsultation from './components/StockConsultation'; // REMOVIDO/DESATIVADO
+import { MapPin, Check } from 'lucide-react';
+
+const ESTANDES = [
+  { id: 'estande_norte', label: 'Pavilhão Norte' },
+  { id: 'ciranda_bienal', label: 'Estande Principal' },
+  { id: 'estande_sul', label: 'Pavilhão Sul' },
+];
 
 function App() {
+  // Configuração inicial do Estande
+  const [isConfigured, setIsConfigured] = useState(false);
+  const [selectedEstande, setSelectedEstande] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('estande') || 'ciranda_bienal';
+  });
+
   // Passos: 0: Welcome, 1: Registration, 2: Wheel, 3: Chat, 'checkin': CheckIn
   const [step, setStep] = useState(0);
   const [userLead, setUserLead] = useState(null);
   const [leadId, setLeadId] = useState(null);
   const [target, setTarget] = useState(null);
   const [prefilledPhone, setPrefilledPhone] = useState('')
-
-  // 1. CAPTURA DINÂMICA DO ESTANDE VIA URL
-  const estandeViaURL = useMemo(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('estande') || 'geral';
-  }, []);
 
   const qrCodeLinkParaCelular = window.location.href;
 
@@ -48,6 +55,8 @@ function App() {
     // Navega conforme escolha inicial
     if (target === 'wheel') {
       setStep(2);
+    } else if (target === 'checkin_redirect') {
+      setStep('checkin'); // <--- Retorna para o checkin após cadastro
     } else {
       setStep(3); 
     }
@@ -71,13 +80,52 @@ function App() {
         
         <div className="h-full w-full overflow-y-auto overflow-x-hidden relative bg-[#87CEEB]">
           
+          {/* TELA DE CONFIGURAÇÃO INICIAL (SELEÇÃO DE ESTANDE) */}
+          {!isConfigured && (
+            <div className="h-full w-full bg-gradient-to-b from-gray-900 to-gray-800 p-8 flex flex-col items-center justify-center text-white z-50 absolute inset-0">
+               <div className="mb-8 p-4 bg-white/10 rounded-full border border-white/20">
+                 <MapPin size={48} className="text-pink-500" />
+               </div>
+               
+               <h1 className="text-2xl font-black mb-2 text-center">Configuração do Terminal</h1>
+               <p className="text-gray-400 text-sm mb-8 text-center max-w-xs">Selecione abaixo em qual estande este dispositivo está localizado.</p>
+
+               <div className="w-full max-w-sm space-y-3">
+                 {ESTANDES.map((estande) => (
+                   <button
+                     key={estande.id}
+                     onClick={() => setSelectedEstande(estande.id)}
+                     className={`w-full p-4 rounded-xl border-2 flex items-center justify-between transition-all ${
+                       selectedEstande === estande.id 
+                       ? 'bg-pink-600 border-pink-500 shadow-lg scale-105' 
+                       : 'bg-white/5 border-white/10 hover:bg-white/10'
+                     }`}
+                   >
+                      <span className="font-bold tracking-wide">{estande.label}</span>
+                      {selectedEstande === estande.id && <Check size={20} className="text-white" />}
+                   </button>
+                 ))}
+               </div>
+
+               <button
+                 onClick={() => setIsConfigured(true)}
+                 className="mt-12 w-full max-w-sm py-4 bg-white text-gray-900 font-black rounded-2xl shadow-xl hover:bg-gray-100 transition-all active:scale-95"
+               >
+                 CONFIRMAR E INICIAR
+               </button>
+               
+               <p className="fixed bottom-4 text-[10px] text-gray-600 font-mono">ID: {selectedEstande}</p>
+            </div>
+          )}
+
           {/* TELA DE CHECK-IN (FORA DO FLUXO PRINCIPAL) */}
-          {step === 'checkin' && (
+          {isConfigured && step === 'checkin' && (
             <CheckInScreen 
-              idEstande={estandeViaURL} 
+              idEstande={selectedEstande} 
               onBack={() => setStep(0)} 
               onUserNotFound={(phone) => {
                 setPrefilledPhone(phone);
+                setTarget('checkin_redirect'); // <--- Marca que veio do checkin
                 setStep(1); 
               }}
             />
@@ -86,7 +134,7 @@ function App() {
           {/* TELA DE CONSULTA DE ESTOQUE - INTEGRADA NO CHAT AGORA, REMOVIDA DAQUI */}
 
           {/* PASSO 0: BOAS-VINDAS (COM ESCOLHA) */}
-          {step === 0 && (
+          {isConfigured && step === 0 && (
             <WelcomeScreen 
               onStart={handleStart} 
               qrLink={qrCodeLinkParaCelular} 
@@ -94,9 +142,9 @@ function App() {
           )}
 
           {/* PASSO 1: CADASTRO */}
-          {step === 1 && (
+          {isConfigured && step === 1 && (
             <Registration 
-              idEstande={estandeViaURL} 
+              idEstande={selectedEstande} 
               initialPhone={prefilledPhone}
               onBack={() => setStep(0)}
               onComplete={(userData, res) => {
@@ -107,7 +155,7 @@ function App() {
           )}
           
           {/* PASSO 2: ROLETA */}
-          {step === 2 && (
+          {isConfigured && step === 2 && (
             <PrizeWheel 
               userId={leadId} 
               onFinish={handleWheelFinish} 
@@ -115,13 +163,13 @@ function App() {
           )}
 
           {/* PASSO 3: CHAT */}
-          {step === 3 && (
+          {isConfigured && step === 3 && (
             <ChatInterface 
               userName={userLead?.nome} 
               userPhone={userLead?.telefone}
               cupom={userLead?.cupom} 
               initialMode={target === 'chat_stock' ? 'stock' : 'chat'}
-              idEstande={estandeViaURL}
+              idEstande={selectedEstande}
               onBack={() => setStep(0)}
             />
           )}

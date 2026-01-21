@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api, { getBookByIsbn } from '../api';
-import { Send, Search, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw, Trash2, MessageCircle, CheckCircle, AlertCircle, ChevronUp, ChevronDown } from 'lucide-react';
+import { Send, Search, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw, Trash2, MessageCircle, CheckCircle, AlertCircle, ChevronUp, ChevronDown, Eye } from 'lucide-react';
 import bgChat from '../assets/background-chat.png';
 
 const generateSessionId = () => Math.random().toString(36).substring(7);
@@ -129,7 +129,7 @@ const BookDetailsModal = ({ book, isOpen, onClose, onConfirm }) => {
   );
 };
 
-const CartModal = ({ isOpen, onClose, cart, onRemove, userPhone, sessionId }) => {
+const CartModal = ({ isOpen, onClose, cart, onRemove, userPhone, sessionId, userName }) => {
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(null); // null, 'success', 'error'
   
@@ -143,11 +143,15 @@ const CartModal = ({ isOpen, onClose, cart, onRemove, userPhone, sessionId }) =>
         const payload = {
             session_id: sessionId,
             user_phone: userPhone,
+            user_name: userName,
             total_price: total,
+            cart_total: `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+            cart_link: 'https://www.cirandacultural.com.br',
             items: cart.map(item => ({
                 isbn: item.barras,
-                title: item.titulo,
-                price: item.preco_capa
+                title: (item.titulo || '').replace(/[\n\t\r]/g, ' ').replace(/\s{2,}/g, ' ').trim(),
+                price: item.preco_capa,
+                link: `https://www.cirandacultural.com.br/busca?busca=${item.barras || item.titulo}`
             }))
         };
         
@@ -249,7 +253,7 @@ const CartModal = ({ isOpen, onClose, cart, onRemove, userPhone, sessionId }) =>
 };
 
 
-const CartDrawer = ({ cart, onRemove, onClear, userPhone, sessionId }) => {
+const CartDrawer = ({ cart, onRemove, onClear, userPhone, sessionId, userName }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(null); // null, 'success', 'error'
@@ -265,11 +269,15 @@ const CartDrawer = ({ cart, onRemove, onClear, userPhone, sessionId }) => {
         const payload = {
             session_id: sessionId,
             user_phone: userPhone,
+            user_name: userName,
             total_price: total,
+            cart_total: `R$ ${total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+            cart_link: 'https://www.cirandacultural.com.br',
             items: cart.map(item => ({
                 isbn: item.barras,
-                title: item.titulo,
-                price: item.preco_capa
+                title: (item.titulo || '').replace(/[\n\t\r]/g, ' ').replace(/\s{2,}/g, ' ').trim(),
+                price: item.preco_capa,
+                link: `https://www.cirandacultural.com.br/busca?busca=${item.barras || item.titulo}`
             }))
         };
         
@@ -729,6 +737,7 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
         onRemove={removeFromCart}
         userPhone={userPhone}
         sessionId={sessionId}
+        userName={userName}
       />
 
       <div className="absolute inset-0 z-0" style={{ backgroundImage: `url(${bgChat})`, backgroundSize: 'cover', backgroundPosition: 'center top' }} />
@@ -770,11 +779,14 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
               msg.role === 'user' ? 'bg-pink-500 text-white rounded-tr-none' : 'bg-white/95 text-gray-800 rounded-tl-none border border-white/40'
             }`}>
               <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">
-                {userName && msg.content.includes(userName) ? (
-                  msg.content.split(userName).map((part, i, arr) => (
+                {userName && msg.content.toLowerCase().includes(userName.toLowerCase()) ? (
+                  msg.content.split(new RegExp(`(\\b${userName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b)`, 'gi')).map((part, i) => (
                     <React.Fragment key={i}>
-                      {part}
-                      {i < arr.length - 1 && <strong className={msg.role === 'user' ? 'font-black' : 'font-black text-pink-500'}>{userName}</strong>}
+                      {part.toLowerCase() === userName.toLowerCase() ? (
+                        <strong className={msg.role === 'user' ? 'font-black' : 'font-black text-pink-500'}>{part}</strong>
+                      ) : (
+                        part
+                      )}
                     </React.Fragment>
                   ))
                 ) : (
@@ -847,9 +859,27 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
                           <span className="text-sm font-black text-pink-600">
                             R$ {item.preco_capa?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </span>
-                          <button onClick={() => handleBookSelection(item)} className="p-2 bg-pink-500 text-white rounded-lg shadow-sm active:scale-90 transition-transform">
-                            <ShoppingCart size={14} />
-                          </button>
+                          
+                          <div className="flex gap-1.5">
+                            {/* Botão de Consulta de Estoque */}
+                            <button 
+                              onClick={() => handleBookSelection(item)} 
+                              className="px-2 py-2 bg-pink-100 text-pink-600 rounded-lg shadow-sm hover:bg-pink-200 active:scale-90 transition-all flex items-center gap-1"
+                              title="Ver detalhes e estoque"
+                            >
+                              <Eye size={14} />
+                              <span className="text-[10px] font-black uppercase tracking-wide">ESTOQUE</span>
+                            </button>
+
+                            {/* Botão de Adicionar ao Carrinho Direto */}
+                            <button 
+                              onClick={() => addToCart(item)} 
+                              className="p-2 bg-pink-500 text-white rounded-lg shadow-sm hover:bg-pink-600 active:scale-90 transition-all"
+                              title="Adicionar ao Carrinho"
+                            >
+                              <ShoppingCart size={14} />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -872,7 +902,7 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
       </main>
 
       <div className="relative z-20">
-      <CartDrawer cart={cart} onRemove={removeFromCart} onClear={clearCart} userPhone={userPhone} sessionId={sessionId} />
+      <CartDrawer cart={cart} onRemove={removeFromCart} onClear={clearCart} userPhone={userPhone} sessionId={sessionId} userName={userName} />
       <footer className="relative z-10 p-4 bg-white/80 backdrop-blur-xl border-t border-white/20">
         <div className="max-w-4xl mx-auto flex flex-col gap-3">
           
