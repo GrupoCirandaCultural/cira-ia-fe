@@ -151,6 +151,7 @@ const CartModal = ({ isOpen, onClose, cart, onRemove, userPhone, sessionId, user
                 isbn: item.barras,
                 title: (item.titulo || '').replace(/[\n\t\r]/g, ' ').replace(/\s{2,}/g, ' ').trim(),
                 price: item.preco_capa,
+                cover: item.capa_url,
                 link: `https://www.cirandacultural.com.br/busca?busca=${item.barras || item.titulo}`
             }))
         };
@@ -277,6 +278,7 @@ const CartDrawer = ({ cart, onRemove, onClear, userPhone, sessionId, userName })
                 isbn: item.barras,
                 title: (item.titulo || '').replace(/[\n\t\r]/g, ' ').replace(/\s{2,}/g, ' ').trim(),
                 price: item.preco_capa,
+                cover: item.capa_url,
                 link: `https://www.cirandacultural.com.br/busca?busca=${item.barras || item.titulo}`
             }))
         };
