@@ -34,12 +34,17 @@ const CouponModal = ({ code, isOpen, onClose }) => {
   );
 };
 
-const BookDetailsModal = ({ book, isOpen, onClose, onConfirm }) => {
+const BookDetailsModal = ({ book, isOpen, onClose, onConfirm, onAnalytics }) => {
   if (!isOpen || !book) return null;
 
   const isChecking = book.checkingStock;
   const status = book.stockStatus;
   const searchUrl = `https://www.cirandacultural.com.br/busca?busca=${book.barras || book.titulo}`;
+
+  const handleExternalLink = () => {
+    if (onAnalytics) onAnalytics('external_link_click', book.barras || 'SEM_ISBN', { title: book.titulo, status: status });
+  };
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -86,7 +91,7 @@ const BookDetailsModal = ({ book, isOpen, onClose, onConfirm }) => {
                         <ShoppingCart size={18} />
                         Adicionar à Lista
                     </button>
-                    <a href={searchUrl} target="_blank" rel="noopener noreferrer" className="w-full py-3 border border-red-200 text-red-700 rounded-xl font-bold hover:bg-red-100 transition-colors flex items-center justify-center gap-2">
+                    <a href={searchUrl} target="_blank" rel="noopener noreferrer" onClick={handleExternalLink} className="w-full py-3 border border-red-200 text-red-700 rounded-xl font-bold hover:bg-red-100 transition-colors flex items-center justify-center gap-2">
                         <Search size={18} />
                         Comprar no Site
                     </a>
@@ -129,7 +134,7 @@ const BookDetailsModal = ({ book, isOpen, onClose, onConfirm }) => {
   );
 };
 
-const CartModal = ({ isOpen, onClose, cart, onRemove, userPhone, sessionId, userName }) => {
+const CartModal = ({ isOpen, onClose, cart, onRemove, userPhone, sessionId, userName, onAnalytics }) => {
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(null); // null, 'success', 'error'
   
@@ -139,6 +144,14 @@ const CartModal = ({ isOpen, onClose, cart, onRemove, userPhone, sessionId, user
 
   const handleCheckout = async () => {
     setLoading(true);
+
+    if (onAnalytics) {
+        onAnalytics('conversion_whatsapp', 'full_cart_checkout', { 
+            total_value: total, 
+            items_count: cart.length 
+        });
+    }
+
     try {
         const payload = {
             session_id: sessionId,
@@ -254,7 +267,7 @@ const CartModal = ({ isOpen, onClose, cart, onRemove, userPhone, sessionId, user
 };
 
 
-const CartDrawer = ({ cart, onRemove, onClear, userPhone, sessionId, userName }) => {
+const CartDrawer = ({ cart, onRemove, onClear, userPhone, sessionId, userName, onAnalytics }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(null); // null, 'success', 'error'
@@ -266,6 +279,14 @@ const CartDrawer = ({ cart, onRemove, onClear, userPhone, sessionId, userName })
 
   const handleCheckout = async () => {
     setLoading(true);
+
+    if (onAnalytics) {
+        onAnalytics('conversion_whatsapp', 'minicart_checkout', { 
+            total_value: total, 
+            items_count: cart.length 
+        });
+    }
+
     try {
         const payload = {
             session_id: sessionId,
@@ -468,6 +489,24 @@ const getStockCardStyle = (status) => {
 export default function ChatInterface({ userName, userPhone, cupom, onBack, initialMode = 'chat', idEstande = 'geral' }) { // <--- Função principal começa aqui
   const [isModalOpen, setIsModalOpen] = useState(false);
   
+  // --- FUNÇÃO CENTRAL DE ANALYTICS ---
+  const trackEvent = async (eventName, label, metaData = {}) => {
+      try {
+          const payload = {
+              event_name: eventName,
+              user_phone: userPhone,
+              user_name: userName,
+              session_id: sessionId,
+              label: label,
+              metadata: JSON.stringify(metaData),
+              timestamp: new Date().toISOString()
+          };
+          api.post('/api/analytics', payload).catch(err => console.warn("Analytics fail:", err));
+      } catch (e) {
+          console.error(e);
+      }
+  };
+
   // CART & BOOK DETAILS STATES
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -476,6 +515,7 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
   const addToCart = (book) => {
     setCart([...cart, book]);
     setSelectedBook(null);
+    trackEvent('add_to_cart', book.barras || 'SEM_ISBN', { title: book.titulo, price: book.preco_capa });
   };
 
   const removeFromCart = (index) => {
@@ -516,6 +556,12 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
                location: found.location_hint, // <--- Importante: Pega a localização da API
                checkingStock: false
            }));
+
+           trackEvent('stock_check', found.isbn || book.barras || 'SEM_ISBN', { 
+               title: book.titulo,
+               status: found.status, 
+               found: true
+           });
         } else {
            // Se não achou na busca, assume indisponível
            setSelectedBook(prev => ({
@@ -523,6 +569,12 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
                stockStatus: 'unavailable',
                checkingStock: false
            }));
+
+           trackEvent('stock_check', book.barras || 'SEM_ISBN', { 
+               title: book.titulo,
+               status: 'unavailable',
+               found: false
+           });
         }
     } catch (error) {
         console.error("Erro ao checar estoque:", error);
@@ -532,6 +584,8 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
             stockStatus: 'unavailable',
             checkingStock: false
         }));
+
+        trackEvent('stock_check_error', book.barras || 'SEM_ISBN', { title: book.titulo, found: false });
     }
   };
   
@@ -675,6 +729,11 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
     if (isAgeSelection) {
       currentAge = ageOption.label;
       setSelectedAge(currentAge);
+      trackEvent('select_age', currentAge, { full_text: messageToSend });
+    } else {
+      if (initialMode === 'stock' || messageToSend.length > 3) {
+         trackEvent('search_query', messageToSend, { mode: initialMode, context_age: currentAge });
+      }
     }
 
     let apiMessage = messageToSend;
@@ -731,6 +790,7 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
         isOpen={!!selectedBook} 
         onClose={() => setSelectedBook(null)} 
         onConfirm={addToCart}
+        onAnalytics={trackEvent}
       />
       <CartModal 
         cart={cart}
@@ -740,6 +800,7 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
         userPhone={userPhone}
         sessionId={sessionId}
         userName={userName}
+        onAnalytics={trackEvent}
       />
 
       <div className="absolute inset-0 z-0" style={{ backgroundImage: `url(${bgChat})`, backgroundSize: 'cover', backgroundPosition: 'center top' }} />
@@ -904,7 +965,7 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
       </main>
 
       <div className="relative z-20">
-      <CartDrawer cart={cart} onRemove={removeFromCart} onClear={clearCart} userPhone={userPhone} sessionId={sessionId} userName={userName} />
+      <CartDrawer cart={cart} onRemove={removeFromCart} onClear={clearCart} userPhone={userPhone} sessionId={sessionId} userName={userName} onAnalytics={trackEvent} />
       <footer className="relative z-10 p-4 bg-white/80 backdrop-blur-xl border-t border-white/20">
         <div className="max-w-4xl mx-auto flex flex-col gap-3">
           
