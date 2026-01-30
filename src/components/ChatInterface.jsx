@@ -134,13 +134,14 @@ const BookDetailsModal = ({ book, isOpen, onClose, onConfirm, onAnalytics }) => 
   );
 };
 
-const CartModal = ({ isOpen, onClose, cart, onRemove, userPhone, sessionId, userName, onAnalytics }) => {
+const CartModal = ({ isOpen, onClose, cart, onRemove, onUpdateQuantity, userPhone, sessionId, userName, onAnalytics }) => {
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(null); // null, 'success', 'error'
   
   if (!isOpen) return null;
 
-  const total = cart.reduce((acc, item) => acc + (item.preco_capa || 0), 0);
+  const total = cart.reduce((acc, item) => acc + (item.preco_capa || 0) * (item.quantity || 1), 0);
+  const totalItems = cart.reduce((acc, item) => acc + (item.quantity || 1), 0);
 
   const handleCheckout = async () => {
     setLoading(true);
@@ -148,7 +149,7 @@ const CartModal = ({ isOpen, onClose, cart, onRemove, userPhone, sessionId, user
     if (onAnalytics) {
         onAnalytics('conversion_whatsapp', 'full_cart_checkout', { 
             total_value: total, 
-            items_count: cart.length 
+            items_count: totalItems 
         });
     }
 
@@ -162,7 +163,7 @@ const CartModal = ({ isOpen, onClose, cart, onRemove, userPhone, sessionId, user
             cart_link: 'https://www.cirandacultural.com.br',
             items: cart.map(item => ({
                 isbn: item.barras,
-                title: (item.titulo || '').replace(/[\n\t\r]/g, ' ').replace(/\s{2,}/g, ' ').trim(),
+                title: ((item.quantity || 1) > 1 ? `(${item.quantity}x) ` : '') + (item.titulo || '').replace(/[\n\t\r]/g, ' ').replace(/\s{2,}/g, ' ').trim(),
                 price: item.preco_capa,
                 cover: item.capa_url,
                 link: `https://www.cirandacultural.com.br/busca?busca=${item.barras || item.titulo}`
@@ -232,12 +233,24 @@ const CartModal = ({ isOpen, onClose, cart, onRemove, userPhone, sessionId, user
             ) : (
                 cart.map((item, idx) => (
                     <div key={idx} className="flex gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 items-center">
-                        <div className="w-12 h-16 bg-white rounded-lg overflow-hidden shrink-0 border border-gray-200">
+                        <div className="w-12 h-16 bg-white rounded-lg overflow-hidden shrink-0 border border-gray-200 relative">
                             {item.capa_url && <img src={item.capa_url} alt={item.titulo} className="w-full h-full object-cover" />}
+                            {(item.quantity || 1) > 1 && (
+                               <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white shadow-sm">
+                                 {item.quantity}
+                               </span>
+                            )}
                         </div>
                         <div className="flex-1 min-w-0">
                             <h4 className="font-bold text-sm text-gray-800 line-clamp-2 leading-tight">{item.titulo}</h4>
-                            <p className="text-pink-600 font-bold text-sm mt-1">R$ {item.preco_capa?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                            <div className="flex items-center gap-2 mt-1 justify-between pr-2">
+                                <p className="text-pink-600 font-bold text-sm">R$ {item.preco_capa?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-0.5 shadow-sm">
+                                    <button onClick={() => onUpdateQuantity(idx, -1)} className="w-5 h-5 flex items-center justify-center bg-gray-50 rounded text-gray-600 font-bold hover:bg-gray-100 disabled:opacity-40" disabled={(item.quantity || 1) <= 1}>-</button>
+                                    <span className="text-xs font-bold w-4 text-center">{item.quantity || 1}</span>
+                                    <button onClick={() => onUpdateQuantity(idx, 1)} className="w-5 h-5 flex items-center justify-center bg-gray-50 rounded text-gray-600 font-bold hover:bg-gray-100">+</button>
+                                </div>
+                            </div>
                         </div>
                         <button onClick={() => onRemove(idx)} className="p-2 text-gray-400 hover:text-red-500 transition-colors">
                             <Trash2 size={18} />
@@ -249,7 +262,7 @@ const CartModal = ({ isOpen, onClose, cart, onRemove, userPhone, sessionId, user
 
         <div className="pt-4 mt-4 border-t border-gray-100">
             <div className="flex justify-between items-end mb-4">
-                <span className="text-gray-500 font-medium">Total ({cart.length} itens)</span>
+                <span className="text-gray-500 font-medium">Total ({totalItems} itens)</span>
                 <span className="text-2xl font-black text-gray-800">R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
             </div>
             <button 
@@ -267,7 +280,7 @@ const CartModal = ({ isOpen, onClose, cart, onRemove, userPhone, sessionId, user
 };
 
 
-const CartDrawer = ({ cart, onRemove, onClear, userPhone, sessionId, userName, onAnalytics }) => {
+const CartDrawer = ({ cart, onRemove, onClear, onUpdateQuantity, userPhone, sessionId, userName, onAnalytics }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(null); // null, 'success', 'error'
@@ -275,7 +288,8 @@ const CartDrawer = ({ cart, onRemove, onClear, userPhone, sessionId, userName, o
   
   if (!cart || cart.length === 0) return null;
 
-  const total = cart.reduce((acc, item) => acc + (item.preco_capa || 0), 0);
+  const total = cart.reduce((acc, item) => acc + (item.preco_capa || 0) * (item.quantity || 1), 0);
+  const totalItems = cart.reduce((acc, item) => acc + (item.quantity || 1), 0);
 
   const handleCheckout = async () => {
     setLoading(true);
@@ -283,7 +297,7 @@ const CartDrawer = ({ cart, onRemove, onClear, userPhone, sessionId, userName, o
     if (onAnalytics) {
         onAnalytics('conversion_whatsapp', 'minicart_checkout', { 
             total_value: total, 
-            items_count: cart.length 
+            items_count: totalItems 
         });
     }
 
@@ -297,7 +311,7 @@ const CartDrawer = ({ cart, onRemove, onClear, userPhone, sessionId, userName, o
             cart_link: 'https://www.cirandacultural.com.br',
             items: cart.map(item => ({
                 isbn: item.barras,
-                title: (item.titulo || '').replace(/[\n\t\r]/g, ' ').replace(/\s{2,}/g, ' ').trim(),
+                title: ((item.quantity || 1) > 1 ? `(${item.quantity}x) ` : '') + (item.titulo || '').replace(/[\n\t\r]/g, ' ').replace(/\s{2,}/g, ' ').trim(),
                 price: item.preco_capa,
                 cover: item.capa_url,
                 link: `https://www.cirandacultural.com.br/busca?busca=${item.barras || item.titulo}`
@@ -429,7 +443,7 @@ const CartDrawer = ({ cart, onRemove, onClear, userPhone, sessionId, userName, o
                      <div className="h-px w-full bg-gray-100 mb-4" />
 
                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-bold text-gray-400 text-xs uppercase tracking-wider">Itens selecionados ({cart.length})</h3>
+                        <h3 className="font-bold text-gray-400 text-xs uppercase tracking-wider">Itens selecionados ({totalItems})</h3>
                         {cart.length > 0 && (
                             <button 
                                 onClick={() => setIsConfirmingClear(true)}
@@ -443,14 +457,26 @@ const CartDrawer = ({ cart, onRemove, onClear, userPhone, sessionId, userName, o
                      <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-thin pb-4">
                         {cart.map((item, idx) => (
                             <div key={idx} className="flex gap-3 p-3 bg-white rounded-2xl border border-gray-100 items-center shadow-sm">
-                                <div className="w-14 h-[84px] bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200 shadow-inner">
+                                <div className="w-14 h-[84px] bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200 shadow-inner relative">
                                     {item.capa_url && <img src={item.capa_url} alt={item.titulo} className="w-full h-full object-cover" />}
+                                    {(item.quantity || 1) > 1 && (
+                                       <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white shadow-sm">
+                                          {item.quantity}
+                                       </span>
+                                    )}
                                 </div>
                                 <div className="flex-1 min-w-0 py-1">
                                     <h4 className="font-bold text-sm text-gray-800 line-clamp-2 leading-tight mb-1">{item.titulo}</h4>
-                                    <div className="flex items-center gap-2">
-                                        <p className="text-pink-600 font-black text-sm">R$ {item.preco_capa?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                                        <span className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full font-bold">ISBN: {item.barras}</span>
+                                    <div className="flex items-center gap-2 justify-between pr-2">
+                                        <div className="flex items-center gap-2">
+                                            <p className="text-pink-600 font-black text-sm">R$ {item.preco_capa?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                            <span className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full font-bold">ISBN: {item.barras}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1 bg-gray-50 border border-gray-100 rounded-lg p-0.5">
+                                            <button onClick={() => onUpdateQuantity(idx, -1)} className="w-5 h-5 flex items-center justify-center bg-white rounded text-gray-600 font-bold hover:text-pink-500 shadow-sm disabled:opacity-40" disabled={(item.quantity || 1) <= 1}>-</button>
+                                            <span className="text-xs font-bold w-4 text-center">{item.quantity || 1}</span>
+                                            <button onClick={() => onUpdateQuantity(idx, 1)} className="w-5 h-5 flex items-center justify-center bg-white rounded text-gray-600 font-bold hover:text-pink-500 shadow-sm">+</button>
+                                        </div>
                                     </div>
                                 </div>
                                 <button onClick={() => onRemove(idx)} className="p-2.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all">
@@ -513,13 +539,31 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
   const [selectedBook, setSelectedBook] = useState(null);
 
   const addToCart = (book) => {
-    setCart([...cart, book]);
+    setCart(prev => {
+        const existingIndex = prev.findIndex(item => (item.barras && item.barras === book.barras) || (item.titulo === book.titulo));
+        if (existingIndex >= 0) {
+            const newCart = [...prev];
+            newCart[existingIndex] = { ...newCart[existingIndex], quantity: (newCart[existingIndex].quantity || 1) + 1 };
+            return newCart;
+        }
+        return [...prev, { ...book, quantity: 1 }];
+    });
     setSelectedBook(null);
     trackEvent('add_to_cart', book.barras || 'SEM_ISBN', { title: book.titulo, price: book.preco_capa });
   };
 
   const removeFromCart = (index) => {
     setCart(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const updateQuantity = (index, delta) => {
+    setCart(prev => {
+        const newCart = [...prev];
+        const item = newCart[index];
+        const newQty = Math.max(1, (item.quantity || 1) + delta);
+        newCart[index] = { ...item, quantity: newQty };
+        return newCart;
+    });
   };
 
   const clearCart = () => setCart([]);
@@ -797,6 +841,7 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
         onRemove={removeFromCart}
+        onUpdateQuantity={updateQuantity}
         userPhone={userPhone}
         sessionId={sessionId}
         userName={userName}
@@ -823,7 +868,7 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
         <div className="flex gap-1">
           <button onClick={() => setIsCartOpen(true)} className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors relative" title="Carrinho">
             <ShoppingCart size={20} />
-            {cart.length > 0 && <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold animate-pulse">{cart.length}</span>}
+            {cart.length > 0 && <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold animate-pulse">{cart.reduce((acc, item) => acc + (item.quantity || 1), 0)}</span>}
           </button>
           <button onClick={handleResetChat} className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors" title="Novo Chat">
             <RotateCcw size={20} />
@@ -965,7 +1010,7 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
       </main>
 
       <div className="relative z-20">
-      <CartDrawer cart={cart} onRemove={removeFromCart} onClear={clearCart} userPhone={userPhone} sessionId={sessionId} userName={userName} onAnalytics={trackEvent} />
+      <CartDrawer cart={cart} onRemove={removeFromCart} onUpdateQuantity={updateQuantity} onClear={clearCart} userPhone={userPhone} sessionId={sessionId} userName={userName} onAnalytics={trackEvent} />
       <footer className="relative z-10 p-4 bg-white/80 backdrop-blur-xl border-t border-white/20">
         <div className="max-w-4xl mx-auto flex flex-col gap-3">
           
