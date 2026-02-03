@@ -166,7 +166,7 @@ const CartModal = ({ isOpen, onClose, cart, onRemove, onUpdateQuantity, userPhon
                 title: ((item.quantity || 1) > 1 ? `(${item.quantity}x) ` : '') + (item.titulo || '').replace(/[\n\t\r]/g, ' ').replace(/\s{2,}/g, ' ').trim(),
                 price: item.preco_capa,
                 cover: item.capa_url,
-                link: `https://www.cirandacultural.com.br/busca?busca=${item.barras || item.titulo}`
+                link: `${item.barras || item.titulo}`
             }))
         };
         
@@ -224,7 +224,7 @@ const CartModal = ({ isOpen, onClose, cart, onRemove, onUpdateQuantity, userPhon
             </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-3 pr-2 scrollbar-thin">
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-2 scrollbar-thin">
             {cart.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-gray-400 gap-4">
                     <ShoppingCart size={48} className="opacity-20" />
@@ -314,7 +314,7 @@ const CartDrawer = ({ cart, onRemove, onClear, onUpdateQuantity, userPhone, sess
                 title: ((item.quantity || 1) > 1 ? `(${item.quantity}x) ` : '') + (item.titulo || '').replace(/[\n\t\r]/g, ' ').replace(/\s{2,}/g, ' ').trim(),
                 price: item.preco_capa,
                 cover: item.capa_url,
-                link: `https://www.cirandacultural.com.br/busca?busca=${item.barras || item.titulo}`
+                link: `${item.barras || item.titulo}`
             }))
         };
         
@@ -392,20 +392,20 @@ const CartDrawer = ({ cart, onRemove, onClear, onUpdateQuantity, userPhone, sess
 
   return (
     <div 
-        className={`absolute bottom-full left-0 right-0 bg-white shadow-[0_-8px_40px_rgba(0,0,0,0.15)] border-t border-pink-100 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] z-30 flex flex-col rounded-t-[32px] ${isOpen ? 'h-[75vh] rounded-t-[32px]' : 'h-auto rounded-t-[24px]'} mx-0 mb-0`}
+        className={`absolute bottom-full left-0 right-0 bg-white shadow-[0_-8px_40px_rgba(0,0,0,0.15)] border-t border-pink-100 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] z-30 flex flex-col rounded-t-[32px] ${isOpen ? 'h-[75vh] rounded-t-[32px]' : 'h-auto rounded-t-[24px]'} mx-0 mb-0 overflow-hidden`}
     >
         {/* Handle */}
         <div 
-            className="w-full flex items-center justify-center py-3 cursor-pointer active:bg-gray-50 rounded-t-[32px] touch-none"
+            className="w-full flex items-center justify-center py-3 cursor-pointer active:bg-gray-50 rounded-t-[32px] touch-none shrink-0"
             onClick={() => setIsOpen(!isOpen)}
         >
             <div className={`w-12 h-1.5 rounded-full transition-colors ${isOpen ? 'bg-gray-300' : 'bg-gray-200'}`} />
         </div>
 
         {/* Content Container */}
-        <div className="flex-1 flex flex-col px-5 pb-2">
+        <div className="flex-1 min-h-0 flex flex-col px-5 pb-2">
             
-            <div className={`flex items-center justify-between transition-all duration-300 ${isOpen ? 'mb-4 py-5' : 'mb-1'}`}>
+            <div className={`flex items-center justify-between shrink-0 transition-all duration-300 ${isOpen ? 'mb-4 py-5' : 'mb-1'}`}>
                  <div className="flex items-center gap-3 cursor-pointer" onClick={() => !isOpen && setIsOpen(true)}>
                       <div className="relative">
                            <div className="bg-gradient-to-br from-pink-100 to-pink-50 p-2.5 rounded-2xl text-pink-600 shadow-sm border border-pink-100">
@@ -439,10 +439,10 @@ const CartDrawer = ({ cart, onRemove, onClear, onUpdateQuantity, userPhone, sess
 
             {/* Expanded Content */}
             {isOpen && (
-                <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-300 slide-in-from-bottom-2">
-                     <div className="h-px w-full bg-gray-100 mb-4" />
+                <div className="flex-1 min-h-0 flex flex-col animate-in fade-in duration-300 slide-in-from-bottom-2">
+                     <div className="h-px w-full bg-gray-100 mb-4 shrink-0" />
 
-                     <div className="flex items-center justify-between mb-3">
+                     <div className="flex items-center justify-between mb-3 shrink-0">
                         <h3 className="font-bold text-gray-400 text-xs uppercase tracking-wider">Itens selecionados ({totalItems})</h3>
                         {cart.length > 0 && (
                             <button 
@@ -454,7 +454,7 @@ const CartDrawer = ({ cart, onRemove, onClear, onUpdateQuantity, userPhone, sess
                         )}
                      </div>
                      
-                     <div className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-thin pb-4">
+                     <div className="flex-1 min-h-0 overflow-y-auto space-y-3 pr-1 scrollbar-thin pb-4">
                         {cart.map((item, idx) => (
                             <div key={idx} className="flex gap-3 p-3 bg-white rounded-2xl border border-gray-100 items-center shadow-sm">
                                 <div className="w-14 h-[84px] bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200 shadow-inner relative">
@@ -486,7 +486,7 @@ const CartDrawer = ({ cart, onRemove, onClear, onUpdateQuantity, userPhone, sess
                         ))}
                      </div>
                      
-                     <div className="mt-auto pt-4 border-t border-gray-100">
+                     <div className="mt-auto pt-4 border-t border-gray-100 shrink-0">
                         <button 
                             onClick={handleCheckout}
                             disabled={loading}
