@@ -34,17 +34,11 @@ const CouponModal = ({ code, isOpen, onClose }) => {
   );
 };
 
-const BookDetailsModal = ({ book, isOpen, onClose, onConfirm, onAnalytics }) => {
+const BookDetailsModal = ({ book, isOpen, onClose, onConfirm }) => {
   if (!isOpen || !book) return null;
 
   const isChecking = book.checkingStock;
   const status = book.stockStatus;
-  const searchUrl = `https://www.cirandacultural.com.br/busca?busca=${book.barras || book.titulo}`;
-
-  const handleExternalLink = () => {
-    if (onAnalytics) onAnalytics('external_link_click', book.barras || 'SEM_ISBN', { title: book.titulo, status: status });
-  };
-
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -91,10 +85,6 @@ const BookDetailsModal = ({ book, isOpen, onClose, onConfirm, onAnalytics }) => 
                         <ShoppingCart size={18} />
                         Adicionar à Lista
                     </button>
-                    <a href={searchUrl} target="_blank" rel="noopener noreferrer" onClick={handleExternalLink} className="w-full py-3 border border-red-200 text-red-700 rounded-xl font-bold hover:bg-red-100 transition-colors flex items-center justify-center gap-2">
-                        <Search size={18} />
-                        Comprar no Site
-                    </a>
                  </div>
                </div>
             ) : status === 'available_elsewhere' ? (
