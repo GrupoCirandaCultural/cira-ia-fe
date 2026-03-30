@@ -15,7 +15,10 @@ const ESTANDES = [
 
 function App() {
   // Configuração inicial do Estande
-  const [isConfigured, setIsConfigured] = useState(false);
+  const [isConfigured, setIsConfigured] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.has('estande');
+  });
   const [selectedEstande, setSelectedEstande] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get('estande') || 'ciranda_bienal';
@@ -28,7 +31,7 @@ function App() {
   const [target, setTarget] = useState(null);
   const [prefilledPhone, setPrefilledPhone] = useState('')
 
-  const qrCodeLinkParaCelular = window.location.href;
+  const qrCodeLinkParaCelular = window.location.origin + window.location.pathname + '?estande=' + selectedEstande;
 
   // 2. LOGICA DE INÍCIO CENTRALIZADA
   const handleStart = (choice) => {
