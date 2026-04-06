@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import api, { getBookByIsbn } from '../api';
 import { Send, Search, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw, Trash2, MessageCircle, CheckCircle, AlertCircle, ChevronUp, ChevronDown, Eye } from 'lucide-react';
 import bgChat from '../assets/background-chat.png';
+import { getEstandeTheme } from '../theme';
 
 const generateSessionId = () => Math.random().toString(36).substring(7);
 
-const CouponModal = ({ code, isOpen, onClose }) => {
+const CouponModal = ({ code, isOpen, onClose, theme }) => {
   if (!isOpen) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -14,16 +15,16 @@ const CouponModal = ({ code, isOpen, onClose }) => {
           <X size={20} />
         </button>
         <div className="flex flex-col items-center text-center space-y-4 pt-2">
-          <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center text-pink-500 mb-2 shadow-inner">
+          <div style={{ backgroundColor: `${theme.primaryColor}20`, color: theme.primaryColor }} className="w-16 h-16 rounded-full flex items-center justify-center mb-2 shadow-inner">
             <Ticket size={32} />
           </div>
           <h3 className="text-xl font-black text-gray-800">Seu Cupom Especial!</h3>
           <p className="text-gray-500 text-sm px-4">Apresente este código no caixa para ganhar um brinde exclusivo.</p>
           
-          <div className="w-full bg-gradient-to-r from-pink-500 to-rose-500 p-1 rounded-2xl shadow-lg mt-2">
-            <div className="bg-white rounded-xl py-4 border-2 border-dashed border-pink-200 flex flex-col items-center justify-center gap-1">
-              <span className="text-xs font-bold text-pink-400 uppercase tracking-[0.2em]">Código</span>
-              <span className="text-3xl font-black text-gray-800 tracking-wider font-mono selection:bg-pink-100">{code}</span>
+          <div style={{ background: `linear-gradient(to right, ${theme.primaryColor}, ${theme.accentColor})` }} className="w-full p-1 rounded-2xl shadow-lg mt-2">
+            <div className="bg-white rounded-xl py-4 border-2 border-dashed flex flex-col items-center justify-center gap-1" style={{ borderColor: `${theme.primaryColor}40` }}>
+              <span className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: theme.primaryColor }}>Código</span>
+              <span className="text-3xl font-black text-gray-800 tracking-wider font-mono">{code}</span>
             </div>
           </div>
           
@@ -34,7 +35,7 @@ const CouponModal = ({ code, isOpen, onClose }) => {
   );
 };
 
-const BookDetailsModal = ({ book, isOpen, onClose, onConfirm }) => {
+const BookDetailsModal = ({ book, isOpen, onClose, onConfirm, theme }) => {
   if (!isOpen || !book) return null;
 
   const isChecking = book.checkingStock;
@@ -57,7 +58,7 @@ const BookDetailsModal = ({ book, isOpen, onClose, onConfirm }) => {
            {/* Overlay de carregamento */}
            {isChecking && (
              <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center gap-2 backdrop-blur-sm">
-               <Loader2 className="animate-spin text-pink-500" size={32} />
+               <Loader2 className="animate-spin" size={32} style={{ color: theme.primaryColor }} />
                <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Verificando Estoque...</span>
              </div>
            )}
@@ -65,7 +66,7 @@ const BookDetailsModal = ({ book, isOpen, onClose, onConfirm }) => {
 
         <div className="text-center">
             <h3 className="text-lg font-black text-gray-800 leading-tight mb-1">{book.titulo}</h3>
-            {book.preco_capa && <p className="text-xl font-bold text-pink-600">R$ {book.preco_capa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>}
+            {book.preco_capa && <p className="text-xl font-bold" style={{ color: theme.primaryColor }}>R$ {book.preco_capa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>}
         </div>
         
         <div className="max-h-24 overflow-y-auto text-sm text-gray-600 text-center px-2 scrollbar-thin">
@@ -111,7 +112,7 @@ const BookDetailsModal = ({ book, isOpen, onClose, onConfirm }) => {
                     <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-colors">
                         Talvez depois
                     </button>
-                    <button onClick={() => onConfirm(book)} className="flex-1 py-3 rounded-xl bg-pink-500 text-white font-bold hover:bg-pink-600 shadow-md active:scale-95 transition-all flex items-center justify-center gap-2">
+                    <button onClick={() => onConfirm(book)} className="flex-1 py-3 rounded-xl text-white font-bold shadow-md active:scale-95 transition-all flex items-center justify-center gap-2" style={{ backgroundColor: theme.primaryColor }}>
                         <ShoppingCart size={18} />
                         Sim, eu quero!
                     </button>
@@ -124,7 +125,7 @@ const BookDetailsModal = ({ book, isOpen, onClose, onConfirm }) => {
   );
 };
 
-const CartModal = ({ isOpen, onClose, cart, onRemove, onUpdateQuantity, userPhone, sessionId, userName, onAnalytics }) => {
+const CartModal = ({ isOpen, onClose, cart, onRemove, onUpdateQuantity, userPhone, sessionId, userName, onAnalytics, theme }) => {
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(null); // null, 'success', 'error'
   
@@ -205,7 +206,7 @@ const CartModal = ({ isOpen, onClose, cart, onRemove, onUpdateQuantity, userPhon
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white rounded-3xl p-6 w-full max-w-md h-[80vh] flex flex-col relative shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
         <div className="flex justify-between items-center mb-6">
-            <div className="flex items-center gap-2 text-pink-600">
+            <div className="flex items-center gap-2" style={{ color: theme.primaryColor }}>
                 <ShoppingCart size={24} />
                 <h2 className="text-xl font-black text-gray-800">Seu Carrinho</h2>
             </div>
@@ -226,7 +227,7 @@ const CartModal = ({ isOpen, onClose, cart, onRemove, onUpdateQuantity, userPhon
                         <div className="w-12 h-16 bg-white rounded-lg overflow-hidden shrink-0 border border-gray-200 relative">
                             {item.capa_url && <img src={item.capa_url} alt={item.titulo} className="w-full h-full object-cover" />}
                             {(item.quantity || 1) > 1 && (
-                               <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white shadow-sm">
+                               <span className="absolute -top-2 -right-2 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: theme.primaryColor }}>
                                  {item.quantity}
                                </span>
                             )}
@@ -234,7 +235,7 @@ const CartModal = ({ isOpen, onClose, cart, onRemove, onUpdateQuantity, userPhon
                         <div className="flex-1 min-w-0">
                             <h4 className="font-bold text-sm text-gray-800 line-clamp-2 leading-tight">{item.titulo}</h4>
                             <div className="flex items-center gap-2 mt-1 justify-between pr-2">
-                                <p className="text-pink-600 font-bold text-sm">R$ {item.preco_capa?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                <p className="font-bold text-sm" style={{ color: theme.primaryColor }}>R$ {item.preco_capa?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                                 <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-0.5 shadow-sm">
                                     <button onClick={() => onUpdateQuantity(idx, -1)} className="w-5 h-5 flex items-center justify-center bg-gray-50 rounded text-gray-600 font-bold hover:bg-gray-100 disabled:opacity-40" disabled={(item.quantity || 1) <= 1}>-</button>
                                     <span className="text-xs font-bold w-4 text-center">{item.quantity || 1}</span>
@@ -257,7 +258,8 @@ const CartModal = ({ isOpen, onClose, cart, onRemove, onUpdateQuantity, userPhon
             </div>
             <button 
                 disabled={cart.length === 0 || loading}
-                className="w-full py-4 bg-green-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-2xl font-black text-lg shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-green-600"
+                style={{ backgroundColor: theme.primaryColor }}
+                className="w-full py-4 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-2xl font-black text-lg shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 hover:opacity-90"
                 onClick={handleCheckout}
             >
                 {loading ? <Loader2 className="animate-spin" size={24} /> : <MessageCircle size={24} />}
@@ -270,7 +272,7 @@ const CartModal = ({ isOpen, onClose, cart, onRemove, onUpdateQuantity, userPhon
 };
 
 
-const CartDrawer = ({ cart, onRemove, onClear, onUpdateQuantity, userPhone, sessionId, userName, onAnalytics }) => {
+const CartDrawer = ({ cart, onRemove, onClear, onUpdateQuantity, userPhone, sessionId, userName, onAnalytics, theme }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(null); // null, 'success', 'error'
@@ -353,7 +355,7 @@ const CartDrawer = ({ cart, onRemove, onClear, onUpdateQuantity, userPhone, sess
 
   if (feedback) {
      return (
-        <div className={`absolute bottom-full left-0 right-0 bg-white rounded-t-[32px] shadow-[0_-8px_30px_rgba(0,0,0,0.12)] border-t border-pink-100 flex flex-col z-30 animate-in slide-in-from-bottom-5 duration-300 pb-2 mx-2 mb-2`}>
+        <div className="absolute bottom-full left-0 right-0 bg-white rounded-t-[32px] shadow-[0_-8px_30px_rgba(0,0,0,0.12)] flex flex-col z-30 animate-in slide-in-from-bottom-5 duration-300 pb-2 mx-2 mb-2" style={{ borderTopColor: `${theme.primaryColor}20`, borderTopWidth: '1px' }}>
            <div className="w-full p-2 flex justify-end px-4">
               <button 
                 onClick={() => {
@@ -382,7 +384,8 @@ const CartDrawer = ({ cart, onRemove, onClear, onUpdateQuantity, userPhone, sess
 
   return (
     <div 
-        className={`absolute bottom-full left-0 right-0 bg-white shadow-[0_-8px_40px_rgba(0,0,0,0.15)] border-t border-pink-100 transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] z-30 flex flex-col rounded-t-[32px] ${isOpen ? 'h-[75vh] rounded-t-[32px]' : 'h-auto rounded-t-[24px]'} mx-0 mb-0 overflow-hidden`}
+        className={`absolute bottom-full left-0 right-0 bg-white shadow-[0_-8px_40px_rgba(0,0,0,0.15)] transition-all duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] z-30 flex flex-col rounded-t-[32px] ${isOpen ? 'h-[75vh] rounded-t-[32px]' : 'h-auto rounded-t-[24px]'} mx-0 mb-0 overflow-hidden`}
+        style={{ borderTopColor: `${theme.primaryColor}20`, borderTopWidth: '1px' }}
     >
         {/* Handle */}
         <div 
@@ -398,7 +401,7 @@ const CartDrawer = ({ cart, onRemove, onClear, onUpdateQuantity, userPhone, sess
             <div className={`flex items-center justify-between shrink-0 transition-all duration-300 ${isOpen ? 'mb-4 py-5' : 'mb-1'}`}>
                  <div className="flex items-center gap-3 cursor-pointer" onClick={() => !isOpen && setIsOpen(true)}>
                       <div className="relative">
-                           <div className="bg-gradient-to-br from-pink-100 to-pink-50 p-2.5 rounded-2xl text-pink-600 shadow-sm border border-pink-100">
+                           <div className="p-2.5 rounded-2xl shadow-sm" style={{ backgroundColor: `${theme.primaryColor}15`, color: theme.primaryColor, borderColor: `${theme.primaryColor}30`, borderWidth: '1px' }}>
                                <ShoppingCart size={24} />
                            </div>
                            <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-white shadow-sm">{cart.length}</span>
@@ -413,7 +416,7 @@ const CartDrawer = ({ cart, onRemove, onClear, onUpdateQuantity, userPhone, sess
                      <button 
                         onClick={(e) => { e.stopPropagation(); handleCheckout(); }}
                         disabled={loading}
-                        className="bg-green-500 text-white pl-4 pr-5 py-2.5 rounded-xl font-bold shadow-lg shadow-green-200 active:scale-95 transition-all text-sm flex items-center gap-2 hover:bg-green-600"
+                        className="text-white pl-4 pr-5 py-2.5 rounded-xl font-bold active:scale-95 transition-all text-sm flex items-center gap-2" style={{ backgroundColor: theme.primaryColor }}
                     >
                         {loading ? <Loader2 className="animate-spin" size={18} /> : <MessageCircle size={20} />}
                         <span>Receber</span>
@@ -450,7 +453,7 @@ const CartDrawer = ({ cart, onRemove, onClear, onUpdateQuantity, userPhone, sess
                                 <div className="w-14 h-[84px] bg-gray-100 rounded-xl overflow-hidden shrink-0 border border-gray-200 shadow-inner relative">
                                     {item.capa_url && <img src={item.capa_url} alt={item.titulo} className="w-full h-full object-cover" />}
                                     {(item.quantity || 1) > 1 && (
-                                       <span className="absolute -top-2 -right-2 bg-pink-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white shadow-sm">
+                                       <span className="absolute -top-2 -right-2 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white shadow-sm" style={{ backgroundColor: theme.primaryColor }}>
                                           {item.quantity}
                                        </span>
                                     )}
@@ -459,13 +462,13 @@ const CartDrawer = ({ cart, onRemove, onClear, onUpdateQuantity, userPhone, sess
                                     <h4 className="font-bold text-sm text-gray-800 line-clamp-2 leading-tight mb-1">{item.titulo}</h4>
                                     <div className="flex items-center gap-2 justify-between pr-2">
                                         <div className="flex items-center gap-2">
-                                            <p className="text-pink-600 font-black text-sm">R$ {item.preco_capa?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                                            <p className="font-black text-sm" style={{ color: theme.primaryColor }}>R$ {item.preco_capa?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                                             <span className="text-[10px] px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full font-bold">ISBN: {item.barras}</span>
                                         </div>
                                         <div className="flex items-center gap-1 bg-gray-50 border border-gray-100 rounded-lg p-0.5">
-                                            <button onClick={() => onUpdateQuantity(idx, -1)} className="w-5 h-5 flex items-center justify-center bg-white rounded text-gray-600 font-bold hover:text-pink-500 shadow-sm disabled:opacity-40" disabled={(item.quantity || 1) <= 1}>-</button>
+                                            <button onClick={() => onUpdateQuantity(idx, -1)} className="w-5 h-5 flex items-center justify-center bg-white rounded text-gray-600 font-bold shadow-sm disabled:opacity-40" disabled={(item.quantity || 1) <= 1} onMouseEnter={(e) => e.target.style.color = theme.primaryColor} onMouseLeave={(e) => e.target.style.color = 'rgb(75, 85, 99)'}>-</button>
                                             <span className="text-xs font-bold w-4 text-center">{item.quantity || 1}</span>
-                                            <button onClick={() => onUpdateQuantity(idx, 1)} className="w-5 h-5 flex items-center justify-center bg-white rounded text-gray-600 font-bold hover:text-pink-500 shadow-sm">+</button>
+                                            <button onClick={() => onUpdateQuantity(idx, 1)} className="w-5 h-5 flex items-center justify-center bg-white rounded text-gray-600 font-bold shadow-sm" onMouseEnter={(e) => e.target.style.color = theme.primaryColor} onMouseLeave={(e) => e.target.style.color = 'rgb(75, 85, 99)'}>+</button>
                                         </div>
                                     </div>
                                 </div>
@@ -480,7 +483,7 @@ const CartDrawer = ({ cart, onRemove, onClear, onUpdateQuantity, userPhone, sess
                         <button 
                             onClick={handleCheckout}
                             disabled={loading}
-                            className="w-full py-4 bg-green-500 text-white rounded-2xl font-black text-lg shadow-xl shadow-green-200 active:scale-95 transition-all flex items-center justify-center gap-2 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full py-4 text-white rounded-2xl font-black text-lg active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed" style={{ backgroundColor: theme.primaryColor }}
                         >
                             {loading ? <Loader2 className="animate-spin" size={24} /> : <MessageCircle size={24} />}
                             {loading ? "Enviando lista..." : "Receber no WhatsApp"}
@@ -499,10 +502,11 @@ const getStockCardStyle = (status) => {
   if (status === 'available_here') return 'border-l-4 border-l-green-500 bg-green-50';
   if (status === 'available_elsewhere') return 'border-l-4 border-l-yellow-500 bg-yellow-50';
   if (status === 'unavailable') return 'border-l-4 border-l-red-500 bg-red-50 opacity-75';
-  return 'bg-white/95 border border-pink-100'; // Default do chat normal
+  return 'bg-white/95'; // Default do chat normal
 };
 
-export default function ChatInterface({ userName, userPhone, cupom, onBack, initialMode = 'chat', idEstande = 'geral' }) { // <--- Função principal começa aqui
+export default function ChatInterface({ userName, userPhone, cupom, onBack, initialMode = 'chat', idEstande = 'estande_laranja' }) { // <--- Função principal começa aqui
+  const theme = getEstandeTheme(idEstande);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   // --- FUNÇÃO CENTRAL DE ANALYTICS ---
@@ -817,7 +821,7 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
 
   return (
     <div className="flex flex-col h-full bg-[#87CEEB] relative overflow-hidden">
-      {cupom && <CouponModal code={cupom} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />}
+      {cupom && <CouponModal code={cupom} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} theme={theme} />}
       
       <BookDetailsModal 
         book={selectedBook} 
@@ -825,6 +829,7 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
         onClose={() => setSelectedBook(null)} 
         onConfirm={addToCart}
         onAnalytics={trackEvent}
+        theme={theme}
       />
       <CartModal 
         cart={cart}
@@ -836,18 +841,19 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
         sessionId={sessionId}
         userName={userName}
         onAnalytics={trackEvent}
+        theme={theme}
       />
 
       <div className="absolute inset-0 z-0" style={{ backgroundImage: `url(${bgChat})`, backgroundSize: 'cover', backgroundPosition: 'center top' }} />
 
-      <header className="relative z-10 bg-white/90 backdrop-blur-md border-b border-pink-100 p-4 flex justify-between items-center shadow-sm">
+      <header className="relative z-10 bg-white/90 backdrop-blur-md p-4 flex justify-between items-center shadow-sm" style={{ borderBottomColor: `${theme.primaryColor}20`, borderBottomWidth: '1px' }}>
         <div className="flex items-center gap-2">
           {onBack && (
             <button onClick={onBack} className="mr-1 p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors">
               <ArrowLeft size={20} />
             </button>
           )}
-          <div className="bg-pink-500 p-2 rounded-xl text-white shadow-lg"><BookOpen size={20} /></div>
+          <div className="p-2 rounded-xl text-white shadow-lg" style={{ backgroundColor: theme.primaryColor }}><BookOpen size={20} /></div>
           <div>
             <h1 className="font-black text-lg text-gray-800 leading-none">Cira IA</h1>
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
@@ -873,15 +879,16 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
             ref={idx === messages.length - 1 ? lastMessageRef : null}
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
-            <div className={`max-w-[90%] p-5 rounded-[24px] shadow-lg ${
-              msg.role === 'user' ? 'bg-pink-500 text-white rounded-tr-none' : 'bg-white/95 text-gray-800 rounded-tl-none border border-white/40'
-            }`}>
+            <div className={`max-w-[90%] p-5 rounded-[24px] shadow-lg rounded-tl-none border border-white/40 ${
+              msg.role === 'user' ? 'text-white rounded-tr-none' : 'bg-white/95 text-gray-800'
+            }`}
+            style={msg.role === 'user' ? { backgroundColor: theme.primaryColor } : {}}>
               <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">
                 {userName && msg.content.toLowerCase().includes(userName.toLowerCase()) ? (
                   msg.content.split(new RegExp(`(\\b${userName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b)`, 'gi')).map((part, i) => (
                     <React.Fragment key={i}>
                       {part.toLowerCase() === userName.toLowerCase() ? (
-                        <strong className={msg.role === 'user' ? 'font-black' : 'font-black text-pink-500'}>{part}</strong>
+                        <strong className='font-black' style={msg.role === 'user' ? {} : { color: theme.primaryColor }}>{part}</strong>
                       ) : (
                         part
                       )}
@@ -899,7 +906,14 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
                     <button
                       key={oIdx}
                       onClick={() => handleSend(opt.value)} // Envia o valor do botão para a API
-                      className="bg-pink-50 hover:bg-pink-500 hover:text-white text-pink-600 border border-pink-200 px-4 py-2 rounded-full text-xs font-bold transition-all active:scale-95"
+                      className="px-4 py-2 rounded-full text-xs font-bold transition-all active:scale-95 border"
+                      style={{ 
+                        backgroundColor: `${theme.primaryColor}15`,
+                        color: theme.primaryColor,
+                        borderColor: `${theme.primaryColor}30`
+                      }}
+                      onMouseEnter={(e) => { e.target.style.backgroundColor = theme.primaryColor; e.target.style.color = 'white'; }}
+                      onMouseLeave={(e) => { e.target.style.backgroundColor = `${theme.primaryColor}15`; e.target.style.color = theme.primaryColor; }}
                     >
                       {opt.label}
                     </button>
@@ -909,7 +923,7 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
 
               {/* BOTÃO DO CUPOM */}
               {msg.hasCupom && (
-                <button onClick={() => setIsModalOpen(true)} className="mt-4 w-full bg-gradient-to-r from-pink-500 to-rose-400 text-white p-4 rounded-2xl flex items-center justify-between shadow-lg active:scale-95 transition-all">
+                <button onClick={() => setIsModalOpen(true)} className="mt-4 w-full text-white p-4 rounded-2xl flex items-center justify-between shadow-lg active:scale-95 transition-all" style={{ background: `linear-gradient(to right, ${theme.primaryColor}, ${theme.accentColor})` }}>
                   <div className="flex items-center gap-3">
                     <div className="bg-white/20 p-2 rounded-lg"><Ticket size={20} /></div>
                     <div className="flex flex-col items-start">
@@ -924,7 +938,7 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
               {msg.dados && msg.dados.length > 0 && (
                 <div className="grid grid-cols-1 gap-3 mt-4">
                   {msg.dados.map((item, iIdx) => (
-                    <div key={iIdx} className={`rounded-xl overflow-hidden flex shadow-sm transition-all ${item.status ? getStockCardStyle(item.status) : 'bg-white/95 border border-pink-100'}`}>
+                    <div key={iIdx} className={`rounded-xl overflow-hidden flex shadow-sm transition-all ${item.status ? getStockCardStyle(item.status) : 'bg-white/95 border'}`} style={!item.status ? { borderColor: `${theme.primaryColor}30` } : {}}>
                       <div className="w-24 min-w-[96px] bg-gray-300 flex items-center justify-center overflow-hidden">
                         {item.capa_url && (
                           <img 
@@ -954,7 +968,7 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
                         </p>
 
                         <div className="mt-auto flex justify-between items-center">
-                          <span className="text-sm font-black text-pink-600">
+                          <span className="text-sm font-black" style={{ color: theme.primaryColor }}>
                             R$ {item.preco_capa?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                           </span>
                           
@@ -962,7 +976,13 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
                             {/* Botão de Consulta de Estoque */}
                             <button 
                               onClick={() => handleBookSelection(item)} 
-                              className="px-2 py-2 bg-pink-100 text-pink-600 rounded-lg shadow-sm hover:bg-pink-200 active:scale-90 transition-all flex items-center gap-1"
+                              className="px-2 py-2 rounded-lg shadow-sm active:scale-90 transition-all flex items-center gap-1"
+                              style={{ 
+                                backgroundColor: `${theme.primaryColor}15`,
+                                color: theme.primaryColor
+                              }}
+                              onMouseEnter={(e) => e.target.style.backgroundColor = `${theme.primaryColor}30`}
+                              onMouseLeave={(e) => e.target.style.backgroundColor = `${theme.primaryColor}15`}
                               title="Ver detalhes e estoque"
                             >
                               <Eye size={14} />
@@ -972,7 +992,10 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
                             {/* Botão de Adicionar ao Carrinho Direto */}
                             <button 
                               onClick={() => addToCart(item)} 
-                              className="p-2 bg-pink-500 text-white rounded-lg shadow-sm hover:bg-pink-600 active:scale-90 transition-all"
+                              className="p-2 text-white rounded-lg shadow-sm active:scale-90 transition-all"
+                              style={{ backgroundColor: theme.primaryColor }}
+                              onMouseEnter={(e) => e.target.style.opacity = '0.9'}
+                              onMouseLeave={(e) => e.target.style.opacity = '1'}
                               title="Adicionar ao Carrinho"
                             >
                               <ShoppingCart size={14} />
@@ -991,7 +1014,7 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
         {loading && (
           <div className="flex justify-start">
             <div className="bg-white/80 backdrop-blur-md px-6 py-3 rounded-full flex items-center gap-3 shadow-sm border border-white/40">
-              <Loader2 className="animate-spin text-pink-500" size={16} />
+              <Loader2 className="animate-spin" size={16} style={{ color: theme.primaryColor }} />
               <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Cira está selecionando...</span>
             </div>
           </div>
@@ -1000,7 +1023,7 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
       </main>
 
       <div className="relative z-20">
-      <CartDrawer cart={cart} onRemove={removeFromCart} onUpdateQuantity={updateQuantity} onClear={clearCart} userPhone={userPhone} sessionId={sessionId} userName={userName} onAnalytics={trackEvent} />
+      <CartDrawer cart={cart} onRemove={removeFromCart} onUpdateQuantity={updateQuantity} onClear={clearCart} userPhone={userPhone} sessionId={sessionId} userName={userName} onAnalytics={trackEvent} theme={theme} />
       <footer className="relative z-10 p-4 bg-white/80 backdrop-blur-xl border-t border-white/20">
         <div className="max-w-4xl mx-auto flex flex-col gap-3">
           
@@ -1033,11 +1056,29 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
                          // Foca no input para abrir o teclado no mobile e facilitar a busca
                          setTimeout(() => inputRef.current?.focus(), 50);
                       }}
-                      className={`px-3 py-1 font-bold text-[10px] uppercase tracking-wide rounded-full whitespace-nowrap transition-colors border shadow-sm ${
-                        isSelected 
-                          ? 'bg-pink-600 text-white border-pink-600 ring-2 ring-pink-200' 
-                          : 'bg-white text-slate-600 border-slate-200 hover:bg-pink-50 hover:text-pink-600'
-                      }`}
+                      className={`px-3 py-1 font-bold text-[10px] uppercase tracking-wide rounded-full whitespace-nowrap transition-colors border shadow-sm`}
+                      style={isSelected ? {
+                        backgroundColor: theme.primaryColor,
+                        color: 'white',
+                        borderColor: theme.primaryColor,
+                        boxShadow: `0 0 0 2px ${theme.primaryColor}30`
+                      } : {
+                        backgroundColor: 'white',
+                        color: 'rgb(71, 85, 105)',
+                        borderColor: 'rgb(226, 232, 240)'
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isSelected) {
+                          e.target.style.backgroundColor = `${theme.primaryColor}15`;
+                          e.target.style.color = theme.primaryColor;
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isSelected) {
+                          e.target.style.backgroundColor = 'white';
+                          e.target.style.color = 'rgb(71, 85, 105)';
+                        }
+                      }}
                     >
                       {genre.nome}
                     </button>
@@ -1049,7 +1090,8 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
                    id="footerBoothFilter"
                    checked={stockOnlyBooth}
                    onChange={(e) => setStockOnlyBooth(e.target.checked)}
-                   className="rounded text-pink-600 focus:ring-pink-500 w-4 h-4 cursor-pointer"
+                   className="rounded w-4 h-4 cursor-pointer"
+                   style={{ accentColor: theme.primaryColor }}
                  />
                  <label htmlFor="footerBoothFilter" className="text-xs text-slate-700 cursor-pointer select-none font-bold flex items-center gap-1">
                    Apenas neste estande <span className="text-[10px] font-normal bg-pink-100 text-pink-700 px-1 rounded uppercase tracking-wider">{idEstande}</span>
@@ -1059,13 +1101,17 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
           )}
 
           <div className="flex gap-3 w-full">
-            <button onClick={() => handleSend()} disabled={loading} className="bg-pink-500 text-white p-4 rounded-2xl shadow-lg active:scale-90 disabled:opacity-50 transition-all">
+            <button onClick={() => handleSend()} disabled={loading} className="text-white p-4 rounded-2xl shadow-lg active:scale-90 disabled:opacity-50 transition-all" style={{ backgroundColor: theme.primaryColor }}>
               {initialMode === 'stock' ? <Search size={22} /> : <Send size={22} />}
             </button>
             <input
               ref={inputRef}
               type="text"
-              className="flex-1 bg-white border border-pink-100 rounded-2xl px-5 py-4 text-sm focus:ring-4 focus:ring-pink-100 outline-none shadow-sm"
+              className="flex-1 bg-white rounded-2xl px-5 py-4 text-sm outline-none shadow-sm border focus:ring-4 transition-all"
+              style={{
+                borderColor: `${theme.primaryColor}30`,
+                '--tw-ring-color': `${theme.primaryColor}20`
+              }}
               placeholder={initialMode === 'stock' ? "Busque por título, autor ou ISBN..." : "Qual livro vamos encontrar hoje?"}
               value={input}
               onChange={(e) => setInput(e.target.value)}

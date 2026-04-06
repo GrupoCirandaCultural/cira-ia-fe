@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import api from '../api';
 import bgImage from '../assets/background-roleta.png';
+import { getEstandeTheme } from '../theme';
 
 const getRandomExtraDegrees = () => Math.floor(Math.random() * 360);
 
-export default function PrizeWheel({ userId, onFinish }) {
+export default function PrizeWheel({ userId, onFinish, idEstande }) {
+  const theme = getEstandeTheme(idEstande);
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
 
@@ -71,7 +73,7 @@ export default function PrizeWheel({ userId, onFinish }) {
             className="w-72 h-72 sm:w-80 sm:h-80 rounded-full border-8 border-white shadow-2xl transition-transform duration-[4000ms] ease-out relative flex items-center justify-center overflow-hidden"
             style={{ 
               transform: `rotate(${rotation}deg)`,
-              background: `conic-gradient(#f472b6 0% 16.6%, #60a5fa 16.6% 33.3%, #f472b6 33.3% 50%, #60a5fa 50% 66.6%, #f472b6 66.6% 83.3%, #60a5fa 83.3% 100%)`
+              background: `conic-gradient(${theme.primaryColor} 0% 16.6%, ${theme.accentColor} 16.6% 33.3%, ${theme.primaryColor} 33.3% 50%, ${theme.accentColor} 50% 66.6%, ${theme.primaryColor} 66.6% 83.3%, ${theme.accentColor} 83.3% 100%)`
             }}
           >
             {prizes.map((prize, index) => (
