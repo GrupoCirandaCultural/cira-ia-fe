@@ -866,7 +866,7 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
         </div>
       </header>
 
-      <main className="relative z-10 flex-1 overflow-y-auto p-4 space-y-6">
+      <main className={`relative z-10 flex-1 overflow-y-auto p-4 space-y-6 ${cart.length > 0 ? 'mb-[7vh]' : ''}`}>
         {messages.map((msg, idx) => (
           <div 
             key={idx} 

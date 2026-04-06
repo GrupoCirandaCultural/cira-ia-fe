@@ -174,7 +174,8 @@ export default function Registration({ onComplete, idEstande, initialPhone, onBa
             <>
               <input 
                 type="email"
-                placeholder="E-mail (opcional)"
+                required
+                placeholder="E-mail *"
                 className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-pink-400 outline-none transition-all"
                 value={formData.email}
                 onChange={e => setFormData({...formData, email: e.target.value})}
