@@ -11,6 +11,7 @@ export const EVENTOS_CONFIG = {
     nome: 'BETT Educar 2026',
     descricao: 'Maior evento de educação da América Latina',
     imagem: 'https://via.placeholder.com/400x300?text=BETT+Educar',
+    temRoleta: false, // Bett Educar não tem roleta
     
     estandes: [
       {
@@ -47,13 +48,15 @@ export const EVENTOS_CONFIG = {
         primaryColor: '#FF8C42',
         secondaryColor: '#FFB366',
         accentColor: '#FFB366',
-        darkColor: '#E67E22'
+        darkColor: '#E67E22',
+        buttonColor: '#0055A8'
       },
       estande_azul: {
         primaryColor: '#003D82',
         secondaryColor: '#0055A8',
         accentColor: '#0055A8',
-        darkColor: '#002455'
+        darkColor: '#002455',
+        buttonColor: '#FF8C42'
       }
     }
   },
@@ -63,6 +66,7 @@ export const EVENTOS_CONFIG = {
     nome: 'Bienal do Livro 2026',
     descricao: 'A maior festa do livro do Brasil',
     imagem: 'https://via.placeholder.com/400x300?text=Bienal+2026',
+    temRoleta: true, // Bienal tem roleta
     
     estandes: [
       {

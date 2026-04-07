@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import QRCode from 'react-qr-code';
-import { Sparkles, MessageCircle, Search, MapPin } from 'lucide-react';
+import { Sparkles, MessageCircle, Search, MapPin, BookOpen } from 'lucide-react';
 import { getEventoConfig, getEstandeConfig, getTemaEstande } from '../config/events.config';
 import ciraWelcomeLimpa from '../assets/cira-welcome.png';
 
@@ -16,6 +16,7 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_edu
 
   const primaryColor = temaEstande.primaryColor;
   const secondaryColor = temaEstande.secondaryColor || primaryColor;
+  const buttonColor = temaEstande.buttonColor || primaryColor;
 
   // QR link (apenas para Bienal)
   const qrLink = `https://bienal.example.com?estande=${idEstande}`;
@@ -26,6 +27,7 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_edu
       id: estandeConfig.numero,
       nome: estandeConfig.label,
       primaryColor: primaryColor,
+      buttonColor: buttonColor,
       cor: estandeConfig.cor,
       footerText: `Vá até o ${estandeConfig.label} para resgatar`
     };
@@ -54,14 +56,29 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_edu
             </h2>
           </div>
 
-          {/* Botão Principal - QUERO DESCONTO */}
-          <button
-            onClick={() => onStart('wheel')}
-            className="w-full py-5 text-white font-black text-xl rounded-3xl shadow-2xl active:scale-95 transition-all border-2"
-            style={{ backgroundColor: config.primaryColor, borderColor: config.primaryColor }}
-          >
-            QUERO DESCONTO
-          </button>
+          {/* Botão Principal - QUERO DESCONTO (apenas se tem roleta) */}
+          {eventoConfig.temRoleta && (
+            <button
+              onClick={() => onStart('wheel')}
+              className="w-full py-5 text-white font-black text-xl rounded-3xl shadow-2xl active:scale-95 transition-all border-2 flex items-center justify-center gap-2"
+              style={{ backgroundColor: config.primaryColor, borderColor: config.primaryColor }}
+            >
+              <Sparkles size={24} />
+              QUERO DESCONTO
+            </button>
+          )}
+
+          {/* Se não tem roleta, vai direto para chat */}
+          {!eventoConfig.temRoleta && (
+            <button
+              onClick={() => onStart('chat')}
+              className="w-full py-5 text-white font-black text-xl rounded-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all border-2 border-white/40 flex items-center justify-center gap-2"
+              style={{ backgroundColor: config.buttonColor }}
+            >
+              <BookOpen size={24} />
+              QUERO DESCONTO
+            </button>
+          )}
 
           {/* Texto Secundário */}
           <div className="text-center">

@@ -4,6 +4,7 @@ import api from '../api';
 import { ArrowLeft, AlertCircle, X } from 'lucide-react';
 import { getEstandeTheme } from '../theme';
 import { getCamposRegistration, getOpcoesAtividade } from '../config/events.config';
+import CustomSelect from './CustomSelect';
 
 export default function Registration({ onComplete, idEstande, eventoId = 'bett_educar', initialPhone, onBack }) {
   const theme = getEstandeTheme(idEstande);
@@ -218,32 +219,26 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_e
               
               {/* Campo Estado - Dinâmico */}
               {isCampoObrigatorio('estado') && (
-                <select 
-                  required
-                  className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl outline-none transition-all text-gray-700"
+                <CustomSelect
                   value={formData.estado}
-                  onChange={e => setFormData({...formData, estado: e.target.value})}
-                >
-                  <option value="">Selecione seu Estado *</option>
-                  {estados.map(est => (
-                    <option key={est} value={est}>{est}</option>
-                  ))}
-                </select>
+                  onChange={(value) => setFormData({...formData, estado: value})}
+                  placeholder="Selecione seu Estado *"
+                  options={estados.map(est => ({ value: est, label: est }))}
+                  required
+                  openDirection="auto"
+                />
               )}
 
               {/* Campo Atividade - Dinâmico com opções do evento */}
               {isCampoObrigatorio('atividade') && opcoesAtividadeEvento.length > 0 && (
-                <select 
-                  required
-                  className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl outline-none transition-all text-gray-700"
+                <CustomSelect
                   value={formData.atividade}
-                  onChange={e => setFormData({...formData, atividade: e.target.value})}
-                >
-                  <option value="">Qual sua atividade principal? *</option>
-                  {opcoesAtividadeEvento.map(ativ => (
-                    <option key={ativ.id} value={ativ.id}>{ativ.label}</option>
-                  ))}
-                </select>
+                  onChange={(value) => setFormData({...formData, atividade: value})}
+                  placeholder="Qual sua atividade principal? *"
+                  options={opcoesAtividadeEvento.map(ativ => ({ value: ativ.id, label: ativ.label }))}
+                  required
+                  openDirection="auto"
+                />
               )}
               
               <label className="flex items-start gap-3 p-2 cursor-pointer">

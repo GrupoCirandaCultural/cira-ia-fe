@@ -5,6 +5,7 @@ import PrizeWheel from './components/PrizeWheel';
 import ChatInterface from './components/ChatInterface';
 import CheckInScreen from './components/CheckInScreen';
 import EventSelector from './components/EventSelector';
+import DiscountSuccess from './components/DiscountSuccess';
 import { MapPin, Check } from 'lucide-react';
 import { getEventoConfig, verificarEstandeValido } from './config/events.config';
 
@@ -76,7 +77,14 @@ function App() {
     if (choice === 'checkin') {
       setStep('checkin'); // Vai para a tela de rota de brindes
     } else {
-      setTarget(choice);  // Guarda 'wheel' ou 'chat'
+      // Valida se o evento suporta a escolha (ex: wheel só se temRoleta)
+      const eventoConfig = getEventoConfig(appState.selectedEvento);
+      if (choice === 'wheel' && !eventoConfig?.temRoleta) {
+        // Se tentou acessar wheel mas evento não tem, vai para chat
+        setTarget('chat');
+      } else {
+        setTarget(choice);  // Guarda a escolha original
+      }
       setStep(1);         // Vai para o cadastro
     }
   };
@@ -93,12 +101,21 @@ function App() {
       return;
     }
 
-    // Navega conforme escolha inicial
-    if (target === 'wheel') {
+    // Obtém config do evento para verificar se tem roleta
+    const eventoConfig = getEventoConfig(appState.selectedEvento);
+    
+    // Navega conforme escolha inicial e disponibilidade de roleta
+    if (target === 'wheel' && eventoConfig?.temRoleta) {
+      // Vai para roleta se tem e foi escolhido
       setStep(2);
     } else if (target === 'checkin_redirect') {
-      setStep('checkin'); // <--- Retorna para o checkin após cadastro
+      // Retorna para o checkin
+      setStep('checkin');
+    } else if (!eventoConfig?.temRoleta && appState.selectedEvento === 'bett_educar') {
+      // Bett Educar: Show discount success screen before chat
+      setStep('discount-success');
     } else {
+      // Chat direto (padrão ou se não tem roleta)
       setStep(3); 
     }
   };
@@ -119,7 +136,7 @@ function App() {
           - PC: Fixo (max-w-md), altura limitada, bordas arredondadas e sombra. */}
       <div className="relative w-full h-full lg:w-full lg:max-w-md lg:h-[90vh] lg:max-h-[850px] lg:rounded-2xl lg:shadow-2xl bg-white overflow-hidden">
         
-        <div className="h-full w-full overflow-y-auto overflow-x-hidden relative bg-[#87CEEB]">
+        <div className="h-full w-full overflow-hidden relative bg-[#87CEEB]">
           
           {/* TELA DE SELEÇÃO DE EVENTO (SE NÃO HOUVER EVENTO NA URL) */}
           {!appState.selectedEvento && appState.isConfigured && (
@@ -198,6 +215,16 @@ function App() {
                 setPrefilledPhone('');
                 handleRegistrationComplete(userData, res);
               }}
+            />
+          )}
+          
+          {/* TELA DE SUCESSO - BETT EDUCAR */}
+          {appState.isConfigured && step === 'discount-success' && (
+            <DiscountSuccess 
+              idEstande={appState.selectedEstande}
+              eventoId={appState.selectedEvento}
+              onExplore={() => setStep(3)}
+              onBack={() => setStep(0)}
             />
           )}
           
