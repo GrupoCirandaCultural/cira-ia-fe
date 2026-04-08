@@ -4,9 +4,8 @@ import { MapPin, Check } from 'lucide-react';
 const EventMap = ({ visitados = [], idEstandeAtual }) => {
   // Simulação dos estandes do evento (Pode ser parametrizado via props no futuro)
   const estandes = [
-    { id: 'estande_norte', label: 'Pavilhão Norte', x: '15%', y: '20%' },
-    { id: 'ciranda_bienal', label: 'Estande Principal', x: '50%', y: '45%' },
-    { id: 'estande_sul', label: 'Pavilhão Sul', x: '80%', y: '75%' },
+    { id: 'estande_laranja', label: 'Estande Laranja', x: '25%', y: '40%', color: '#FF8C42' },
+    { id: 'estande_azul', label: 'Estande Azul', x: '75%', y: '60%', color: '#003D82' },
   ];
 
   return (
