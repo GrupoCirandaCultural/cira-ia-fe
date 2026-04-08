@@ -3,6 +3,7 @@ import QRCode from 'react-qr-code';
 import { Sparkles, MessageCircle, Search, MapPin, BookOpen } from 'lucide-react';
 import { getEventoConfig, getEstandeConfig, getTemaEstande } from '../config/events.config';
 import ciraWelcomeLimpa from '../assets/cira-welcome.png';
+import logoFundo from '../assets/logo_fundo.png';
 
 export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_educar' }) {
   const eventoConfig = useMemo(() => getEventoConfig(eventoId), [eventoId]);
@@ -42,9 +43,7 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_edu
 
         {/* Logo Placeholder */}
         <div className="flex-1 flex items-center justify-center">
-          <div className="w-32 h-32 rounded-3xl bg-white/10 flex items-center justify-center backdrop-blur-sm border border-white/20 shadow-2xl">
-            <span className="text-4xl font-black text-white/30">logo</span>
-          </div>
+          <img src={logoFundo} alt="logo" className="w-32 h-32 object-contain opacity-100" />
         </div>
 
         {/* Main Content */}
@@ -89,21 +88,23 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_edu
           {/* Botão Secundário - CONSULTE ESTOQUE */}
           <button
             onClick={() => onStart('chat')}
-            className="w-full py-5 bg-white text-black font-black text-lg rounded-3xl shadow-lg active:scale-95 transition-all"
+            className="w-full text-white font-black text-md py-3 rounded-2xl border-2 border-white/40 bg-black/20 shadow-lg hover:scale-105 active:scale-95 transition-all backdrop-blur-sm flex items-center justify-center gap-2"
           >
+            <Search size={24} />
             Consulte o nosso estoque
           </button>
 
           {/* Footer com rota */}
-          <div className="text-center pt-6">
+          <div className="text-center pt-6 flex flex-col items-center">
             <p className="text-white/80 font-medium">
               {config.footerText}
             </p>
             <button 
               onClick={() => onStart('checkin')}
-              className="text-yellow-300 font-black text-lg mt-2 hover:text-yellow-200 transition-colors underline"
+              className="text-yellow-300 font-black text-lg mt-2 hover:text-yellow-200 transition-colors underline inline-flex items-center justify-center gap-2"
             >
-              veja no mapa
+              <MapPin size={20} />
+              Veja no mapa
             </button>
           </div>
         </div>

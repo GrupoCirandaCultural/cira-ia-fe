@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
+import { Search } from 'lucide-react';
 import { getEventoConfig, getEstandeConfig, getTemaEstande } from '../config/events.config';
+import logoFundo from '../assets/logo_fundo.png';
 
 export default function DiscountSuccess({ idEstande, eventoId, onExplore }) {
   const eventoConfig = useMemo(() => getEventoConfig(eventoId), [eventoId]);
@@ -14,8 +16,7 @@ export default function DiscountSuccess({ idEstande, eventoId, onExplore }) {
     <div className="relative h-full w-full flex flex-col overflow-y-auto" style={{ background: `linear-gradient(to bottom, #003D82, #003D82dd)` }}>
       {/* Header com logos */}
       <div className="pt-2 pb-3 flex items-center justify-center gap-4 z-10">
-        <div className="text-white font-black text-4xl opacity-50">logo</div>
-        <div className="text-white font-black text-4xl opacity-50">logo</div>
+        <img src={logoFundo} alt="logo" className="h-18 object-contain opacity-100" />
       </div>
 
       {/* Content */}
@@ -61,7 +62,7 @@ export default function DiscountSuccess({ idEstande, eventoId, onExplore }) {
         {/* Botão Quero Participar */}
         <button
           onClick={() => window.open('https://wa.me/11978802196?text=Já garanti meus 20% e vim responder a pesquisa para garantir 40%!', '_blank')}
-          className="w-full max-w-sm py-3 text-blue-400 font-black text-lg rounded-3xl border-2 border-blue-400 bg-transparent shadow-lg hover:scale-105 active:scale-95 transition-all mb-3"
+          className="w-full max-w-sm py-3 text-white font-black text-lg rounded-3xl border-2 border-blue-400 bg-transparent shadow-lg hover:scale-105 active:scale-95 transition-all mb-3"
         >
           Quero participar
         </button>
@@ -79,9 +80,10 @@ export default function DiscountSuccess({ idEstande, eventoId, onExplore }) {
         
         <button
           onClick={onExplore}
-          className="w-full bg-white text-black font-black text-md py-3 rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all"
-        >
-          Consulte o nosso estoque
+          className="w-full text-white font-black text-md py-3 rounded-2xl border-2 border-white/40 bg-black/20 shadow-lg hover:scale-105 active:scale-95 transition-all backdrop-blur-sm flex items-center justify-center gap-2"
+          >
+            <Search size={24} />
+            Consulte o nosso estoque
         </button>
       </div>
     </div>
