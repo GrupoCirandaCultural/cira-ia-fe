@@ -1,9 +1,11 @@
 // src/components/Registration.jsx
 import React, { useState } from 'react';
-import api from '../api'; // Importe o api
+import api from '../api';
 import { ArrowLeft, AlertCircle, X } from 'lucide-react';
+import { getEstandeColors } from '../utils/colors';
 
 export default function Registration({ onComplete, idEstande, initialPhone, onBack }) {
+  const colors = getEstandeColors(idEstande);
   const [formData, setFormData] = useState({ nome: '', telefone: initialPhone || '', email: '', aceito: false });
   const [loading, setLoading] = useState(false);
   const [isLoginMode, setIsLoginMode] = useState(false);
@@ -92,14 +94,14 @@ export default function Registration({ onComplete, idEstande, initialPhone, onBa
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-full bg-pink-50 p-6">
-      <div className="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md border-t-8 border-pink-500 relative">
+    <div className={`flex flex-col items-center justify-center h-full ${colors.light50} p-6`}>
+      <div className={`bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md ${colors.borderTop} border-t-8 relative`}>
         {onBack && (
-          <button onClick={onBack} className="absolute top-4 left-4 text-gray-400 hover:text-pink-500 transition-colors" title="Voltar">
+          <button onClick={onBack} className={`absolute top-4 left-4 text-gray-400 hover:${colors.text600} transition-colors`} title="Voltar">
             <ArrowLeft size={24} />
           </button>
         )}
-        <h2 className="text-3xl font-black text-pink-600 mb-2 text-center">Cira IA</h2>
+        <h2 className={`text-3xl font-black ${colors.text600} mb-2 text-center`}>Cira IA</h2>
         <p className="text-gray-500 text-center mb-6 font-medium">
           {isLoginMode ? 'Informe seu WhatsApp para entrar' : 'Cadastre-se para participar!'}
         </p>
@@ -108,14 +110,14 @@ export default function Registration({ onComplete, idEstande, initialPhone, onBa
           <button 
             type="button"
             onClick={() => setIsLoginMode(false)}
-            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${!isLoginMode ? 'bg-white text-pink-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${!isLoginMode ? `bg-white ${colors.text600} shadow-sm` : 'text-gray-500 hover:text-gray-700'}`}
           >
             Novo Cadastro
           </button>
           <button 
             type="button"
             onClick={() => setIsLoginMode(true)}
-            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${isLoginMode ? 'bg-white text-pink-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${isLoginMode ? `bg-white ${colors.text600} shadow-sm` : 'text-gray-500 hover:text-gray-700'}`}
           >
             Já tenho cadastro
           </button>
@@ -132,7 +134,7 @@ export default function Registration({ onComplete, idEstande, initialPhone, onBa
                 <X size={20} />
               </button>
               <div className="flex flex-col items-center text-center space-y-3 pt-2">
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-2 shadow-inner ${customAlert.type === 'error' ? 'bg-red-100 text-red-500' : 'bg-pink-100 text-pink-500'}`}>
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-2 shadow-inner ${customAlert.type === 'error' ? 'bg-red-100 text-red-500' : `${colors.light100} ${colors.text500}`}`}>
                   <AlertCircle size={32} />
                 </div>
                 <h3 className="text-xl font-black text-gray-800">{customAlert.title}</h3>
@@ -140,7 +142,7 @@ export default function Registration({ onComplete, idEstande, initialPhone, onBa
                 
                 <button 
                   onClick={closeAlert}
-                  className={`w-full text-white font-black py-3 rounded-xl shadow-lg mt-4 active:scale-95 transition-all ${customAlert.type === 'error' ? 'bg-red-500 hover:bg-red-600' : 'bg-pink-500 hover:bg-pink-600'}`}
+                  className={`w-full text-white font-black py-3 rounded-xl shadow-lg mt-4 active:scale-95 transition-all ${customAlert.type === 'error' ? 'bg-red-500 hover:bg-red-600' : `${colors.bg500} hover:${colors.bg600}`}`}
                 >
                   {customAlert.type === 'error' ? 'Tentar Novamente' : 'Continuar'}
                 </button>
@@ -154,7 +156,7 @@ export default function Registration({ onComplete, idEstande, initialPhone, onBa
             <input 
               required 
               placeholder="Nome Completo *"
-              className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-pink-400 outline-none transition-all"
+              className={`w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl ${colors.focus} outline-none transition-all`}
               value={formData.nome}
               onChange={e => setFormData({...formData, nome: e.target.value})}
             />
@@ -164,7 +166,7 @@ export default function Registration({ onComplete, idEstande, initialPhone, onBa
             required 
             type="tel"
             placeholder="WhatsApp *"
-            className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-pink-400 outline-none transition-all"
+            className={`w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl ${colors.focus} outline-none transition-all`}
             value={formData.telefone}
             onChange={handlePhoneChange}
             maxLength={15}
@@ -176,7 +178,7 @@ export default function Registration({ onComplete, idEstande, initialPhone, onBa
                 type="email"
                 required
                 placeholder="E-mail *"
-                className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl focus:border-pink-400 outline-none transition-all"
+                className={`w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl ${colors.focus} outline-none transition-all`}
                 value={formData.email}
                 onChange={e => setFormData({...formData, email: e.target.value})}
               />
@@ -185,7 +187,7 @@ export default function Registration({ onComplete, idEstande, initialPhone, onBa
                 <input 
                   type="checkbox" 
                   required 
-                  className="mt-1 w-5 h-5 accent-pink-500"
+                  className={`mt-1 w-5 h-5 ${colors.accent}`}
                   checked={formData.aceito}
                   onChange={e => setFormData({...formData, aceito: e.target.checked})}
                 />
@@ -200,7 +202,7 @@ export default function Registration({ onComplete, idEstande, initialPhone, onBa
             type="submit"
             disabled={loading}
             className={`w-full text-white font-black py-4 rounded-2xl shadow-lg transition-all uppercase tracking-widest ${
-              loading ? 'bg-gray-400' : 'bg-pink-500 hover:bg-pink-600'
+              loading ? 'bg-gray-400' : `${colors.bg500} hover:${colors.bg600}`
             }`}
           >
             {loading ? 'Processando...' : (isLoginMode ? 'Entrar' : 'Cadastrar')}

@@ -8,9 +8,9 @@ import CheckInScreen from './components/CheckInScreen';
 import { MapPin, Check } from 'lucide-react';
 
 const ESTANDES = [
-  { id: 'estande_norte', label: 'Pavilhão Norte' },
-  { id: 'ciranda_bienal', label: 'Estande Principal' },
-  { id: 'estande_sul', label: 'Pavilhão Sul' },
+  { id: 'estande_norte', label: 'Pavilhão Norte', bgColor: 'bg-blue-600', borderColor: 'border-blue-500' },
+  { id: 'ciranda_bienal', label: 'Estande Principal', bgColor: 'bg-pink-600', borderColor: 'border-pink-500' },
+  { id: 'estande_sul', label: 'Pavilhão Sul', bgColor: 'bg-green-600', borderColor: 'border-green-500' },
 ];
 
 function App() {
@@ -100,7 +100,7 @@ function App() {
                      onClick={() => setSelectedEstande(estande.id)}
                      className={`w-full p-4 rounded-xl border-2 flex items-center justify-between transition-all ${
                        selectedEstande === estande.id 
-                       ? 'bg-pink-600 border-pink-500 shadow-lg scale-105' 
+                       ? `${estande.bgColor} ${estande.borderColor} shadow-lg scale-105` 
                        : 'bg-white/5 border-white/10 hover:bg-white/10'
                      }`}
                    >
