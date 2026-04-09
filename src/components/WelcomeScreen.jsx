@@ -4,6 +4,7 @@ import { Sparkles, MessageCircle, Search, MapPin, BookOpen } from 'lucide-react'
 import { getEventoConfig, getEstandeConfig, getTemaEstande } from '../config/events.config';
 import ciraWelcomeLimpa from '../assets/cira-welcome.png';
 import logoFundo from '../assets/logo_fundo.png';
+import '../styles/WelcomeScreen.css';
 
 export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_educar' }) {
   const eventoConfig = useMemo(() => getEventoConfig(eventoId), [eventoId]);
@@ -22,7 +23,7 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_edu
   // QR link (apenas para Bienal)
   const qrLink = `https://bienal.example.com?estande=${idEstande}`;
 
-  // LAYOUT PARA BETT EDUCAR (padrão anterior)
+  // LAYOUT PARA BETT EDUCAR COM GLASSMORPHISM
   if (eventoId === 'bett_educar') {
     const config = {
       id: estandeConfig.numero,
@@ -34,78 +35,122 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_edu
     };
 
     return (
-      <div className="relative h-full w-full flex flex-col items-center justify-between p-6 overflow-hidden" style={{ background: `linear-gradient(to bottom, ${config.primaryColor}, ${config.primaryColor}dd)` }}>
-        {/* Header com nome do estande */}
-        <div className="pt-4 text-center z-10">
-          <p className="text-sm font-medium text-white/70 uppercase tracking-widest mb-2">Estande</p>
-          <h1 className="text-4xl font-black text-white/80">{config.id}</h1>
-        </div>
+      <div
+        className="relative h-full w-full flex flex-col items-center justify-center overflow-hidden backdrop-blur-md"
+        style={{
+          background: `linear-gradient(135deg, ${config.primaryColor}, ${config.primaryColor}cc)`,
+        }}
+      >
+        <div className="absolute inset-0 shimmer pointer-events-none" />
+        {/* Main card with glassmorphism */}
+        <div className="relative z-10 w-full max-w-md">
+          {/* Inner glass card */}
 
-        {/* Logo Placeholder */}
-        <div className="flex-1 flex items-center justify-center">
-          <img src={logoFundo} alt="logo" className="w-32 h-32 object-contain opacity-100" />
-        </div>
+          {/* Shimmer overlay */}
 
-        {/* Main Content */}
-        <div className="flex flex-col items-center gap-6 w-full max-w-md z-10">
-          {/* Texto Principal */}
-          <div className="text-center">
-            <h2 className="text-4xl font-black text-white leading-tight mb-4">
-              Cadastre-se e libere <br />20% de desconto
-            </h2>
-          </div>
+          <div className="relative z-10 px-8 flex flex-col items-center text-center gap-6">
+            {/* Header com nome do estande */}
+            <div className="flex flex-col items-center gap-1 animate-in fade-in slide-in-from-top-2 duration-600">
+              <p className="text-xs font-medium text-white/60 uppercase tracking-widest">
+                Estande
+              </p>
+              <h1 className="font-display text-5xl font-black text-white/90 tracking-tight">
+                {config.id}
+              </h1>
+            </div>
 
-          {/* Botão Principal - QUERO DESCONTO (apenas se tem roleta) */}
-          {eventoConfig.temRoleta && (
+            {/* Logo com animação float */}
+            <div
+              className="w-24 h-24 rounded-2xl animate-float"
+              style={{
+                backgroundColor: `${config.primaryColor}40`,
+                backdropFilter: "blur(10px)",
+              }}
+            >
+              <img
+                src={logoFundo}
+                alt="logo"
+                className="w-24 h-24 object-contain opacity-100"
+              />
+            </div>
+
+            {/* Texto Principal */}
+            <div className="flex flex-col items-center gap-3 animate-in fade-in slide-in-from-top-3 duration-700 delay-150">
+              <h2 className="font-display text-3xl font-black text-white leading-tight">
+                Cadastre-se e libere <br />
+                <span style={{ color: "#FFD700" }}>20% de desconto</span>
+              </h2>
+            </div>
+
+            {/* Botão Principal - QUERO DESCONTO */}
+            {eventoConfig.temRoleta && (
+              <button
+                onClick={() => onStart("wheel")}
+                className="w-full py-5 font-display font-black text-xl rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 animate-in fade-in zoom-in-75 duration-700 delay-300"
+                style={{ backgroundColor: config.buttonColor, color: "white" }}
+              >
+                <BookOpen size={24} />
+                QUERO DESCONTO
+                <Sparkles size={20} className="opacity-70" />
+              </button>
+            )}
+
+            {/* Se não tem roleta, vai direto para chat */}
+            {!eventoConfig.temRoleta && (
+              <button
+                onClick={() => onStart("chat")}
+                className="w-full py-5 font-display font-black text-xl rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 animate-in fade-in zoom-in-75 duration-700 delay-300"
+                style={{ backgroundColor: config.buttonColor, color: "white" }}
+              >
+                <BookOpen size={24} />
+                QUERO DESCONTO
+              </button>
+            )}
+
+            {/* Divider */}
+            <div className="w-full flex items-center gap-3">
+              <div className="flex-1 h-px bg-white/10" />
+              <Search className="w-4 h-4 text-white/30" />
+              <div className="flex-1 h-px bg-white/10" />
+            </div>
+
+            {/* Texto Secundário */}
+            <div className="text-center space-y-2">
+              <p className="font-display font-black text-lg text-white">
+                Não sabe o que escolher?
+              </p>
+              <p className="text-sm text-white/70">
+                Encontre o seu livro favorito aqui
+              </p>
+            </div>
+
+            {/* Botão Secundário - CONSULTE ESTOQUE */}
             <button
-              onClick={() => onStart('wheel')}
-              className="w-full py-5 text-white font-black text-xl rounded-3xl shadow-2xl active:scale-95 transition-all border-2 flex items-center justify-center gap-2"
-              style={{ backgroundColor: config.primaryColor, borderColor: config.primaryColor }}
+              onClick={() => onStart("chat")}
+              className="w-full py-4 font-display font-black text-base rounded-2xl transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center gap-2 animate-in fade-in duration-700 delay-500"
+              style={{
+                backgroundColor: "rgba(0, 0, 0, 0.3)",
+                backdropFilter: "blur(20px)",
+                color: "white",
+                border: "1px solid rgba(255, 255, 255, 0.1)",
+              }}
             >
-              <Sparkles size={24} />
-              QUERO DESCONTO
+              <Search size={20} />
+              Consulte o nosso estoque
             </button>
-          )}
 
-          {/* Se não tem roleta, vai direto para chat */}
-          {!eventoConfig.temRoleta && (
-            <button
-              onClick={() => onStart('chat')}
-              className="w-full py-5 text-white font-black text-xl rounded-3xl shadow-2xl hover:scale-105 active:scale-95 transition-all border-2 border-white/40 flex items-center justify-center gap-2"
-              style={{ backgroundColor: config.buttonColor }}
-            >
-              <BookOpen size={24} />
-              QUERO DESCONTO
-            </button>
-          )}
-
-          {/* Texto Secundário */}
-          <div className="text-center">
-            <p className="text-white font-black mb-2 text-lg">Não sabe o que escolher?</p>
-            <p className="text-white/80 font-medium">Encontre o seu livro favorito aqui</p>
-          </div>
-
-          {/* Botão Secundário - CONSULTE ESTOQUE */}
-          <button
-            onClick={() => onStart('chat')}
-            className="w-full text-white font-black text-md py-3 rounded-2xl border-2 border-white/40 bg-black/20 shadow-lg hover:scale-105 active:scale-95 transition-all backdrop-blur-sm flex items-center justify-center gap-2"
-          >
-            <Search size={24} />
-            Consulte o nosso estoque
-          </button>
-
-          {/* Footer com rota */}
-          <div className="text-center pt-6 flex flex-col items-center">
-            <p className="text-white/80 font-medium">
-              {config.footerText}
-            </p>
-            <button 
-              onClick={() => onStart('checkin')}
-              className="text-yellow-300 font-black text-lg mt-2 hover:text-yellow-200 transition-colors underline inline-flex items-center justify-center gap-2"
-            >
-              <MapPin size={20} />
-              Veja no mapa
-            </button>
+            {/* Footer com rota */}
+            <div className="text-center pt-4 flex flex-col items-center space-y-2 animate-in fade-in duration-700 delay-700">
+              <p className="text-sm text-white/70">{config.footerText}</p>
+              <button
+                onClick={() => onStart("checkin")}
+                className="flex items-center gap-1.5 font-display font-black text-base hover:scale-110 transition-transform duration-200"
+                style={{ color: "#FFD700" }}
+              >
+                <MapPin size={20} />
+                Veja no mapa
+              </button>
+            </div>
           </div>
         </div>
       </div>

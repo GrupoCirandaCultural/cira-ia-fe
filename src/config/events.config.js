@@ -45,18 +45,18 @@ export const EVENTOS_CONFIG = {
     // Temas por estande
     temaPorEstande: {
       estande_laranja: {
-        primaryColor: '#FF8C42',
-        secondaryColor: '#FFB366',
-        accentColor: '#FFB366',
-        darkColor: '#E67E22',
-        buttonColor: '#0055A8'
+        primaryColor: '#ea580c',
+        secondaryColor: '#ff7a2a',
+        accentColor: '#ff7a2a',
+        darkColor: '#d94a08',
+        buttonColor: '#2563eb'
       },
       estande_azul: {
-        primaryColor: '#003D82',
-        secondaryColor: '#0055A8',
-        accentColor: '#0055A8',
-        darkColor: '#002455',
-        buttonColor: '#FF8C42'
+        primaryColor: '#2563eb',
+        secondaryColor: '#3b82f6',
+        accentColor: '#3b82f6',
+        darkColor: '#1e40af',
+        buttonColor: '#ea580c'
       }
     }
   },
