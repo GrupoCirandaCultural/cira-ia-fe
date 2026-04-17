@@ -111,7 +111,7 @@ function App() {
     } else if (target === 'checkin_redirect') {
       // Retorna para o checkin
       setStep('checkin');
-    } else if (!eventoConfig?.temRoleta && appState.selectedEvento === 'bett_educar') {
+    } else if (!eventoConfig?.temRoleta && appState.selectedEvento === 'bett_brasil') {
       // Bett Educar: Show discount success screen before chat
       setStep('discount-success');
     } else {
@@ -223,6 +223,7 @@ function App() {
             <DiscountSuccess 
               idEstande={appState.selectedEstande}
               eventoId={appState.selectedEvento}
+              userName={userLead?.nome}
               onExplore={() => setStep(3)}
               onBack={() => setStep(0)}
             />

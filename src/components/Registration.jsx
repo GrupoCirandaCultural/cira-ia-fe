@@ -5,8 +5,9 @@ import { ArrowLeft, AlertCircle, X } from 'lucide-react';
 import { getEstandeTheme } from '../theme';
 import { getCamposRegistration, getOpcoesAtividade } from '../config/events.config';
 import CustomSelect from './CustomSelect';
+import imagemEscolaPreto from '../assets/escola_preto_horizontal.png';
 
-export default function Registration({ onComplete, idEstande, eventoId = 'bett_educar', initialPhone, onBack }) {
+export default function Registration({ onComplete, idEstande, eventoId = 'bett_brasil', initialPhone, onBack }) {
   const theme = getEstandeTheme(idEstande);
   
   // Campos dinâmicos baseado no evento
@@ -21,6 +22,7 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_e
       email: '', 
       estado: '', 
       atividade: '',
+      atividadeOutro: '',
       aceito: false 
     };
     // Remove campos que não são obrigatórios neste evento
@@ -105,7 +107,9 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_e
           ...formData, 
           nome: (formData.nome || '').replace(/[\n\t\r]/g, ' ').replace(/\s{2,}/g, ' ').trim(),
           id_estande: idEstande,
-          id_evento: eventoId
+          id_evento: eventoId,
+          // Se atividade é 'outro', usa o valor customizado
+          ...(formData.atividade === 'outro' && { atividade: formData.atividadeOutro })
         };
         const res = await api.post('/leads', payload);
         onComplete(formData, res.data);
@@ -130,7 +134,15 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_e
             <ArrowLeft size={24} />
           </button>
         )}
-        <h2 className={`text-3xl font-black ${theme.textPrimary} mb-2 text-center`}>Cira IA</h2>
+        {eventoId === 'bett_brasil' ? (
+          <img 
+            src={imagemEscolaPreto} 
+            alt="Escola Logo" 
+            className="h-10 mt-5 mb-2 mx-auto"
+          />
+        ) : (
+          <h2 className={`text-3xl font-black ${theme.textPrimary} mb-2 text-center`}>Cira IA</h2>
+        )}
         <p className="text-gray-500 text-center mb-6 font-medium">
           {isLoginMode ? 'Informe seu WhatsApp para entrar' : 'Cadastre-se para participar!'}
         </p>
@@ -231,14 +243,28 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_e
 
               {/* Campo Atividade - Dinâmico com opções do evento */}
               {isCampoObrigatorio('atividade') && opcoesAtividadeEvento.length > 0 && (
-                <CustomSelect
-                  value={formData.atividade}
-                  onChange={(value) => setFormData({...formData, atividade: value})}
-                  placeholder="Qual sua atividade principal? *"
-                  options={opcoesAtividadeEvento.map(ativ => ({ value: ativ.id, label: ativ.label }))}
-                  required
-                  openDirection="auto"
-                />
+                <>
+                  <CustomSelect
+                    value={formData.atividade}
+                    onChange={(value) => setFormData({...formData, atividade: value, atividadeOutro: value === 'outro' ? formData.atividadeOutro : ''})}
+                    placeholder="Qual sua atividade principal? *"
+                    options={opcoesAtividadeEvento.map(ativ => ({ value: ativ.id, label: ativ.label }))}
+                    required
+                    openDirection="auto"
+                  />
+                  
+                  {/* Campo de input para atividade customizada quando "Outro" é selecionado */}
+                  {formData.atividade === 'outro' && (
+                    <input 
+                      type="text"
+                      required
+                      placeholder="Digite sua atividade *"
+                      className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl outline-none transition-all"
+                      value={formData.atividadeOutro}
+                      onChange={e => setFormData({...formData, atividadeOutro: e.target.value})}
+                    />
+                  )}
+                </>
               )}
               
               <label className="flex items-start gap-3 p-2 cursor-pointer">

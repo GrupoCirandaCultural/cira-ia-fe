@@ -6,7 +6,7 @@ import ciraWelcomeLimpa from '../assets/cira-welcome.png';
 import logoFundo from '../assets/logo_fundo.png';
 import '../styles/WelcomeScreen.css';
 
-export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_educar' }) {
+export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_brasil' }) {
   const eventoConfig = useMemo(() => getEventoConfig(eventoId), [eventoId]);
   const estandeConfig = useMemo(() => getEstandeConfig(eventoId, idEstande), [eventoId, idEstande]);
   const temaEstande = useMemo(() => getTemaEstande(eventoId, idEstande), [eventoId, idEstande]);
@@ -24,7 +24,7 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_edu
   const qrLink = `https://bienal.example.com?estande=${idEstande}`;
 
   // LAYOUT PARA BETT EDUCAR COM GLASSMORPHISM
-  if (eventoId === 'bett_educar') {
+  if (eventoId === 'bett_brasil') {
     const config = {
       id: estandeConfig.numero,
       nome: estandeConfig.label,
@@ -61,7 +61,7 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_edu
 
             {/* Logo com animação float */}
             <div
-              className="w-24 h-24 rounded-2xl animate-float"
+              className="w-50 h-32 rounded-2xl animate-float"
               style={{
                 backgroundColor: `${config.primaryColor}40`,
                 backdropFilter: "blur(10px)",
@@ -70,7 +70,7 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_edu
               <img
                 src={logoFundo}
                 alt="logo"
-                className="w-24 h-24 object-contain opacity-100"
+                className="w-50 h-32 object-contain opacity-100"
               />
             </div>
 

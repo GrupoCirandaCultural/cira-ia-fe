@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import api, { getBookByIsbn } from '../api';
 import { Send, Search, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw, Trash2, MessageCircle, CheckCircle, AlertCircle, ChevronUp, ChevronDown, Eye } from 'lucide-react';
 import bgChat from '../assets/background-chat.png';
+import iconeEscola from '../assets/icone_ciranda_escola.png';
 import { getEstandeTheme } from '../theme';
 
 const generateSessionId = () => Math.random().toString(36).substring(7);
@@ -505,7 +506,7 @@ const getStockCardStyle = (status) => {
   return 'bg-white/95'; // Default do chat normal
 };
 
-export default function ChatInterface({ userName, userPhone, cupom, onBack, initialMode = 'chat', idEstande = 'estande_laranja' }) { // <--- Função principal começa aqui
+export default function ChatInterface({ userName, userPhone, cupom, onBack, initialMode = 'chat', idEstande = 'estande_laranja', eventoId = 'bett_brasil' }) { // <--- Função principal começa aqui
   const theme = getEstandeTheme(idEstande);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
@@ -692,6 +693,14 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
     { label: "Adulto", value: "Estou procurando para um Adulto" }
   ];
 
+  const tagOptions = [
+    { label: "Socioemocional", value: "Recomende livros sobre Socioemocional" },
+    { label: "Inclusão", value: "Gostaria de conhecer livros sobre Inclusão" },
+    { label: "Indígena", value: "Mostre-me livros com temática Indígena" },
+    { label: "Alfabetização", value: "Procuro livros de Alfabetização" },
+    { label: "Sustentabilidade", value: "Recomende livros sobre Sustentabilidade" }
+  ];
+
   const getInitialMessages = () => {
     const msgs = [];
     if (cupom) {
@@ -708,13 +717,25 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
         content: `Olá ${userName}! Estou pronta para consultar nosso estoque. 📚\n\nUse os filtros abaixo ou digite o nome do livro.`
       });
     } else {
-      msgs.push({
-        role: 'Cira IA',
-        content: cupom 
-          ? `Comece digitando algo, ou selecione a idade do leitor para eu te indicar o livro perfeito!`
-          : `Olá ${userName}! Que alegria ter você aqui. 🐑💖\n\nSou a Cira, sua curadora. Para eu te dar as melhores dicas, qual a idade do leitor hoje?`,
-        options: ageOptions
-      });
+      // Mostra tags apenas para bett_brasil
+      if (eventoId === 'bett_brasil') {
+        msgs.push({
+          role: 'Cira IA',
+          content: cupom 
+            ? `Comece digitando algo, ou selecione uma tag para explorar livros especiais!`
+            : `Olá ${userName}! Que alegria ter você aqui. 🐑💖\n\nSou a Cira, sua curadora. Qual tema você gostaria de explorar?`,
+          options: tagOptions
+        });
+      } else {
+        // Para outros eventos, mostra as opções de idade
+        msgs.push({
+          role: 'Cira IA',
+          content: cupom 
+            ? `Comece digitando algo, ou selecione a idade do leitor para eu te indicar o livro perfeito!`
+            : `Olá ${userName}! Que alegria ter você aqui. 🐑💖\n\nSou a Cira, sua curadora. Para eu te dar as melhores dicas, qual a idade do leitor hoje?`,
+          options: ageOptions
+        });
+      }
     }
     return msgs;
   };
@@ -853,9 +874,9 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
               <ArrowLeft size={20} />
             </button>
           )}
-          <div className="p-2 rounded-xl text-white shadow-lg" style={{ backgroundColor: theme.primaryColor }}><BookOpen size={20} /></div>
+          <img src={iconeEscola} alt="Escola" className="h-12 w-auto" />
           <div>
-            <h1 className="font-black text-lg text-gray-800 leading-none">Cira IA</h1>
+            <h1 className="font-black text-lg text-gray-800 leading-none">Ciranda na Escola</h1>
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
               {initialMode === 'stock' ? 'Consulta de Estoque' : 'Recomendador Literário'}
             </p>

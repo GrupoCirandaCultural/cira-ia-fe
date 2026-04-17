@@ -2,12 +2,12 @@
  * CONFIGURAÇÃO CENTRALIZADA DE EVENTOS
  * Define estandes, campos obrigatórios e regras por evento
  * URL Format: /{evento}/{estande}
- * Ex: /bett_educar/estande_laranja, /bienal_2026/ciranda_bienal
+ * Ex: /bett_brasil/estande_laranja, /bienal_2026/ciranda_bienal
  */
 
 export const EVENTOS_CONFIG = {
-  bett_educar: {
-    id: 'bett_educar',
+  bett_brasil: {
+    id: 'bett_brasil',
     nome: 'BETT Educar 2026',
     descricao: 'Maior evento de educação da América Latina',
     imagem: 'https://via.placeholder.com/400x300?text=BETT+Educar',
@@ -92,7 +92,7 @@ export const EVENTOS_CONFIG = {
     // Campos obrigatórios da Registration (sem estado/atividade)
     camposObrigatorios: ['nome', 'telefone', 'email'],
     
-    // Opções de atividade para este evento (diferente do bett_educar)
+    // Opções de atividade para este evento (diferente do bett_brasil)
     opcoesAtividade: [
       { id: 'visitante', label: 'Visitante' },
       { id: 'profissional', label: 'Profissional Livro' },
