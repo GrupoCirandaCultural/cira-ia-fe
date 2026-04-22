@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import api, { getBookByIsbn } from '../api';
 import { Send, Search, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw, Trash2, MessageCircle, CheckCircle, AlertCircle, ChevronUp, ChevronDown, Eye } from 'lucide-react';
 import bgChat from '../assets/background-chat.png';
+import bgChatBett from '../assets/background-chat-bett.png';
 import iconeEscola from '../assets/icone_ciranda_escola.png';
 import { getEstandeTheme } from '../theme';
 
@@ -865,7 +866,7 @@ export default function ChatInterface({ userName, userPhone, cupom, onBack, init
         theme={theme}
       />
 
-      <div className="absolute inset-0 z-0" style={{ backgroundImage: `url(${bgChat})`, backgroundSize: 'cover', backgroundPosition: 'center top' }} />
+      <div className="absolute inset-0 z-0" style={{ backgroundImage: `url(${eventoId === 'bett_brasil' ? bgChatBett : bgChat})`, backgroundSize: 'cover', backgroundPosition: 'center top' }} />
 
       <header className="relative z-10 bg-white/90 backdrop-blur-md p-4 flex justify-between items-center shadow-sm" style={{ borderBottomColor: `${theme.primaryColor}20`, borderBottomWidth: '1px' }}>
         <div className="flex items-center gap-2">

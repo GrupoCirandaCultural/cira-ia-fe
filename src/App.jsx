@@ -185,6 +185,7 @@ function App() {
           {/* TELA DE CHECK-IN (FORA DO FLUXO PRINCIPAL) */}
           {appState.isConfigured && step === 'checkin' && (
             <CheckInScreen 
+              eventoId={appState.selectedEvento}
               idEstande={appState.selectedEstande} 
               onBack={() => setStep(0)} 
               onUserNotFound={(phone) => {

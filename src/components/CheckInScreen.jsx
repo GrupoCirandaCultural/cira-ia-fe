@@ -3,8 +3,9 @@ import QRCode from 'react-qr-code';
 import api from '../api';
 import { ArrowLeft, MapPin, CheckCircle2, AlertCircle, X } from 'lucide-react';
 import EventMap from './EventMap';
+import CheckInScreenBettBrasil from './CheckInScreenBettBrasil';
 
-export default function CheckInScreen({ onBack, idEstande, onUserNotFound }) {
+export default function CheckInScreen({ onBack, eventoId, idEstande, onUserNotFound }) {
   const [phone, setPhone] = useState('');
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -79,6 +80,12 @@ export default function CheckInScreen({ onBack, idEstande, onUserNotFound }) {
     setCustomAlert(null);
   };
 
+  // Layout especial para BETT Brasil (sem check-in)
+  console.log("ID do evento atual:", eventoId);
+  if (eventoId === 'bett_brasil') {
+    return <CheckInScreenBettBrasil onBack={onBack} eventoId={eventoId} idEstande={idEstande} />;
+  }
+
   return (
     <div className="h-full w-full bg-gradient-to-b from-purple-600 to-pink-500 p-6 flex flex-col text-white animate-in fade-in duration-500">
       
@@ -126,7 +133,8 @@ export default function CheckInScreen({ onBack, idEstande, onUserNotFound }) {
         {/* MAPA INTERATIVO */}
         <EventMap 
             visitados={status?.visitados || []} 
-            idEstandeAtual={idEstande} 
+            idEstandeAtual={idEstande}
+            eventoId={eventoId}
         />
 
         <h2 className="text-2xl font-black mb-2">Passaporte Ciranda 🎁</h2>

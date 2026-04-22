@@ -5,7 +5,7 @@ import { ArrowLeft, AlertCircle, X } from 'lucide-react';
 import { getEstandeTheme } from '../theme';
 import { getCamposRegistration, getOpcoesAtividade } from '../config/events.config';
 import CustomSelect from './CustomSelect';
-import imagemEscolaPreto from '../assets/escola_preto_horizontal.png';
+import imagemEscola from '../assets/ciranda_escola_sem_fundo.png';
 
 export default function Registration({ onComplete, idEstande, eventoId = 'bett_brasil', initialPhone, onBack }) {
   const theme = getEstandeTheme(idEstande);
@@ -136,9 +136,9 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
         )}
         {eventoId === 'bett_brasil' ? (
           <img 
-            src={imagemEscolaPreto} 
+            src={imagemEscola} 
             alt="Escola Logo" 
-            className="h-10 mt-5 mb-2 mx-auto"
+            className="h-15 mt-2 mb-3 mx-auto"
           />
         ) : (
           <h2 className={`text-3xl font-black ${theme.textPrimary} mb-2 text-center`}>Cira IA</h2>
@@ -287,7 +287,7 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
             type="submit"
             disabled={loading}
             className="w-full text-white font-black py-4 rounded-2xl shadow-lg transition-all uppercase tracking-widest disabled:bg-gray-400"
-            style={{ backgroundColor: loading ? '' : theme.primaryColor }}
+            style={{ backgroundColor: theme.primaryColor ?? ''}}
           >
             {loading ? 'Processando...' : (isLoginMode ? 'Entrar' : 'Cadastrar')}
           </button>

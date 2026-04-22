@@ -1,12 +1,27 @@
 import React from 'react';
 import { MapPin, Check } from 'lucide-react';
+import mapaBettBrasil from '../assets/mapa_bett_brasil.jpeg';
 
-const EventMap = ({ visitados = [], idEstandeAtual }) => {
+const EventMap = ({ visitados = [], idEstandeAtual, eventoId }) => {
   // Simulação dos estandes do evento (Pode ser parametrizado via props no futuro)
   const estandes = [
-    { id: 'estande_laranja', label: 'Estande Laranja', x: '25%', y: '40%', color: '#FF8C42' },
+    { id: 'estande_laranja', label: 'Estande Laranja', x: '25%', y: '40%', color: '#FFB366' },
     { id: 'estande_azul', label: 'Estande Azul', x: '75%', y: '60%', color: '#003D82' },
   ];
+
+  // Layout especial para bett_brasil
+  if (eventoId === 'bett_brasil') {
+    return (
+      <div className="w-full flex flex-col gap-4 mb-6">
+        {/* Imagem superior do estande Azul */}
+
+        {/* Mapa da rota */}
+        <div className="bg-white/10 rounded-3xl border border-white/20 overflow-hidden shadow-inner p-4">
+          <img src={mapaBettBrasil} alt="Mapa BETT Brasil" className="w-full h-full rounded-xl object-cover" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full h-56 bg-white/10 rounded-3xl border border-white/20 mb-6 overflow-hidden shadow-inner">
