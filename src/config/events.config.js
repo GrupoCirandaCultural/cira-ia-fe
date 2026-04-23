@@ -17,13 +17,13 @@ export const EVENTOS_CONFIG = {
       {
         id: 'estande_laranja',
         label: 'Estande Laranja',
-        numero: 'N164',
+        numero: 'D10',
         cor: '#FF8C42'
       },
       {
         id: 'estande_azul',
         label: 'Estande Azul',
-        numero: 'D10',
+        numero: 'N164',
         cor: '#003D82'
       }
     ],
@@ -45,7 +45,7 @@ export const EVENTOS_CONFIG = {
     // Temas por estande
     temaPorEstande: {
       estande_laranja: {
-        primaryColor: '#ea580c',
+        primaryColor: '#F9B334',
         secondaryColor: '#ff7a2a',
         accentColor: '#ff7a2a',
         darkColor: '#d94a08',

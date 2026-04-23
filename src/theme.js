@@ -1,7 +1,7 @@
 // Configurações de tema por estande
 export const ESTANDE_THEMES = {
   estande_laranja: {
-    id: 'N164',
+    id: 'D10',
     nome: 'Laranja',
     bgGradient: 'from-orange-400 to-orange-500',
     primaryColor: '#F9B334',
@@ -21,7 +21,7 @@ export const ESTANDE_THEMES = {
     footerLink: 'text-yellow-300 hover:text-yellow-200',
   },
   estande_azul: {
-    id: 'D10',
+    id: 'N164',
     nome: 'Azul',
     bgGradient: 'from-blue-700 to-blue-800',
     primaryColor: '#003D82',

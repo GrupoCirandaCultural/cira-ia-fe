@@ -1,13 +1,25 @@
 import React from 'react';
 import { ArrowLeft, MapPin } from 'lucide-react';
 import EventMap from './EventMap';
+import { EVENTOS_CONFIG } from '../config/events.config';
 
 export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande }) {
   // Formata o ID do estande para exibição
   const estandeNome = idEstande ? idEstande.replace(/_/g, ' ').toUpperCase() : "GERAL";
+  
+  // Obtém o tema do estande a partir da configuração
+  const eventoConfig = EVENTOS_CONFIG[eventoId];
+  const tema = eventoConfig?.temaPorEstande?.[idEstande];
+  const primaryColor = tema?.primaryColor || '#ea580c';
+  const darkColor = tema?.darkColor || '#d94a08';
 
   return (
-    <div className="h-full w-full bg-gradient-to-b from-orange-500 to-orange-600 p-6 flex flex-col text-white animate-in fade-in duration-500">
+    <div 
+      className="h-full w-full p-6 flex flex-col text-white animate-in fade-in duration-500"
+      style={{
+        background: `linear-gradient(180deg, ${primaryColor} 0%, ${darkColor} 100%)`
+      }}
+    >
       
       {/* HEADER */}
       <button onClick={onBack} className="flex items-center gap-2 text-sm font-bold mb-6 hover:opacity-80 transition-opacity">
