@@ -11,6 +11,7 @@ const scrollbarHideStyle = `
   html, body {
     height: 100%;
     width: 100%;
+    overflow: hidden;
   }
   
   .discount-scroll::-webkit-scrollbar {
@@ -22,10 +23,9 @@ const scrollbarHideStyle = `
   }
   
   .discount-container {
-    height: 100dvh;
     height: 100vh;
+    height: 100dvh;
     min-height: -webkit-fill-available;
-    padding-bottom: env(safe-area-inset-bottom);
   }
 `;
 
@@ -41,7 +41,7 @@ export default function DiscountSuccess({ idEstande, eventoId, onExplore, onView
   return (
     <>
       <style>{scrollbarHideStyle}</style>
-      <div className="discount-container h-screen bg-gradient-to-b from-blue-900 to-blue-950 flex flex-col">
+      <div className="discount-container bg-gradient-to-b from-blue-900 to-blue-950 flex flex-col">
       {/* Header */}
       <motion.header
         initial={{ opacity: 0, y: -8 }}
@@ -124,7 +124,8 @@ export default function DiscountSuccess({ idEstande, eventoId, onExplore, onView
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="px-4 pb-0 md:pb-25 space-y-3 mb-2"
+        className="px-4 space-y-3"
+        style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
       >
         <button
           onClick={() =>
