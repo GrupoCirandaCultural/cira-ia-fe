@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
 import { ArrowLeft, MapPin, Download, Check } from 'lucide-react';
-import { toPng } from 'html-to-image';
 import EventMap from './EventMap';
 import { EVENTOS_CONFIG } from '../config/events.config';
+import mapaBettBrasil from '../assets/mapa_bett_brasil.jpeg';
 
 const viewportStyle = `
   .checkin-container {
@@ -14,7 +14,6 @@ const viewportStyle = `
 `;
 
 export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande, fromDiscount }) {
-  const mapRef = useRef(null);
   const [downloaded, setDownloaded] = useState(false);
   // Formata o ID do estande para exibição
   const estandeNome = idEstande ? idEstande.replace(/_/g, ' ').toUpperCase() : "GERAL";
@@ -26,23 +25,16 @@ export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande, f
   const darkColor = tema?.darkColor || '#d94a08';
 
   const handleDownloadMap = async () => {
-    if (!mapRef.current) return;
     try {
-      const dataUrl = await toPng(mapRef.current, {
-        pixelRatio: 2,
-        cacheBust: true,
-        skipFonts: true,
-      });
-
       // Safari mobile: usa Web Share API
       if (navigator.share && /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-        const blob = await fetch(dataUrl).then(r => r.blob());
-        const file = new File([blob], 'mapa-bett-brasil.png', { type: 'image/png' });
+        const blob = await fetch(mapaBettBrasil).then(r => r.blob());
+        const file = new File([blob], 'mapa-bett-brasil.jpeg', { type: 'image/jpeg' });
         await navigator.share({ files: [file], title: 'Mapa BETT Brasil' });
       } else {
         const link = document.createElement('a');
-        link.download = 'mapa-bett-brasil.png';
-        link.href = dataUrl;
+        link.download = 'mapa-bett-brasil.jpeg';
+        link.href = mapaBettBrasil;
         link.click();
       }
 
@@ -77,7 +69,7 @@ export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande, f
 
         {/* MAPA INTERATIVO COM BOTÃO SOBREPOSTO */}
         <div className="relative w-full flex-1 mb-6">
-          <div ref={mapRef} className="w-full h-full">
+          <div className="w-full h-full">
             <EventMap 
                 visitados={[]} 
                 idEstandeAtual={idEstande}
