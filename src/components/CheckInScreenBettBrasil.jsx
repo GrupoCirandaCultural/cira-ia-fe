@@ -3,7 +3,7 @@ import { ArrowLeft, MapPin } from 'lucide-react';
 import EventMap from './EventMap';
 import { EVENTOS_CONFIG } from '../config/events.config';
 
-export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande }) {
+export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande, fromDiscount }) {
   // Formata o ID do estande para exibição
   const estandeNome = idEstande ? idEstande.replace(/_/g, ' ').toUpperCase() : "GERAL";
   
@@ -23,7 +23,7 @@ export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande })
       
       {/* HEADER */}
       <button onClick={onBack} className="flex items-center gap-2 text-sm font-bold mb-6 hover:opacity-80 transition-opacity">
-        <ArrowLeft size={20} /> Voltar para o Início
+        <ArrowLeft size={20} /> Voltar {fromDiscount ? 'para o Desconto' : 'para o Início'}
       </button>
 
       <div className="flex-1 flex flex-col items-center text-center">

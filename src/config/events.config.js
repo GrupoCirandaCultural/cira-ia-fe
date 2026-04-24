@@ -166,6 +166,13 @@ export function getOpcoesAtividade(eventoId) {
   return evento.opcoesAtividade;
 }
 
+export function getOutroEstande(eventoId, estandeAtualId) {
+  const evento = EVENTOS_CONFIG[eventoId];
+  if (!evento) return null;
+  
+  return evento.estandes.find(e => e.id !== estandeAtualId) || null;
+}
+
 export function listarEventos() {
   return Object.values(EVENTOS_CONFIG).map(evento => ({
     id: evento.id,

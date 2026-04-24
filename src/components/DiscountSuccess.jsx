@@ -1,12 +1,23 @@
 import React, { useMemo } from 'react';
-import { Search, MapPin, ShoppingCart } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Search, ShoppingCart } from 'lucide-react';
 import { getEventoConfig, getEstandeConfig, getTemaEstande } from '../config/events.config';
+import { CouponCard } from './CouponCard';
+import { Stepper } from './Stepper';
 import logoFundo from '../assets/logo_fundo.png';
 import logoFundoCirandaEscola from '../assets/ciranda_escola_sem_fundo_branco.png';
-import bookIcon from '../assets/book_icon.png';
-import cartIcon from '../assets/cart_icon.png';
 
-export default function DiscountSuccess({ idEstande, eventoId, onExplore, userName = 'Visitante' }) {
+const scrollbarHideStyle = `
+  .discount-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  .discount-scroll {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+`;
+
+export default function DiscountSuccess({ idEstande, eventoId, onExplore, onViewMap, onBack, userName = 'Visitante', userPhone = '', discount = '20% OFF' }) {
   const eventoConfig = useMemo(() => getEventoConfig(eventoId), [eventoId]);
   const estandeConfig = useMemo(() => getEstandeConfig(eventoId, idEstande), [eventoId, idEstande]);
   const temaEstande = useMemo(() => getTemaEstande(eventoId, idEstande), [eventoId, idEstande]);
@@ -16,99 +27,93 @@ export default function DiscountSuccess({ idEstande, eventoId, onExplore, userNa
   }
 
   return (
-    <div
-      className="relative h-full w-full flex flex-col overflow-hidden"
-      style={{ background: `linear-gradient(to bottom, #003D82, #003D82dd)` }}
-    >
+    <>
+      <style>{scrollbarHideStyle}</style>
+      <div className="h-screen bg-gradient-to-b from-blue-900 to-blue-950 flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-center z-10">
-        <div
-          style={{ backgroundColor: "#F9B334" }}
-          className="w-full p-5 flex items-center justify-center gap-2"
-        >
-          <img src={logoFundo} alt="logo" className="h-20" />
-          <img src={logoFundoCirandaEscola} alt="logo" className="h-14" />
-        </div>
-      </div>
-
-      {/* Content - Centro */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-8 z-10 overflow-y-auto">
-        {/* Parabéns */}
-        <h1 className="text-7xl font-black text-white text-center leading-tight">
-          Parabéns
-        </h1>
-
-        {/* Nome em cinza menor */}
-        <p className="text-2xl font-black text-gray-300 text-center mb-6">
-          {userName}
-        </p>
-
-        {/* Desconto */}
-        <div className="text-center mb-8">
-          <p className="text-3xl text-yellow-300 font-black leading-tight">
-            Você ganhou
-            <br />
-            20% de desconto
-          </p>
-        </div>
-
-        {/* Tutorial Centralizado */}
-        <div className="w-full max-w-sm space-y-3 text-white">
-          {/* Passo 1 */}
-          <div className="text-center">
-            <p className="text-lg font-black mb-1">1. Printe esta tela</p>
-          </div>
-
-          {/* Passo 2 */}
-          <div className="text-center">
-            <p className="text-lg font-black mb-1">
-              2. Vá até o próximo estande
-            </p>
-            <p className="text-base font-medium">Ciranda na Escola</p>
-            <p className="text-base text-yellow-300 font-medium underline flex items-center justify-center gap-1">
-              <MapPin size={14} />
-              Veja no mapa como chegar
-            </p>
-          </div>
-
-          {/* Passo 3 */}
-          <div className="text-center">
-            <p className="text-lg font-black mb-1">
-              3. Escolha os seus produtos e
-            </p>
-            <p className="text-base font-medium">
-              aplique o seu desconto no caixa
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Footer com dois botões */}
-      <div
-        className="w-full grid grid-cols-2 gap-0 z-10"
-        style={{ backgroundColor: "#F9B334" }}
+      <motion.header
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        onClick={onBack}
+        className="flex-shrink-0 mb-4 flex items-center justify-between rounded-2xl bg-white mx-4 mt-4 px-5 py-3 shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
       >
-        {/* Botão Esquerdo - Estoque */}
-        <button
-          onClick={onExplore}
-          className="flex-1 py-8 px-1 text-white font-black text-center border-r-4 hover:bg-black/10 active:scale-95 transition-all flex flex-col items-center gap-2 min-h-48"
-          style={{ borderRightColor: "#003D82" }}
-        >
-          <span className="text-center text-black text-base font-medium px-2">
-            Quer ajuda virtual para esclarecer dúvidas?
-          </span>
-          <div className="bg-orange-400 rounded-lg p-3 flex items-center justify-center min-h-18">
-            <div className="rounded-lg p-3 flex items-center justify-center">
-              <img src={bookIcon} alt="book" className="h-7 w-7" />
-            </div>
-            <span className="text-sm leading-tight">
-              CONSULTE O<br />
-              NOSSO ESTOQUE
-            </span>
-          </div>
-        </button>
+        <img src={logoFundo} alt="bett Brasil" className="h-8 w-35 invert" />
+        <img src={logoFundoCirandaEscola} alt="Ciranda na Escola" className="h-14 w-20 invert" />
+      </motion.header>
 
-        {/* Botão Direito - Pesquisa */}
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col px-4 pb-4 overflow-y-auto discount-scroll">
+        <div className="mx-auto w-full max-w-md flex flex-col gap-2">
+          {/* Greeting */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="flex items-center gap-2 text-yellow-300"
+          >
+            <span className="text-2xl">🎉</span>
+            <span className="text-xs font-semibold uppercase tracking-[0.18em]">
+              Parabéns, {userName.split(' ')[0]}!
+            </span>
+          </motion.div>
+
+          {/* Main Title */}
+          <motion.h1
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-4xl font-black leading-none tracking-tight text-white -mt-2"
+          >
+            Você ganhou um<br />
+            desconto exclusivo
+          </motion.h1>
+
+          {/* Subtitle */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.15 }}
+            className="text-sm text-blue-100 mb-1"
+          >
+            Use ainda hoje no estande Ciranda na Escola.
+          </motion.p>
+
+          {/* Coupon Card */}
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2, type: 'spring', stiffness: 200, damping: 18 }}
+          >
+            <CouponCard 
+              code="CIRANDA20" 
+              discount={discount}
+              validUntil="hoje."
+              userName={userName.split(' ')[0]}
+              userPhone={userPhone}
+            />
+          </motion.div>
+
+          {/* Steps */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.35 }}
+          >
+            <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-200 mt-2">
+              Como usar
+            </p>
+            <Stepper idEstande={idEstande} eventoId={eventoId} onViewMap={onViewMap} />
+          </motion.div>
+        </div>
+      </div>
+
+      {/* CTAs - Bottom Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5 }}
+        className="px-4 pb-30 space-y-3"
+      >
         <button
           onClick={() =>
             window.open(
@@ -116,25 +121,20 @@ export default function DiscountSuccess({ idEstande, eventoId, onExplore, userNa
               "_blank",
             )
           }
-          className="flex-1 py-4 px-1 text-white font-black text-center hover:bg-black/10 active:scale-95 transition-all flex flex-col items-center gap-2 min-h-48"
-        >
-          <p className="text-center text-black text-base font-medium mt-4">
-            Preencha a pesquisa e ganhe{" "}
-            <span className="text-red-500 font-black">40% off</span> em nosso
-            site!
-          </p>
-          <div className="bg-orange-400 rounded-lg flex p-3 items-center justify-center min-w-45 h-19">
-            <div className="rounded-lg p-3 flex items-center justify-center">
-              <img src={cartIcon} alt="cart" className="h-7 w-7" />
-            </div>
-            <span className="text-sm leading-tight">
-              QUERO
-              <br />
-              PARTICIPAR
-            </span>
-          </div>
+          className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 px-4 py-4 font-bold text-white transition active:scale-[0.98] shadow-lg">
+          <ShoppingCart />
+          Quero participar da pesquisa e ganhar 40% off
         </button>
-      </div>
+
+        <button
+          onClick={onExplore}
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-gray-300 bg-white px-4 py-4 font-semibold text-gray-900 transition hover:bg-gray-50 active:scale-[0.98]"
+        >
+          <Search className="h-5 w-5" />
+          Consultar nosso estoque
+        </button>
+      </motion.div>
     </div>
+    </>
   );
 }

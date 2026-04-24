@@ -45,6 +45,7 @@ function App() {
   const [leadId, setLeadId] = useState(null);
   const [target, setTarget] = useState(null);
   const [prefilledPhone, setPrefilledPhone] = useState('');
+  const [fromDiscount, setFromDiscount] = useState(false);
 
   // Função para selecionar evento
   const handleSelectEvento = (eventoId) => {
@@ -186,8 +187,16 @@ function App() {
           {appState.isConfigured && step === 'checkin' && (
             <CheckInScreen 
               eventoId={appState.selectedEvento}
-              idEstande={appState.selectedEstande} 
-              onBack={() => setStep(0)} 
+              idEstande={appState.selectedEstande}
+              fromDiscount={fromDiscount}
+              onBack={() => {
+                if (fromDiscount) {
+                  setFromDiscount(false);
+                  setStep('discount-success');
+                } else {
+                  setStep(0);
+                }
+              }}
               onUserNotFound={(phone) => {
                 setPrefilledPhone(phone);
                 setTarget('checkin_redirect');
@@ -225,7 +234,12 @@ function App() {
               idEstande={appState.selectedEstande}
               eventoId={appState.selectedEvento}
               userName={userLead?.nome}
+              userPhone={userLead?.telefone}
               onExplore={() => setStep(3)}
+              onViewMap={() => {
+                setFromDiscount(true);
+                setStep('checkin');
+              }}
               onBack={() => setStep(0)}
             />
           )}

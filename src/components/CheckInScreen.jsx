@@ -5,7 +5,7 @@ import { ArrowLeft, MapPin, CheckCircle2, AlertCircle, X } from 'lucide-react';
 import EventMap from './EventMap';
 import CheckInScreenBettBrasil from './CheckInScreenBettBrasil';
 
-export default function CheckInScreen({ onBack, eventoId, idEstande, onUserNotFound }) {
+export default function CheckInScreen({ onBack, eventoId, idEstande, onUserNotFound, fromDiscount }) {
   const [phone, setPhone] = useState('');
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -83,7 +83,7 @@ export default function CheckInScreen({ onBack, eventoId, idEstande, onUserNotFo
   // Layout especial para BETT Brasil (sem check-in)
   console.log("ID do evento atual:", eventoId);
   if (eventoId === 'bett_brasil') {
-    return <CheckInScreenBettBrasil onBack={onBack} eventoId={eventoId} idEstande={idEstande} />;
+    return <CheckInScreenBettBrasil onBack={onBack} eventoId={eventoId} idEstande={idEstande} fromDiscount={fromDiscount} />;
   }
 
   return (
@@ -91,7 +91,7 @@ export default function CheckInScreen({ onBack, eventoId, idEstande, onUserNotFo
       
       {/* HEADER */}
       <button onClick={onBack} className="flex items-center gap-2 text-sm font-bold mb-6 hover:opacity-80 transition-opacity">
-        <ArrowLeft size={20} /> Voltar para o Início
+        <ArrowLeft size={20} /> Voltar {fromDiscount ? 'para o Desconto' : 'para o Início'}
       </button>
 
       <div className="flex-1 flex flex-col items-center text-center">
