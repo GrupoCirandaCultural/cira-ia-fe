@@ -42,7 +42,7 @@ export default function DiscountSuccess({ idEstande, eventoId, onExplore, onView
       </motion.header>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col px-4 pb-4 overflow-y-auto discount-scroll">
+      <div className="flex-1 flex flex-col px-4 overflow-y-auto discount-scroll">
         <div className="mx-auto w-full max-w-md flex flex-col gap-2">
           {/* Greeting */}
           <motion.div
@@ -112,7 +112,7 @@ export default function DiscountSuccess({ idEstande, eventoId, onExplore, onView
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
-        className="px-4 pb-30 space-y-3"
+        className="px-4 pb-0 md:pb-25 space-y-3 mb-2"
       >
         <button
           onClick={() =>
@@ -121,14 +121,14 @@ export default function DiscountSuccess({ idEstande, eventoId, onExplore, onView
               "_blank",
             )
           }
-          className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 px-4 py-4 font-bold text-white transition active:scale-[0.98] shadow-lg">
+          className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 px-3 py-2 font-bold text-white transition active:scale-[0.98] shadow-lg">
           <ShoppingCart />
           Quero participar da pesquisa e ganhar 40% off
         </button>
 
         <button
           onClick={onExplore}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-gray-300 bg-white px-4 py-4 font-semibold text-gray-900 transition hover:bg-gray-50 active:scale-[0.98]"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-gray-300 bg-white px-4 py-2 font-semibold text-gray-900 transition hover:bg-gray-50 active:scale-[0.98]"
         >
           <Search className="h-5 w-5" />
           Consultar nosso estoque
