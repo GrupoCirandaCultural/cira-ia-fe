@@ -8,12 +8,24 @@ import logoFundo from '../assets/logo_fundo.png';
 import logoFundoCirandaEscola from '../assets/ciranda_escola_sem_fundo_branco.png';
 
 const scrollbarHideStyle = `
+  html, body {
+    height: 100%;
+    width: 100%;
+  }
+  
   .discount-scroll::-webkit-scrollbar {
     display: none;
   }
   .discount-scroll {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+  
+  .discount-container {
+    height: 100dvh;
+    height: 100vh;
+    min-height: -webkit-fill-available;
+    padding-bottom: env(safe-area-inset-bottom);
   }
 `;
 
@@ -29,7 +41,7 @@ export default function DiscountSuccess({ idEstande, eventoId, onExplore, onView
   return (
     <>
       <style>{scrollbarHideStyle}</style>
-      <div className="h-screen bg-gradient-to-b from-blue-900 to-blue-950 flex flex-col">
+      <div className="discount-container h-screen bg-gradient-to-b from-blue-900 to-blue-950 flex flex-col">
       {/* Header */}
       <motion.header
         initial={{ opacity: 0, y: -8 }}
