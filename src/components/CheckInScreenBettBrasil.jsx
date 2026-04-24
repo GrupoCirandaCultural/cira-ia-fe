@@ -31,11 +31,21 @@ export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande, f
       const dataUrl = await toPng(mapRef.current, {
         pixelRatio: 2,
         cacheBust: true,
+        skipFonts: true,
       });
-      const link = document.createElement('a');
-      link.download = 'mapa-bett-brasil.png';
-      link.href = dataUrl;
-      link.click();
+
+      // Safari mobile: usa Web Share API
+      if (navigator.share && /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        const blob = await fetch(dataUrl).then(r => r.blob());
+        const file = new File([blob], 'mapa-bett-brasil.png', { type: 'image/png' });
+        await navigator.share({ files: [file], title: 'Mapa BETT Brasil' });
+      } else {
+        const link = document.createElement('a');
+        link.download = 'mapa-bett-brasil.png';
+        link.href = dataUrl;
+        link.click();
+      }
+
       setDownloaded(true);
       setTimeout(() => setDownloaded(false), 2000);
     } catch (e) {
