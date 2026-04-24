@@ -4,6 +4,15 @@ import { toPng } from 'html-to-image';
 import EventMap from './EventMap';
 import { EVENTOS_CONFIG } from '../config/events.config';
 
+const viewportStyle = `
+  .checkin-container {
+    height: 100vh;
+    height: 100dvh;
+    min-height: -webkit-fill-available;
+    overflow: hidden;
+  }
+`;
+
 export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande, fromDiscount }) {
   const mapRef = useRef(null);
   const [downloaded, setDownloaded] = useState(false);
@@ -35,19 +44,21 @@ export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande, f
   };
 
   return (
-    <div 
-      className="h-full w-full p-6 flex flex-col text-white animate-in fade-in duration-500"
-      style={{
-        background: `linear-gradient(180deg, ${primaryColor} 0%, ${darkColor} 100%)`
-      }}
-    >
+    <>
+      <style>{viewportStyle}</style>
+      <div 
+        className="checkin-container w-full flex flex-col text-white animate-in fade-in duration-500"
+        style={{
+          background: `linear-gradient(180deg, ${primaryColor} 0%, ${darkColor} 100%)`
+        }}
+      >
       
       {/* HEADER */}
-      <button onClick={onBack} className="flex items-center gap-2 text-sm font-bold mb-6 hover:opacity-80 transition-opacity">
+      <button onClick={onBack} className="flex-shrink-0 flex items-center gap-2 text-sm font-bold hover:opacity-80 transition-opacity px-6 pt-6 pb-4">
         <ArrowLeft size={20} /> Voltar {fromDiscount ? 'para o Desconto' : 'para o Início'}
       </button>
 
-      <div className="flex-1 flex flex-col items-center text-center">
+      <div className="flex-1 flex flex-col items-center text-center px-6 overflow-y-auto">
         {/* IDENTIFICAÇÃO DO ESTANDE ATUAL */}
         <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full mb-6 border border-white/30 text-[15px] font-black tracking-widest">
           <MapPin size={28} />
@@ -84,10 +95,11 @@ export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande, f
         </div>
 
         <h2 className="text-2xl font-black mb-2">Mapa BETT Brasil 🗺️</h2>
-        <p className="text-sm opacity-90 px-4 leading-tight">
+        <p className="text-sm opacity-90 px-4 leading-tight" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
           Conheça a localização dos estandes da BETT Brasil
         </p>
       </div>
     </div>
+    </>
   );
 }
