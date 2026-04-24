@@ -1,9 +1,12 @@
-import React from 'react';
-import { ArrowLeft, MapPin } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { ArrowLeft, MapPin, Download, Check } from 'lucide-react';
+import { toPng } from 'html-to-image';
 import EventMap from './EventMap';
 import { EVENTOS_CONFIG } from '../config/events.config';
 
 export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande, fromDiscount }) {
+  const mapRef = useRef(null);
+  const [downloaded, setDownloaded] = useState(false);
   // Formata o ID do estande para exibição
   const estandeNome = idEstande ? idEstande.replace(/_/g, ' ').toUpperCase() : "GERAL";
   
@@ -12,6 +15,24 @@ export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande, f
   const tema = eventoConfig?.temaPorEstande?.[idEstande];
   const primaryColor = tema?.primaryColor || '#ea580c';
   const darkColor = tema?.darkColor || '#d94a08';
+
+  const handleDownloadMap = async () => {
+    if (!mapRef.current) return;
+    try {
+      const dataUrl = await toPng(mapRef.current, {
+        pixelRatio: 2,
+        cacheBust: true,
+      });
+      const link = document.createElement('a');
+      link.download = 'mapa-bett-brasil.png';
+      link.href = dataUrl;
+      link.click();
+      setDownloaded(true);
+      setTimeout(() => setDownloaded(false), 2000);
+    } catch (e) {
+      console.error('Erro ao baixar mapa', e);
+    }
+  };
 
   return (
     <div 
@@ -33,23 +54,39 @@ export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande, f
           VOCÊ ESTÁ NO:  {estandeNome}
         </div>
 
-        {/* MAPA INTERATIVO */}
-        <EventMap 
-            visitados={[]} 
-            idEstandeAtual={idEstande}
-            eventoId={eventoId}
-        />
+        {/* MAPA INTERATIVO COM BOTÃO SOBREPOSTO */}
+        <div className="relative w-full flex-1 mb-6">
+          <div ref={mapRef} className="w-full h-full">
+            <EventMap 
+                visitados={[]} 
+                idEstandeAtual={idEstande}
+                eventoId={eventoId}
+            />
+          </div>
+          
+          {/* BOTÃO SOBREPOSTO NA PARTE INFERIOR */}
+          <div className="absolute bottom-12 left-6 ">
+            <button
+              onClick={handleDownloadMap}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-black/30 hover:bg-black/40 px-4 py-3 text-sm font-semibold text-black transition active:scale-[0.98] backdrop-blur-md border border-white/40"
+            >
+              {downloaded ? (
+                <>
+                  <Check className="h-4 w-4" /> Mapa baixado
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" /> Baixar mapa
+                </>
+              )}
+            </button>
+          </div>
+        </div>
 
         <h2 className="text-2xl font-black mb-2">Mapa BETT Brasil 🗺️</h2>
-        <p className="text-sm opacity-90 mb-8 px-4 leading-tight">
-          Conheça a localização dos estandes da BETT Brasil e encontre tudo que você precisa!
+        <p className="text-sm opacity-90 px-4 leading-tight">
+          Conheça a localização dos estandes da BETT Brasil
         </p>
-
-        <div className="bg-white/20 backdrop-blur-md p-6 rounded-3xl border-2 border-white/30 w-full">
-          <p className="text-sm font-bold text-white/90">
-            Explore o mapa para encontrar os estandes que você deseja visitar
-          </p>
-        </div>
       </div>
     </div>
   );
