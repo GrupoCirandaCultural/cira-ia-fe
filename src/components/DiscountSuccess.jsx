@@ -136,7 +136,7 @@ export default function DiscountSuccess({ idEstande, eventoId, onExplore, onView
           }
           className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 px-3 py-2 font-bold text-white transition active:scale-[0.98] shadow-lg">
           <ShoppingCart />
-          Participe da pesquisa e ganhe 40%off no site
+          Participe da pesquisa e ganhe 40% off no site
         </button>
 
         <button
