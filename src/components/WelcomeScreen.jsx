@@ -78,7 +78,7 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
             <div className="flex flex-col items-center gap-3 animate-in fade-in slide-in-from-top-3 duration-700 delay-150">
               <h2 className="font-display text-3xl font-black text-white leading-tight">
                 Cadastre-se e libere <br />
-                <span style={{ color: "#FFD700" }}>20% de desconto</span>
+                <span style={{ color: config.buttonColor }}>20% de desconto</span>
               </h2>
             </div>
 
@@ -145,7 +145,7 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
               <button
                 onClick={() => onStart("checkin")}
                 className="flex items-center gap-1.5 font-display font-black text-base hover:scale-110 transition-transform duration-200"
-                style={{ color: "#FFD700" }}
+                style={{ color: config.buttonColor}}
               >
                 <MapPin size={20} />
                 Veja no mapa
