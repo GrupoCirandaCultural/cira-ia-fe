@@ -127,31 +127,31 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
   };
 
   return (
-    <div className={`flex flex-col items-center justify-center h-full ${theme.bgLight} p-6`}>
-      <div className={`bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md border-t-8 ${theme.borderPrimary} relative`}>
+    <div className={`flex flex-col items-center justify-center h-full w-full ${theme.bgLight} p-3 sm:p-6 overflow-y-auto`}>
+      <div className={`bg-white p-5 sm:p-8 rounded-3xl shadow-2xl w-full max-w-md border-t-8 ${theme.borderPrimary} relative my-auto`}>
         {onBack && (
-          <button onClick={onBack} className="absolute top-4 left-4 text-gray-400 transition-colors" style={{ color: 'inherit' }} onMouseEnter={(e) => e.target.style.color = theme.primaryColor} onMouseLeave={(e) => e.target.style.color = 'inherit'} title="Voltar">
-            <ArrowLeft size={24} />
+          <button onClick={onBack} className="absolute top-3 left-3 sm:top-4 sm:left-4 text-gray-400 transition-colors" style={{ color: 'inherit' }} onMouseEnter={(e) => e.target.style.color = theme.primaryColor} onMouseLeave={(e) => e.target.style.color = 'inherit'} title="Voltar">
+            <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         )}
         {eventoId === 'bett_brasil' ? (
           <img 
             src={imagemEscola} 
             alt="Escola Logo" 
-            className="h-15 mt-2 mb-3 mx-auto"
+            className="h-12 sm:h-16 mt-1 sm:mt-2 mb-2 sm:mb-3 mx-auto"
           />
         ) : (
-          <h2 className={`text-3xl font-black ${theme.textPrimary} mb-2 text-center`}>Cira IA</h2>
+          <h2 className={`text-2xl sm:text-3xl font-black ${theme.textPrimary} mb-2 text-center`}>Cira IA</h2>
         )}
-        <p className="text-gray-500 text-center mb-6 font-medium">
+        <p className="text-gray-500 text-center mb-4 sm:mb-6 text-sm sm:text-base font-medium">
           {isLoginMode ? 'Informe seu WhatsApp para entrar' : 'Cadastre-se para participar!'}
         </p>
         
-        <div className="flex bg-gray-100 p-1 rounded-xl mb-6">
+        <div className="flex bg-gray-100 p-1 rounded-xl mb-4 sm:mb-6">
           <button 
             type="button"
             onClick={() => setIsLoginMode(false)}
-            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${!isLoginMode ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${!isLoginMode ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             style={!isLoginMode ? { color: theme.primaryColor } : {}}
           >
             Novo Cadastro
@@ -159,7 +159,7 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
           <button 
             type="button"
             onClick={() => setIsLoginMode(true)}
-            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${isLoginMode ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${isLoginMode ? 'bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
             style={isLoginMode ? { color: theme.primaryColor } : {}}
           >
             Já tenho cadastro
@@ -194,12 +194,12 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           {!isLoginMode && (
             <input 
               required 
               placeholder="Nome Completo *"
-              className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl outline-none transition-all"
+              className="w-full p-3 sm:p-4 text-sm sm:text-base bg-gray-50 border-2 border-gray-100 rounded-xl outline-none transition-all"
               value={formData.nome}
               onChange={e => setFormData({...formData, nome: e.target.value})}
             />
@@ -209,7 +209,7 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
             required 
             type="tel"
             placeholder="WhatsApp *"
-            className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl outline-none transition-all"
+            className="w-full p-3 sm:p-4 text-sm sm:text-base bg-gray-50 border-2 border-gray-100 rounded-xl outline-none transition-all"
             value={formData.telefone}
             onChange={handlePhoneChange}
             maxLength={15}
@@ -223,7 +223,7 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
                   type="email"
                   required
                   placeholder="E-mail *"
-                  className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl outline-none transition-all"
+                  className="w-full p-3 sm:p-4 text-sm sm:text-base bg-gray-50 border-2 border-gray-100 rounded-xl outline-none transition-all"
                   value={formData.email}
                   onChange={e => setFormData({...formData, email: e.target.value})}
                 />
@@ -259,7 +259,7 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
                       type="text"
                       required
                       placeholder="Digite sua atividade *"
-                      className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-xl outline-none transition-all"
+                      className="w-full p-3 sm:p-4 text-sm sm:text-base bg-gray-50 border-2 border-gray-100 rounded-xl outline-none transition-all"
                       value={formData.atividadeOutro}
                       onChange={e => setFormData({...formData, atividadeOutro: e.target.value})}
                     />
@@ -267,16 +267,16 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
                 </>
               )}
               
-              <label className="flex items-start gap-3 p-2 cursor-pointer">
+              <label className="flex items-start gap-3 p-1 sm:p-2 cursor-pointer">
                 <input 
                   type="checkbox" 
                   required 
-                  className="mt-1 w-5 h-5"
+                  className="mt-0.5 w-5 h-5 shrink-0"
                   checked={formData.aceito}
                   onChange={e => setFormData({...formData, aceito: e.target.checked})}
                   style={{ accentColor: theme.primaryColor }}
                 />
-                <span className="text-xs text-gray-500 leading-tight">
+                <span className="text-[11px] sm:text-xs text-gray-500 leading-snug">
                   Aceito compartilhar meus dados para receber novidades da Ciranda Cultural. *
                 </span>
               </label>
@@ -286,7 +286,7 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
           <button 
             type="submit"
             disabled={loading}
-            className="w-full text-white font-black py-4 rounded-2xl shadow-lg transition-all uppercase tracking-widest disabled:bg-gray-400"
+            className="w-full text-white font-black py-3 sm:py-4 text-sm sm:text-base rounded-2xl shadow-lg transition-all uppercase tracking-widest disabled:bg-gray-400"
             style={{ backgroundColor: theme.primaryColor ?? ''}}
           >
             {loading ? 'Processando...' : (isLoginMode ? 'Entrar' : 'Cadastrar')}
