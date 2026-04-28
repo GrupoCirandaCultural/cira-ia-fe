@@ -36,32 +36,33 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
 
     return (
       <div
-        className="relative h-full w-full flex flex-col items-center justify-center overflow-hidden backdrop-blur-md"
+        className="relative h-full w-full overflow-y-auto overflow-x-hidden backdrop-blur-md"
         style={{
           background: `linear-gradient(135deg, ${config.primaryColor}, ${config.primaryColor}cc)`,
         }}
       >
         <div className="absolute inset-0 shimmer pointer-events-none" />
-        {/* Main card with glassmorphism */}
-        <div className="relative z-10 w-full max-w-md">
-          {/* Inner glass card */}
+        {/* Wrapper full-height: header em cima, conteúdo no meio, footer embaixo */}
+        <div className="relative z-10 min-h-full w-full flex justify-center px-3 py-4 sm:px-6 sm:py-8">
+        {/* Main card */}
+        <div className="w-full max-w-md flex flex-col min-h-full">
 
-          {/* Shimmer overlay */}
+          {/* HEADER (topo) */}
+          <header className="flex flex-col items-center gap-1 animate-in fade-in slide-in-from-top-2 duration-600">
+            <p className="text-[10px] sm:text-xs font-medium text-white/60 uppercase tracking-widest">
+              Estande
+            </p>
+            <h1 className="font-display text-3xl sm:text-5xl font-black text-white/90 tracking-tight leading-none">
+              {config.id}
+            </h1>
+          </header>
 
-          <div className="relative z-10 px-8 flex flex-col items-center text-center gap-6">
-            {/* Header com nome do estande */}
-            <div className="flex flex-col items-center gap-1 animate-in fade-in slide-in-from-top-2 duration-600">
-              <p className="text-xs font-medium text-white/60 uppercase tracking-widest">
-                Estande
-              </p>
-              <h1 className="font-display text-5xl font-black text-white/90 tracking-tight">
-                {config.id}
-              </h1>
-            </div>
+          {/* MAIN (centro - cresce e centraliza verticalmente) */}
+          <main className="flex-1 flex flex-col items-center justify-center text-center gap-4 sm:gap-8 py-6 sm:py-10">
 
             {/* Logo com animação float */}
             <div
-              className="w-50 h-32 rounded-2xl animate-float"
+              className="w-36 h-20 sm:w-60 sm:h-36 rounded-2xl animate-float flex items-center justify-center shrink-0"
               style={{
                 backgroundColor: `${config.primaryColor}40`,
                 backdropFilter: "blur(10px)",
@@ -70,13 +71,13 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
               <img
                 src={logoFundo}
                 alt="logo"
-                className="w-50 h-32 object-contain opacity-100"
+                className="w-full h-full object-contain opacity-100"
               />
             </div>
 
             {/* Texto Principal */}
-            <div className="flex flex-col items-center gap-3 animate-in fade-in slide-in-from-top-3 duration-700 delay-150">
-              <h2 className="font-display text-3xl font-black text-white leading-tight">
+            <div className="flex flex-col items-center gap-2 sm:gap-3 animate-in fade-in slide-in-from-top-3 duration-700 delay-150">
+              <h2 className="font-display text-xl sm:text-4xl font-black text-white leading-tight">
                 Cadastre-se e libere <br />
                 <span style={{ color: config.buttonColor }}>20% de desconto</span>
               </h2>
@@ -86,12 +87,12 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
             {eventoConfig.temRoleta && (
               <button
                 onClick={() => onStart("wheel")}
-                className="w-full py-5 font-display font-black text-xl rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 animate-in fade-in zoom-in-75 duration-700 delay-300"
+                className="w-full py-3.5 sm:py-5 font-display font-black text-base sm:text-xl rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 animate-in fade-in zoom-in-75 duration-700 delay-300"
                 style={{ backgroundColor: config.buttonColor, color: "white" }}
               >
-                <BookOpen size={24} />
+                <BookOpen className="w-5 h-5 sm:w-6 sm:h-6" />
                 QUERO DESCONTO
-                <Sparkles size={20} className="opacity-70" />
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 opacity-70" />
               </button>
             )}
 
@@ -99,10 +100,10 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
             {!eventoConfig.temRoleta && (
               <button
                 onClick={() => onStart("chat")}
-                className="w-full py-5 font-display font-black text-xl rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 animate-in fade-in zoom-in-75 duration-700 delay-300"
+                className="w-full py-3.5 sm:py-5 font-display font-black text-base sm:text-xl rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 animate-in fade-in zoom-in-75 duration-700 delay-300"
                 style={{ backgroundColor: config.buttonColor, color: "white" }}
               >
-                <BookOpen size={24} />
+                <BookOpen className="w-5 h-5 sm:w-6 sm:h-6" />
                 QUERO DESCONTO
               </button>
             )}
@@ -115,11 +116,11 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
             </div>
 
             {/* Texto Secundário */}
-            <div className="text-center space-y-2">
-              <p className="font-display font-black text-lg text-white">
+            <div className="text-center space-y-1 sm:space-y-2">
+              <p className="font-display font-black text-base sm:text-xl text-white">
                 Não sabe o que escolher?
               </p>
-              <p className="text-sm text-white/70">
+              <p className="text-xs sm:text-base text-white/70">
                 Encontre o seu livro favorito aqui
               </p>
             </div>
@@ -127,7 +128,7 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
             {/* Botão Secundário - CONSULTE ESTOQUE */}
             <button
               onClick={() => onStart("chat")}
-              className="w-full py-4 font-display font-black text-base rounded-2xl transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center gap-2 animate-in fade-in duration-700 delay-500"
+              className="w-full py-3 sm:py-4 font-display font-black text-sm sm:text-base rounded-2xl transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center gap-2 animate-in fade-in duration-700 delay-500"
               style={{
                 backgroundColor: "rgba(0, 0, 0, 0.3)",
                 backdropFilter: "blur(20px)",
@@ -135,23 +136,24 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
                 border: "1px solid rgba(255, 255, 255, 0.1)",
               }}
             >
-              <Search size={20} />
+              <Search className="w-4 h-4 sm:w-5 sm:h-5" />
               Consulte o nosso estoque
             </button>
+          </main>
 
-            {/* Footer com rota */}
-            <div className="text-center pt-4 flex flex-col items-center space-y-2 animate-in fade-in duration-700 delay-700">
-              <p className="text-sm text-white/70">{config.footerText}</p>
-              <button
-                onClick={() => onStart("checkin")}
-                className="flex items-center gap-1.5 font-display font-black text-base hover:scale-110 transition-transform duration-200"
-                style={{ color: config.buttonColor}}
-              >
-                <MapPin size={20} />
-                Veja no mapa
-              </button>
-            </div>
-          </div>
+          {/* FOOTER (rodapé) */}
+          <footer className="text-center flex flex-col items-center gap-1.5 sm:gap-2 animate-in fade-in duration-700 delay-700 pt-2">
+            <p className="text-xs sm:text-sm text-white/70">{config.footerText}</p>
+            <button
+              onClick={() => onStart("checkin")}
+              className="flex items-center gap-1.5 font-display font-black text-sm sm:text-base hover:scale-110 transition-transform duration-200"
+              style={{ color: config.buttonColor}}
+            >
+              <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
+              Veja no mapa
+            </button>
+          </footer>
+        </div>
         </div>
       </div>
     );
