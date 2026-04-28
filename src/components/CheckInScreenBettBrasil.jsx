@@ -56,19 +56,19 @@ export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande, f
       >
       
       {/* HEADER */}
-      <button onClick={onBack} className="flex-shrink-0 flex items-center gap-2 text-sm font-bold hover:opacity-80 transition-opacity px-6 pt-6 pb-4">
-        <ArrowLeft size={20} /> Voltar {fromDiscount ? 'para o Desconto' : 'para o Início'}
+      <button onClick={onBack} className="flex-shrink-0 flex items-center gap-2 text-xs sm:text-sm font-bold hover:opacity-80 transition-opacity px-4 sm:px-6 pt-4 sm:pt-6 pb-2 sm:pb-4">
+        <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" /> Voltar {fromDiscount ? 'para o Desconto' : 'para o Início'}
       </button>
 
-      <div className="flex-1 flex flex-col items-center text-center px-6 overflow-y-auto">
+      <div className="flex-1 min-h-0 flex flex-col items-center text-center px-4 sm:px-6">
         {/* IDENTIFICAÇÃO DO ESTANDE ATUAL */}
-        <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full mb-6 border border-white/30 text-[15px] font-black tracking-widest">
-          <MapPin size={28} />
-          VOCÊ ESTÁ NO:  {estandeNome}
+        <div className="flex-shrink-0 flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 sm:px-4 py-1.5 sm:py-2 rounded-full mb-3 sm:mb-6 border border-white/30 text-xs sm:text-[15px] font-black tracking-widest">
+          <MapPin className="w-5 h-5 sm:w-7 sm:h-7" />
+          <span>VOCÊ ESTÁ NO: {estandeNome}</span>
         </div>
 
         {/* MAPA INTERATIVO COM BOTÃO SOBREPOSTO */}
-        <div className="relative w-full flex-1 mb-6">
+        <div className="relative w-full flex-1 min-h-0 mb-3 sm:mb-6">
           <div className="w-full h-full">
             <EventMap 
                 visitados={[]} 
@@ -78,10 +78,12 @@ export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande, f
           </div>
           
           {/* BOTÃO SOBREPOSTO NA PARTE INFERIOR */}
-          <div className="absolute bottom-12 left-6 ">
+         
+        </div>
+        
             <button
               onClick={handleDownloadMap}
-              className="w-full flex items-center justify-center gap-2 rounded-xl bg-black/30 hover:bg-black/40 px-4 py-3 text-sm font-semibold text-black transition active:scale-[0.98] backdrop-blur-md border border-white/40"
+              className=" sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-black/30 hover:bg-black/40 px-4 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-black transition active:scale-[0.98] backdrop-blur-md border border-white/40"
             >
               {downloaded ? (
                 <>
@@ -93,11 +95,9 @@ export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande, f
                 </>
               )}
             </button>
-          </div>
-        </div>
-
-        <h2 className="text-2xl font-black mb-2">Mapa BETT Brasil 🗺️</h2>
-        <p className="text-sm opacity-90 px-4 leading-tight" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+          
+        <h2 className="flex-shrink-0 text-lg sm:text-2xl font-black mb-1 sm:mb-2">Mapa BETT Brasil 🗺️</h2>
+        <p className="flex-shrink-0 text-xs sm:text-sm opacity-90 px-2 sm:px-4 leading-tight" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}>
           Conheça a localização dos estandes da BETT Brasil
         </p>
       </div>

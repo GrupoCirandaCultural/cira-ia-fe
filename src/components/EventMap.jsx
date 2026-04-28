@@ -12,12 +12,14 @@ const EventMap = ({ visitados = [], idEstandeAtual, eventoId }) => {
   // Layout especial para bett_brasil
   if (eventoId === 'bett_brasil') {
     return (
-      <div className="w-full flex flex-col gap-4 mb-6">
-        {/* Imagem superior do estande Azul */}
-
+      <div className="w-full h-full flex flex-col">
         {/* Mapa da rota */}
-        <div className="bg-white/10 rounded-3xl border border-white/20 overflow-hidden shadow-inner p-4">
-          <img src={mapaBettBrasil} alt="Mapa BETT Brasil" className="w-full h-full rounded-xl object-cover" />
+        <div className="flex-1 min-h-0 bg-white/10 rounded-2xl sm:rounded-3xl border border-white/20 overflow-hidden shadow-inner p-2 sm:p-4 flex items-center justify-center">
+          <img
+            src={mapaBettBrasil}
+            alt="Mapa BETT Brasil"
+            className="max-w-full max-h-full w-auto h-auto rounded-xl object-contain"
+          />
         </div>
       </div>
     );
