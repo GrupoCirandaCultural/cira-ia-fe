@@ -36,7 +36,7 @@ export default function DiscountSuccess({ idEstande, eventoId, onExplore, onView
   const temaEstande = useMemo(() => getTemaEstande(eventoId, idEstande), [eventoId, idEstande]);
   const [showQrModal, setShowQrModal] = useState(false);
 
-  const whatsappUrl = 'https://wa.me/5511978802196?text=Já garanti meus 20% e vim responder a pesquisa para garantir 40%!';
+  const whatsappUrl = 'https://wa.me/5511978802196?text=Garanti meus 20 por cento de desconto e vim responder a pesquisa para garantir 40 por cento';
 
   const handleWhatsappClick = () => {
     if (isKiosk) {
