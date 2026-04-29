@@ -3,7 +3,7 @@ import { Check, Download } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { motion } from 'framer-motion';
 
-export function CouponCard({ code, discount, validUntil, userName = 'Visitante', userPhone = '' }) {
+export function CouponCard({ code, discount, validUntil, userName = 'Visitante', userPhone = '', isKiosk = false }) {
   const [downloaded, setDownloaded] = useState(false);
   const couponRef = useRef(null);
 
@@ -76,6 +76,7 @@ export function CouponCard({ code, discount, validUntil, userName = 'Visitante',
         </div>
       </div>
 
+      {!isKiosk && (
       <button
         onClick={handleDownload}
         className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-4 py-3 text-sm font-semibold text-white transition active:scale-[0.98]"
@@ -90,6 +91,7 @@ export function CouponCard({ code, discount, validUntil, userName = 'Visitante',
           </>
         )}
       </button>
+      )}
     </motion.div>
   );
 }

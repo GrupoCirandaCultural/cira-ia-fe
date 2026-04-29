@@ -99,7 +99,7 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
             {/* Se não tem roleta, vai direto para chat */}
             {!eventoConfig.temRoleta && (
               <button
-                onClick={() => onStart("chat")}
+                onClick={() => onStart("wheel")}
                 className="w-full py-3.5 sm:py-5 font-display font-black text-base sm:text-xl rounded-2xl shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 animate-in fade-in zoom-in-75 duration-700 delay-300"
                 style={{ backgroundColor: config.buttonColor, color: "white" }}
               >
@@ -127,7 +127,7 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
 
             {/* Botão Secundário - CONSULTE ESTOQUE */}
             <button
-              onClick={() => onStart("chat")}
+              onClick={() => onStart("chat_stock")}
               className="w-full py-3 sm:py-4 font-display font-black text-sm sm:text-base rounded-2xl transition-all duration-200 hover:scale-105 active:scale-95 flex items-center justify-center gap-2 animate-in fade-in duration-700 delay-500"
               style={{
                 backgroundColor: "rgba(0, 0, 0, 0.3)",

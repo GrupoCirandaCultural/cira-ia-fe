@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import WelcomeScreen from './components/WelcomeScreen';
 import Registration from './components/Registration';
 import PrizeWheel from './components/PrizeWheel';
@@ -6,8 +6,10 @@ import ChatInterface from './components/ChatInterface';
 import CheckInScreen from './components/CheckInScreen';
 import EventSelector from './components/EventSelector';
 import DiscountSuccess from './components/DiscountSuccess';
+import ConfigGate from './components/ConfigGate';
 import { MapPin, Check } from 'lucide-react';
 import { getEventoConfig, verificarEstandeValido } from './config/events.config';
+import { useKioskMode, useKioskInactivityReset } from './hooks/useKioskMode';
 
 function App() {
   // Estado consolidado com lazy initialization (parse URL apenas na carga inicial)
@@ -47,6 +49,21 @@ function App() {
   const [prefilledPhone, setPrefilledPhone] = useState('');
   const [fromDiscount, setFromDiscount] = useState(false);
 
+  // Gate de configuração (senha) — sem persistência: exigida sempre que entrar na tela de config
+  const [configAuthed, setConfigAuthed] = useState(false);
+
+  // Modo kiosk (?kiosk=true na URL)
+  const [isKiosk, setKiosk] = useKioskMode();
+  const handleKioskReset = useCallback(() => {
+    setStep(0);
+    setUserLead(null);
+    setLeadId(null);
+    setTarget(null);
+    setPrefilledPhone('');
+    setFromDiscount(false);
+  }, []);
+  useKioskInactivityReset(isKiosk, handleKioskReset, 300000);
+
   // Função para selecionar evento
   const handleSelectEvento = (eventoId) => {
     const config = getEventoConfig(eventoId);
@@ -78,14 +95,9 @@ function App() {
     if (choice === 'checkin') {
       setStep('checkin'); // Vai para a tela de rota de brindes
     } else {
-      // Valida se o evento suporta a escolha (ex: wheel só se temRoleta)
-      const eventoConfig = getEventoConfig(appState.selectedEvento);
-      if (choice === 'wheel' && !eventoConfig?.temRoleta) {
-        // Se tentou acessar wheel mas evento não tem, vai para chat
-        setTarget('chat');
-      } else {
-        setTarget(choice);  // Guarda a escolha original
-      }
+      // Guarda a escolha original (wheel/chat/chat_stock).
+      // A validação de roleta acontece em handleRegistrationComplete.
+      setTarget(choice);
       setStep(1);         // Vai para o cadastro
     }
   };
@@ -112,8 +124,14 @@ function App() {
     } else if (target === 'checkin_redirect') {
       // Retorna para o checkin
       setStep('checkin');
+    } else if (target === 'chat_stock' || target === 'chat') {
+      // Usuário escolheu explicitamente chat ou consulta de estoque: vai direto
+      setStep(3);
+    } else if (target === 'wheel' && !eventoConfig?.temRoleta && appState.selectedEvento === 'bett_brasil') {
+      // Bett Educar sem roleta: usuário quis desconto, mostra tela de cupom
+      setStep('discount-success');
     } else if (!eventoConfig?.temRoleta && appState.selectedEvento === 'bett_brasil') {
-      // Bett Educar: Show discount success screen before chat
+      // Bett Educar (fallback): Show discount success screen before chat
       setStep('discount-success');
     } else {
       // Chat direto (padrão ou se não tem roleta)
@@ -139,13 +157,18 @@ function App() {
         
         <div className="h-full w-full overflow-hidden relative bg-[#87CEEB]">
           
+          {/* GATE DE CONFIGURAÇÃO (SENHA) — protege as telas de seleção de evento/estande */}
+          {((!appState.selectedEvento) || (appState.selectedEvento && !appState.selectedEstande)) && appState.isConfigured && !configAuthed && (
+            <ConfigGate onUnlock={() => setConfigAuthed(true)} />
+          )}
+
           {/* TELA DE SELEÇÃO DE EVENTO (SE NÃO HOUVER EVENTO NA URL) */}
-          {!appState.selectedEvento && appState.isConfigured && (
+          {!appState.selectedEvento && appState.isConfigured && configAuthed && (
             <EventSelector onSelectEvent={handleSelectEvento} />
           )}
 
           {/* TELA DE SELEÇÃO DE ESTANDE (APENAS SE EVENTO FOI SELECIONADO MAS NÃO ESTANDE) */}
-          {appState.selectedEvento && !appState.selectedEstande && appState.isConfigured && (
+          {appState.selectedEvento && !appState.selectedEstande && appState.isConfigured && configAuthed && (
             <div className="h-full w-full bg-gradient-to-b from-gray-900 to-gray-800 p-8 flex flex-col items-center justify-center text-white z-50 absolute inset-0">
                <div className="mb-8 p-4 bg-white/10 rounded-full border border-white/20">
                  <MapPin size={48} className="text-blue-400" />
@@ -177,8 +200,22 @@ function App() {
                  ))}
                </div>
 
+               {/* Toggle de modo Kiosk */}
+               <label className="mt-6 w-full max-w-sm flex items-center justify-between gap-3 p-3 rounded-xl bg-white/5 border border-white/10 cursor-pointer">
+                 <div>
+                   <span className="block text-sm font-bold">Modo Kiosk</span>
+                   <span className="block text-[11px] text-gray-400">Oculta downloads e links externos; reseta após inatividade.</span>
+                 </div>
+                 <input
+                   type="checkbox"
+                   checked={isKiosk}
+                   onChange={(e) => setKiosk(e.target.checked)}
+                   className="w-5 h-5 accent-blue-500 shrink-0"
+                 />
+               </label>
+
                <p className="fixed bottom-4 text-[10px] text-gray-600 font-mono">
-                 Evento: {appState.selectedEvento} | Estande: {appState.selectedEstande}
+                 Evento: {appState.selectedEvento} | Estande: {appState.selectedEstande} {isKiosk ? '| KIOSK' : ''}
                </p>
             </div>
           )}
@@ -189,6 +226,7 @@ function App() {
               eventoId={appState.selectedEvento}
               idEstande={appState.selectedEstande}
               fromDiscount={fromDiscount}
+              isKiosk={isKiosk}
               onBack={() => {
                 if (fromDiscount) {
                   setFromDiscount(false);
@@ -235,6 +273,7 @@ function App() {
               eventoId={appState.selectedEvento}
               userName={userLead?.nome}
               userPhone={userLead?.telefone}
+              isKiosk={isKiosk}
               onExplore={() => setStep(3)}
               onViewMap={() => {
                 setFromDiscount(true);

@@ -5,7 +5,7 @@ import { ArrowLeft, MapPin, CheckCircle2, AlertCircle, X } from 'lucide-react';
 import EventMap from './EventMap';
 import CheckInScreenBettBrasil from './CheckInScreenBettBrasil';
 
-export default function CheckInScreen({ onBack, eventoId, idEstande, onUserNotFound, fromDiscount }) {
+export default function CheckInScreen({ onBack, eventoId, idEstande, onUserNotFound, fromDiscount, isKiosk = false }) {
   const [phone, setPhone] = useState('');
   const [status, setStatus] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -83,7 +83,7 @@ export default function CheckInScreen({ onBack, eventoId, idEstande, onUserNotFo
   // Layout especial para BETT Brasil (sem check-in)
   console.log("ID do evento atual:", eventoId);
   if (eventoId === 'bett_brasil') {
-    return <CheckInScreenBettBrasil onBack={onBack} eventoId={eventoId} idEstande={idEstande} fromDiscount={fromDiscount} />;
+    return <CheckInScreenBettBrasil onBack={onBack} eventoId={eventoId} idEstande={idEstande} fromDiscount={fromDiscount} isKiosk={isKiosk} />;
   }
 
   return (

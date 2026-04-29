@@ -13,7 +13,7 @@ const viewportStyle = `
   }
 `;
 
-export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande, fromDiscount }) {
+export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande, fromDiscount, isKiosk = false }) {
   const [downloaded, setDownloaded] = useState(false);
   // Formata o ID do estande para exibição
   const estandeNome = idEstande ? idEstande.replace(/_/g, ' ').toUpperCase() : "GERAL";
@@ -81,6 +81,7 @@ export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande, f
          
         </div>
         
+            {!isKiosk && (
             <button
               onClick={handleDownloadMap}
               className=" sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-black/30 hover:bg-black/40 px-4 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-semibold text-black transition active:scale-[0.98] backdrop-blur-md border border-white/40"
@@ -95,6 +96,7 @@ export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande, f
                 </>
               )}
             </button>
+            )}
           
         <h2 className="flex-shrink-0 text-lg sm:text-2xl font-black mb-1 sm:mb-2">Mapa BETT Brasil 🗺️</h2>
         <p className="flex-shrink-0 text-xs sm:text-sm opacity-90 px-2 sm:px-4 leading-tight" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}>

@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
-import { motion } from 'framer-motion';
-import { Search, ShoppingCart } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import QRCode from 'react-qr-code';
+import { Search, ShoppingCart, X, Smartphone } from 'lucide-react';
 import { getEventoConfig, getEstandeConfig, getTemaEstande } from '../config/events.config';
 import { CouponCard } from './CouponCard';
 import { Stepper } from './Stepper';
@@ -29,10 +30,21 @@ const scrollbarHideStyle = `
   }
 `;
 
-export default function DiscountSuccess({ idEstande, eventoId, onExplore, onViewMap, onBack, userName = 'Visitante', userPhone = '', discount = '20% OFF' }) {
+export default function DiscountSuccess({ idEstande, eventoId, onExplore, onViewMap, onBack, userName = 'Visitante', userPhone = '', discount = '20% OFF', isKiosk = false }) {
   const eventoConfig = useMemo(() => getEventoConfig(eventoId), [eventoId]);
   const estandeConfig = useMemo(() => getEstandeConfig(eventoId, idEstande), [eventoId, idEstande]);
   const temaEstande = useMemo(() => getTemaEstande(eventoId, idEstande), [eventoId, idEstande]);
+  const [showQrModal, setShowQrModal] = useState(false);
+
+  const whatsappUrl = 'https://wa.me/5511978802196?text=Já garanti meus 20% e vim responder a pesquisa para garantir 40%!';
+
+  const handleWhatsappClick = () => {
+    if (isKiosk) {
+      setShowQrModal(true);
+    } else {
+      window.open(whatsappUrl, '_blank');
+    }
+  };
 
   if (!eventoConfig || !estandeConfig || !temaEstande) {
     return <div className="h-full flex items-center justify-center text-red-500">Configuração não encontrada</div>;
@@ -89,6 +101,14 @@ export default function DiscountSuccess({ idEstande, eventoId, onExplore, onView
           >
             Use ainda hoje no estande Ciranda na Escola.
           </motion.p>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.18 }}
+            className="-mt-1 sm:-mt-3 text-[10px] sm:text-xs text-blue-200/80 italic"
+          >
+            O desconto não é válido para itens promocionais.
+          </motion.p>
 
           {/* Coupon Card */}
           <motion.div
@@ -102,6 +122,7 @@ export default function DiscountSuccess({ idEstande, eventoId, onExplore, onView
               validUntil="hoje."
               userName={userName.split(' ')[0]}
               userPhone={userPhone}
+              isKiosk={isKiosk}
             />
           </motion.div>
 
@@ -128,17 +149,23 @@ export default function DiscountSuccess({ idEstande, eventoId, onExplore, onView
         className="flex-shrink-0 px-3 sm:px-4 pt-2 space-y-2 sm:space-y-3"
         style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}
       >
+        {!isKiosk && (
         <button
-          onClick={() =>
-            window.open(
-              "https://wa.me/11978802196?text=Já garanti meus 20% e vim responder a pesquisa para garantir 40%!",
-              "_blank",
-            )
-          }
+          onClick={handleWhatsappClick}
           className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 px-3 py-2.5 sm:py-3 text-sm sm:text-base font-bold text-white transition active:scale-[0.98] shadow-lg">
           <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
           <span>Participe da pesquisa e ganhe 40% off no site</span>
         </button>
+        )}
+
+        {isKiosk && (
+        <button
+          onClick={handleWhatsappClick}
+          className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 px-3 py-2.5 sm:py-3 text-sm sm:text-base font-bold text-white transition active:scale-[0.98] shadow-lg">
+          <Smartphone className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+          <span>Participe da pesquisa e ganhe 40% off no site</span>
+        </button>
+        )}
 
         <button
           onClick={onExplore}
@@ -148,6 +175,57 @@ export default function DiscountSuccess({ idEstande, eventoId, onExplore, onView
           Consultar nosso estoque
         </button>
       </motion.footer>
+
+      {/* Modal QR Code (Kiosk) */}
+      <AnimatePresence>
+        {showQrModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
+            onClick={() => setShowQrModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 250, damping: 22 }}
+              className="relative w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowQrModal(false)}
+                className="absolute top-3 right-3 p-2 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 transition-colors"
+                aria-label="Fechar"
+              >
+                <X size={18} />
+              </button>
+
+              <div className="flex flex-col items-center text-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                  <Smartphone size={24} />
+                </div>
+                <h3 className="text-lg font-black text-gray-800 leading-tight">
+                  Aponte a câmera do seu celular
+                </h3>
+                <p className="text-xs text-gray-500 leading-snug px-2">
+                  Escaneie o QR Code abaixo para abrir o WhatsApp e responder a pesquisa.
+                  Você ganha <span className="font-bold text-orange-600">40% off no site</span>!
+                </p>
+
+                <div className="bg-white p-3 rounded-2xl border-2 border-gray-200 mt-2">
+                  <QRCode value={whatsappUrl} size={180} />
+                </div>
+
+                <p className="text-[11px] text-gray-400 mt-1">
+                  Toque fora ou no X para fechar.
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
     </>
   );

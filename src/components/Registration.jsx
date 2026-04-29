@@ -90,7 +90,7 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
             }
           }
 
-          onComplete({ nome: nomeUsuario, telefone: formData.telefone, cupom: data.cupom }, data);
+          onComplete({ nome: nomeUsuario || 'Visitante', telefone: formData.telefone, cupom: data.cupom }, data);
         }
       } else {
         if (formData.nome.trim().length < 3) {

@@ -507,7 +507,8 @@ const getStockCardStyle = (status) => {
   return 'bg-white/95'; // Default do chat normal
 };
 
-export default function ChatInterface({ userName, userPhone, cupom, onBack, initialMode = 'chat', idEstande = 'estande_laranja', eventoId = 'bett_brasil' }) { // <--- Função principal começa aqui
+export default function ChatInterface({ userName: userNameProp, userPhone, cupom, onBack, initialMode = 'chat', idEstande = 'estande_laranja', eventoId = 'bett_brasil' }) { // <--- Função principal começa aqui
+  const userName = (userNameProp && String(userNameProp).trim()) ? String(userNameProp).trim().split(' ')[0] : 'Visitante';
   const theme = getEstandeTheme(idEstande);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
