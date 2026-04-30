@@ -8,6 +8,12 @@ import { getEstandeTheme } from '../theme';
 
 const generateSessionId = () => Math.random().toString(36).substring(7);
 
+// Mapeamento de ID do estande para código RPA
+const ESTANDE_TO_RPA = {
+  'estande_azul': '000324',
+  'estande_laranja': '000316', // amarelo
+};
+
 const CouponModal = ({ code, isOpen, onClose, theme }) => {
   if (!isOpen) return null;
   return (
@@ -574,14 +580,16 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
 
         // OTIMIZAÇÃO: Se tiver ISBN/Barras, usa o novo endpoint direto
         if (book.barras) {
-            const { data } = await getBookByIsbn(book.barras);
+            const { data } = await getBookByIsbn(book.barras, idEstande);
             found = data; 
         } else {
             // BACKUP: Busca textual antiga
             const term = book.titulo;
-            const { data } = await api.get('/api/books/search', { 
-              params: { q: term } 
-            });
+            const codigoLoja = ESTANDE_TO_RPA[idEstande];
+            const params = { q: term };
+            if (codigoLoja) params.codigo_loja = codigoLoja;
+            
+            const { data } = await api.get('/api/books/search', { params });
             
             // Tenta match pelo título
             found = data.find(b => 
