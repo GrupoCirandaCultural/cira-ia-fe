@@ -14,7 +14,7 @@ const ESTANDE_TO_RPA = {
 export const getBookByIsbn = (isbn, idEstande = null) => {
   const params = {};
   if (idEstande && ESTANDE_TO_RPA[idEstande]) {
-    params.codigo_loja = ESTANDE_TO_RPA[idEstande];
+    params.booth_id = ESTANDE_TO_RPA[idEstande];
   }
   return api.get(`/api/books/${isbn}`, { params });
 };

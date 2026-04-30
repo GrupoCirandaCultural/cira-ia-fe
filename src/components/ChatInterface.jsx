@@ -585,9 +585,12 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
         } else {
             // BACKUP: Busca textual antiga
             const term = book.titulo;
-            const codigoLoja = ESTANDE_TO_RPA[idEstande];
+            const boothId = ESTANDE_TO_RPA[idEstande];
             const params = { q: term };
-            if (codigoLoja) params.codigo_loja = codigoLoja;
+            if (boothId) {
+              params.booth_id = boothId;
+              params.only_local = true;
+            }
             
             const { data } = await api.get('/api/books/search', { params });
             
