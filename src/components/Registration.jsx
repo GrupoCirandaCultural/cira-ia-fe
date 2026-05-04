@@ -5,6 +5,7 @@ import { ArrowLeft, AlertCircle, X } from 'lucide-react';
 import { getEstandeTheme } from '../theme';
 import { getCamposRegistration, getOpcoesAtividade } from '../config/events.config';
 import CustomSelect from './CustomSelect';
+import CustomInput from './CustomInput';
 import imagemEscola from '../assets/ciranda_escola_sem_fundo.png';
 
 export default function Registration({ onComplete, idEstande, eventoId = 'bett_brasil', initialPhone, onBack }) {
@@ -196,36 +197,33 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
 
         <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           {!isLoginMode && (
-            <input 
-              required 
+            <CustomInput
               placeholder="Nome Completo *"
-              className="w-full p-3 sm:p-4 text-sm sm:text-base bg-gray-50 border-2 border-gray-100 rounded-xl outline-none transition-all text-gray-400"
               value={formData.nome}
               onChange={e => setFormData({...formData, nome: e.target.value})}
+              required
             />
           )}
           
-          <input 
-            required 
+          <CustomInput
             type="tel"
             placeholder="WhatsApp *"
-            className="w-full p-3 sm:p-4 text-sm sm:text-base bg-gray-50 border-2 border-gray-100 rounded-xl outline-none transition-all text-gray-400"
             value={formData.telefone}
             onChange={handlePhoneChange}
             maxLength={15}
+            required
           />
 
           {!isLoginMode && (
             <>
               {/* Campo Email - Dinâmico */}
               {isCampoObrigatorio('email') && (
-                <input 
+                <CustomInput
                   type="email"
-                  required
                   placeholder="E-mail *"
-                  className="w-full p-3 sm:p-4 text-sm sm:text-base bg-gray-50 border-2 border-gray-100 rounded-xl outline-none transition-all text-gray-400"
                   value={formData.email}
                   onChange={e => setFormData({...formData, email: e.target.value})}
+                  required
                 />
               )}
               
