@@ -1141,7 +1141,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
             <input
               ref={inputRef}
               type="text"
-              className="flex-1 bg-white rounded-2xl px-5 py-4 text-sm outline-none shadow-sm border focus:ring-4 transition-all"
+              className="flex-1 bg-white rounded-2xl px-5 py-4 text-base outline-none shadow-sm border focus:ring-4 transition-all"
               style={{
                 borderColor: `${theme.primaryColor}30`,
                 '--tw-ring-color': `${theme.primaryColor}20`
