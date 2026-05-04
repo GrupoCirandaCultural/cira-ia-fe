@@ -101,9 +101,6 @@ const BookDetailsModal = ({ book, isOpen, onClose, onConfirm, theme }) => {
                       {estoqueEventos.map((evento, idx) => (
                         <div key={idx} className="text-sm text-gray-700">
                           <p className="font-bold">{getEventDisplayName(evento.nome_evento)}</p>
-                          <p className="text-xs text-gray-600">
-                            <strong>{evento.estoque}</strong> {evento.estoque === 1 ? 'unidade' : 'unidades'} disponível{evento.estoque === 1 ? '' : 's'}
-                          </p>
                         </div>
                       ))}
                     </div>
