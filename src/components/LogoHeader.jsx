@@ -22,6 +22,7 @@ export default function LogoHeader({ onClick, className = '' }) {
         alt="Ciranda na Escola" 
         className="h-12 sm:h-16 w-auto" 
         style={{ 
+          filter: 'brightness(0) saturate(100%)',
           opacity: 0.9
         }}
       />
