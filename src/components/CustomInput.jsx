@@ -23,7 +23,7 @@ export default function CustomInput({
         onBlur={() => setIsFocused(false)}
         required={required}
         maxLength={maxLength}
-        className={`w-full p-3 sm:p-4 text-sm sm:text-base bg-gray-50 border-2 border-gray-100 rounded-xl outline-none transition-all ${className}`}
+        className={`w-full p-3 sm:p-4 sm:text-base bg-gray-50 border-2 border-gray-100 rounded-xl outline-none transition-all text-base ${className}`}
         {...props}
       />
       {/* Placeholder visual - renderiza se campo vazio e não focado */}
