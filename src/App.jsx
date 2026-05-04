@@ -7,7 +7,7 @@ import CheckInScreen from './components/CheckInScreen';
 import EventSelector from './components/EventSelector';
 import DiscountSuccess from './components/DiscountSuccess';
 import ConfigGate from './components/ConfigGate';
-import { MapPin, Check } from 'lucide-react';
+import { MapPin, Check, ArrowLeft } from 'lucide-react';
 import { getEventoConfig, verificarEstandeValido } from './config/events.config';
 import { useKioskMode, useKioskInactivityReset } from './hooks/useKioskMode';
 
@@ -90,6 +90,16 @@ function App() {
     }
   };
 
+  const handleBackToEventSelection = () => {
+    window.history.pushState({}, '', '/');
+    setAppState(prev => ({
+      ...prev,
+      selectedEvento: null,
+      selectedEstande: null,
+      estandeOptions: []
+    }));
+  };
+
   // 2. LOGICA DE INÍCIO CENTRALIZADA
   const handleStart = (choice) => {
     if (choice === 'checkin') {
@@ -170,6 +180,13 @@ function App() {
           {/* TELA DE SELEÇÃO DE ESTANDE (APENAS SE EVENTO FOI SELECIONADO MAS NÃO ESTANDE) */}
           {appState.selectedEvento && !appState.selectedEstande && appState.isConfigured && configAuthed && (
             <div className="h-full w-full bg-gradient-to-b from-gray-900 to-gray-800 p-8 flex flex-col items-center justify-center text-white z-50 absolute inset-0">
+               <button
+                 onClick={handleBackToEventSelection}
+                 className="absolute top-6 left-6 flex items-center gap-2 text-xs sm:text-sm font-bold hover:opacity-80 transition-opacity"
+               >
+                 <ArrowLeft size={18} /> Trocar evento
+               </button>
+
                <div className="mb-8 p-4 bg-white/10 rounded-full border border-white/20">
                  <MapPin size={48} className="text-blue-400" />
                </div>
