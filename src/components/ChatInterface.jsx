@@ -511,6 +511,21 @@ const getEventDisplayName = (nomeEvento) => {
   return String(nomeEvento).split('-')[0].trim();
 };
 
+const getBoothBadgeStyle = (eventoCodigo, nomeEvento) => {
+  const codigo = String(eventoCodigo || '').trim();
+  const nome = String(nomeEvento || '').toLowerCase();
+
+  if (codigo === '000324' || nome.includes('azul')) {
+    return 'text-blue-700 bg-blue-100';
+  }
+
+  if (codigo === '000316' || nome.includes('laranja')) {
+    return 'text-orange-700 bg-orange-100';
+  }
+
+  return 'text-green-700 bg-green-100';
+};
+
 // Função para formatar a exibição de estoque por evento
 const formatStockDisplay = (estoque_eventos) => {
   if (!estoque_eventos || !Array.isArray(estoque_eventos) || estoque_eventos.length === 0) {
@@ -972,11 +987,15 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
                         
                         <div className="mb-2">
                            {stockInfo.status === 'available_here' && (
-                             <div className="text-[9px] font-bold text-green-700 bg-green-100 inline-block px-1.5 py-0.5 rounded mb-1">
-                               {item.estoque_eventos?.length === 1 
-                                 ? `${String(item.estoque_eventos[0].nome_evento || '').split('-')[0].trim()}`
-                                 : `Disponível em ${item.estoque_eventos?.length || 0} evento(s)`
-                               }
+                             <div className="flex flex-col items-start gap-1 mb-1">
+                               {(item.estoque_eventos || []).map((evento, eventIdx) => (
+                                 <div
+                                   key={`${evento.evento || evento.nome_evento || 'evento'}-${eventIdx}`}
+                                   className={`text-[9px] font-bold inline-block px-1.5 py-0.5 rounded ${getBoothBadgeStyle(evento.evento, evento.nome_evento)}`}
+                                 >
+                                   {getEventDisplayName(evento.nome_evento)}
+                                 </div>
+                               ))}
                              </div>
                            )}
                            {stockInfo.status === 'unavailable' && (
