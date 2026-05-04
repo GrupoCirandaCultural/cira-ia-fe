@@ -5,8 +5,7 @@ import { Search, ShoppingCart, X, Smartphone } from 'lucide-react';
 import { getEventoConfig, getEstandeConfig, getTemaEstande } from '../config/events.config';
 import { CouponCard } from './CouponCard';
 import { Stepper } from './Stepper';
-import logoFundo from '../assets/logo_fundo.png';
-import logoFundoCirandaEscola from '../assets/ciranda_escola_sem_fundo_branco.png';
+import LogoHeader from './LogoHeader';
 
 const scrollbarHideStyle = `
   html, body {
@@ -58,11 +57,9 @@ export default function DiscountSuccess({ idEstande, eventoId, onExplore, onView
       <motion.header
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        onClick={onBack}
-        className="flex-shrink-0 flex items-center justify-between rounded-2xl bg-white mx-3 mt-3 sm:mx-4 sm:mt-4 px-4 sm:px-5 py-2.5 sm:py-3 shadow-lg cursor-pointer hover:shadow-xl transition-shadow"
+        className="flex-shrink-0"
       >
-        <img src={logoFundo} alt="bett Brasil" className="h-7 sm:h-9 w-auto invert" />
-        <img src={logoFundoCirandaEscola} alt="Ciranda na Escola" className="h-12 sm:h-16 w-auto invert" />
+        <LogoHeader onClick={onBack} />
       </motion.header>
 
       {/* Main Content */}
