@@ -199,7 +199,7 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
             <input 
               required 
               placeholder="Nome Completo *"
-              className="w-full p-3 sm:p-4 text-sm sm:text-base bg-gray-50 border-2 border-gray-100 rounded-xl outline-none transition-all"
+              className="w-full p-3 sm:p-4 text-sm sm:text-base bg-gray-50 border-2 border-gray-100 rounded-xl outline-none transition-all text-gray-400"
               value={formData.nome}
               onChange={e => setFormData({...formData, nome: e.target.value})}
             />
@@ -209,7 +209,7 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
             required 
             type="tel"
             placeholder="WhatsApp *"
-            className="w-full p-3 sm:p-4 text-sm sm:text-base bg-gray-50 border-2 border-gray-100 rounded-xl outline-none transition-all"
+            className="w-full p-3 sm:p-4 text-sm sm:text-base bg-gray-50 border-2 border-gray-100 rounded-xl outline-none transition-all text-gray-400"
             value={formData.telefone}
             onChange={handlePhoneChange}
             maxLength={15}
@@ -223,7 +223,7 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
                   type="email"
                   required
                   placeholder="E-mail *"
-                  className="w-full p-3 sm:p-4 text-sm sm:text-base bg-gray-50 border-2 border-gray-100 rounded-xl outline-none transition-all"
+                  className="w-full p-3 sm:p-4 text-sm sm:text-base bg-gray-50 border-2 border-gray-100 rounded-xl outline-none transition-all text-gray-400"
                   value={formData.email}
                   onChange={e => setFormData({...formData, email: e.target.value})}
                 />
