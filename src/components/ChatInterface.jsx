@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import api, { getBookByIsbn } from '../api';
+import api from '../api';
 import { Send, Search, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw, Trash2, MessageCircle, CheckCircle, AlertCircle, ChevronUp, ChevronDown, Eye } from 'lucide-react';
 import bgChat from '../assets/background-chat.png';
 import bgChatBett from '../assets/background-chat-bett.png';
@@ -7,12 +7,6 @@ import iconeEscola from '../assets/icone_ciranda_escola.png';
 import { getEstandeTheme } from '../theme';
 
 const generateSessionId = () => Math.random().toString(36).substring(7);
-
-// Mapeamento de ID do estande para código RPA
-const ESTANDE_TO_RPA = {
-  'estande_azul': '000324',
-  'estande_laranja': '000316', // amarelo
-};
 
 const CouponModal = ({ code, isOpen, onClose, theme }) => {
   if (!isOpen) return null;
@@ -46,8 +40,9 @@ const CouponModal = ({ code, isOpen, onClose, theme }) => {
 const BookDetailsModal = ({ book, isOpen, onClose, onConfirm, theme }) => {
   if (!isOpen || !book) return null;
 
-  const isChecking = book.checkingStock;
   const status = book.stockStatus;
+  const stockDisplay = book.stockDisplay || 'Fora de estoque';
+  const estoqueEventos = book.estoqueEventos || [];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -62,14 +57,6 @@ const BookDetailsModal = ({ book, isOpen, onClose, onConfirm, theme }) => {
            ) : (
              <div className="flex items-center justify-center h-full text-gray-400"><BookOpen size={48} /></div>
            )}
-           
-           {/* Overlay de carregamento */}
-           {isChecking && (
-             <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center gap-2 backdrop-blur-sm">
-               <Loader2 className="animate-spin" size={32} style={{ color: theme.primaryColor }} />
-               <span className="text-xs font-bold text-gray-500 uppercase tracking-widest">Verificando Estoque...</span>
-             </div>
-           )}
         </div>
 
         <div className="text-center">
@@ -82,12 +69,10 @@ const BookDetailsModal = ({ book, isOpen, onClose, onConfirm, theme }) => {
         </div>
 
         <div className="pt-2">
-            {isChecking ? (
-               <p className="text-xs text-center text-gray-400 mb-3 font-medium">Aguarde, verificando disponibilidade...</p>
-            ) : status === 'unavailable' ? (
+            {status === 'unavailable' ? (
                <div className="bg-red-50 border border-red-100 p-3 rounded-xl text-center">
-                 <p className="text-sm font-bold text-red-600 mb-1">Esgotado no evento</p>
-                 <p className="text-xs text-gray-600 mb-3">Você pode adicionar à lista ou comprar online.</p>
+                 <p className="text-sm font-bold text-red-600 mb-1">Fora de estoque</p>
+                 <p className="text-xs text-gray-600 mb-3">Desculpe, este livro não está disponível no momento. Você pode adicionar à lista ou comprar online.</p>
                  
                  <div className="flex flex-col gap-2">
                     <button onClick={() => onConfirm(book)} className="w-full py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 shadow-md active:scale-95 transition-all flex items-center justify-center gap-2">
@@ -96,26 +81,31 @@ const BookDetailsModal = ({ book, isOpen, onClose, onConfirm, theme }) => {
                     </button>
                  </div>
                </div>
-            ) : status === 'available_elsewhere' ? (
-                <div className="bg-yellow-50 border border-yellow-100 p-3 rounded-xl text-center">
-                  <p className="text-sm font-bold text-yellow-700 mb-1">Disponível em <span className="text-sm font-bold text-red-500">Outro Estande</span></p>
-                  <p className="text-xs text-yellow-600 mb-3">Localização: <strong>{book.location || 'Consultar Atendente'}</strong></p>
-                  <div className="flex gap-2">
-                    <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-colors">
-                        Agora não
-                    </button>
-                    <button onClick={() => onConfirm(book)} className="flex-1 py-3 rounded-xl bg-yellow-500 text-white font-bold hover:bg-yellow-600 shadow-md active:scale-95 transition-all flex items-center justify-center gap-2">
-                        <ShoppingCart size={18} />
-                        Eu quero!
-                    </button>
-                  </div>
-                </div>
             ) : (
               <>
-                <div className="flex items-center justify-center gap-2 mb-3 bg-green-50 p-2 rounded-lg border border-green-100">
-                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                    <span className="text-xs font-bold text-green-700 uppercase tracking-wide">Disponível no Estande</span>
+                {/* Exibe os eventos onde o livro está disponível */}
+                <div className="bg-green-50 border border-green-100 p-3 rounded-xl mb-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500" />
+                    <span className="text-xs font-bold text-green-700 uppercase tracking-wide">Disponível</span>
+                  </div>
+                  
+                  {estoqueEventos.length > 0 ? (
+                    <div className="space-y-2">
+                      {estoqueEventos.map((evento, idx) => (
+                        <div key={idx} className="text-sm text-gray-700">
+                          <p className="font-bold">{evento.nome_evento}</p>
+                          <p className="text-xs text-gray-600">
+                            <strong>{evento.estoque}</strong> {evento.estoque === 1 ? 'unidade' : 'unidades'} disponível{evento.estoque === 1 ? '' : 's'}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-700">{stockDisplay}</p>
+                  )}
                 </div>
+
                 <div className="flex gap-2">
                     <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-colors">
                         Talvez depois
@@ -504,13 +494,30 @@ const CartDrawer = ({ cart, onRemove, onClear, onUpdateQuantity, userPhone, sess
   );
 };
 
-// --- MOCK E FUNÇÕES AUXILIARES DE ESTOQUE ---
+// --- FUNÇÕES AUXILIARES DE ESTOQUE ---
 
 const getStockCardStyle = (status) => {
   if (status === 'available_here') return 'border-l-4 border-l-green-500 bg-green-50';
   if (status === 'available_elsewhere') return 'border-l-4 border-l-yellow-500 bg-yellow-50';
   if (status === 'unavailable') return 'border-l-4 border-l-red-500 bg-red-50 opacity-75';
   return 'bg-white/95'; // Default do chat normal
+};
+
+// Função para formatar a exibição de estoque por evento
+const formatStockDisplay = (estoque_eventos) => {
+  if (!estoque_eventos || !Array.isArray(estoque_eventos) || estoque_eventos.length === 0) {
+    return { text: 'Fora de estoque', status: 'unavailable' };
+  }
+
+  const disponibilidades = estoque_eventos.map(
+    e => `${e.nome_evento} (${e.estoque} ${e.estoque === 1 ? 'unidade' : 'unidades'})`
+  ).join(' e ');
+
+  return {
+    text: `Disponível em: ${disponibilidades}`,
+    status: 'available_here',
+    eventos: estoque_eventos
+  };
 };
 
 export default function ChatInterface({ userName: userNameProp, userPhone, cupom, onBack, initialMode = 'chat', idEstande = 'estande_laranja', eventoId = 'bett_brasil' }) { // <--- Função principal começa aqui
@@ -571,74 +578,24 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
 
   const clearCart = () => setCart([]);
   
-  const handleBookSelection = async (book) => {
-    // 1. Abre o modal imediatamente com estado de 'verificando'
-    setSelectedBook({ ...book, checkingStock: true, stockStatus: null });
+  const handleBookSelection = (book) => {
+    // Abre o modal com as informações de estoque já vindo da resposta inicial
+    const stockInfo = formatStockDisplay(book.estoque_eventos);
     
-    try {
-        let found = null;
+    setSelectedBook({
+      ...book,
+      checkingStock: false,
+      stockStatus: stockInfo.status,
+      stockDisplay: stockInfo.text,
+      estoqueEventos: book.estoque_eventos || []
+    });
 
-        // OTIMIZAÇÃO: Se tiver ISBN/Barras, usa o novo endpoint direto
-        if (book.barras) {
-            const { data } = await getBookByIsbn(book.barras, idEstande);
-            found = data; 
-        } else {
-            // BACKUP: Busca textual antiga
-            const term = book.titulo;
-            const boothId = ESTANDE_TO_RPA[idEstande];
-            const params = { q: term };
-            if (boothId) {
-              params.booth_id = boothId;
-              params.only_local = true;
-            }
-            
-            const { data } = await api.get('/api/books/search', { params });
-            
-            // Tenta match pelo título
-            found = data.find(b => 
-              b.title.toLowerCase().trim() === book.titulo.toLowerCase().trim()
-            );
-        }
-
-        // 4. Atualiza o modal com o resultado real
-        if (found) {
-           setSelectedBook(prev => ({
-               ...prev,
-               stockStatus: found.status,
-               location: found.location_hint, // <--- Importante: Pega a localização da API
-               checkingStock: false
-           }));
-
-           trackEvent('stock_check', found.isbn || book.barras || 'SEM_ISBN', { 
-               title: book.titulo,
-               status: found.status, 
-               found: true
-           });
-        } else {
-           // Se não achou na busca, assume indisponível
-           setSelectedBook(prev => ({
-               ...prev,
-               stockStatus: 'unavailable',
-               checkingStock: false
-           }));
-
-           trackEvent('stock_check', book.barras || 'SEM_ISBN', { 
-               title: book.titulo,
-               status: 'unavailable',
-               found: false
-           });
-        }
-    } catch (error) {
-        console.error("Erro ao checar estoque:", error);
-        // Em caso de erro, define como indisponível para não travar
-        setSelectedBook(prev => ({
-            ...prev,
-            stockStatus: 'unavailable',
-            checkingStock: false
-        }));
-
-        trackEvent('stock_check_error', book.barras || 'SEM_ISBN', { title: book.titulo, found: false });
-    }
+    // Registra a visualização do detalhe do livro
+    trackEvent('stock_check', book.barras || 'SEM_ISBN', { 
+      title: book.titulo,
+      status: stockInfo.status,
+      eventos_disponiveis: book.estoque_eventos?.length || 0
+    });
   };
   
   // ESTADOS DO MODO ESTOQUE
@@ -971,8 +928,10 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
 
               {msg.dados && msg.dados.length > 0 && (
                 <div className="grid grid-cols-1 gap-3 mt-4">
-                  {msg.dados.map((item, iIdx) => (
-                    <div key={iIdx} className={`rounded-xl overflow-hidden flex shadow-sm transition-all ${item.status ? getStockCardStyle(item.status) : 'bg-white/95 border'}`} style={!item.status ? { borderColor: `${theme.primaryColor}30` } : {}}>
+                  {msg.dados.map((item, iIdx) => {
+                    const stockInfo = formatStockDisplay(item.estoque_eventos);
+                    return (
+                    <div key={iIdx} className={`rounded-xl overflow-hidden flex shadow-sm transition-all ${stockInfo.status ? getStockCardStyle(stockInfo.status) : 'bg-white/95 border'}`} style={!stockInfo.status ? { borderColor: `${theme.primaryColor}30` } : {}}>
                       <div className="w-24 min-w-[96px] bg-gray-300 flex items-center justify-center overflow-hidden">
                         {item.capa_url && (
                           <img 
@@ -990,9 +949,17 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
                         </h4>
                         
                         <div className="mb-2">
-                           {item.status === 'available_here' && <p className="text-[10px] font-black text-green-700 uppercase bg-green-100 inline-block px-1 rounded">Disponível Aqui</p>}
-                           {item.status === 'available_elsewhere' && <p className="text-[10px] font-black text-yellow-700 uppercase bg-yellow-100 inline-block px-1 rounded">{item.location}</p>}
-                           {item.status === 'unavailable' && <p className="text-[10px] font-black text-red-700 uppercase bg-red-100 inline-block px-1 rounded">Esgotado</p>}
+                           {stockInfo.status === 'available_here' && (
+                             <div className="text-[9px] font-bold text-green-700 bg-green-100 inline-block px-1.5 py-0.5 rounded mb-1">
+                               {item.estoque_eventos?.length === 1 
+                                 ? `${item.estoque_eventos[0].nome_evento} (${item.estoque_eventos[0].estoque} un.)`
+                                 : `Disponível em ${item.estoque_eventos?.length || 0} evento(s)`
+                               }
+                             </div>
+                           )}
+                           {stockInfo.status === 'unavailable' && (
+                             <p className="text-[10px] font-black text-red-700 uppercase bg-red-100 inline-block px-1 rounded">Fora de estoque</p>
+                           )}
                            <p className="text-[9px] text-gray-400 mb-1 ml-1 font-bold">ISBN: {item.barras}</p>
                         </div>
 
@@ -1007,7 +974,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
                           </span>
                           
                           <div className="flex gap-1.5">
-                            {/* Botão de Consulta de Estoque */}
+                            {/* Botão de Detalhes do Livro */}
                             <button 
                               onClick={() => handleBookSelection(item)} 
                               className="px-2 py-2 rounded-lg shadow-sm active:scale-90 transition-all flex items-center gap-1"
@@ -1017,10 +984,10 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
                               }}
                               onMouseEnter={(e) => e.target.style.backgroundColor = `${theme.primaryColor}30`}
                               onMouseLeave={(e) => e.target.style.backgroundColor = `${theme.primaryColor}15`}
-                              title="Ver detalhes e estoque"
+                              title="Ver detalhes"
                             >
                               <Eye size={14} />
-                              <span className="text-[10px] font-black uppercase tracking-wide">ESTOQUE</span>
+                              <span className="text-[10px] font-black uppercase tracking-wide">DETALHE</span>
                             </button>
 
                             {/* Botão de Adicionar ao Carrinho Direto */}
@@ -1038,7 +1005,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
                         </div>
                       </div>
                     </div>
-                  ))}
+                  )})}
                 </div>
               )}
             </div>
