@@ -94,7 +94,7 @@ const BookDetailsModal = ({ book, isOpen, onClose, onConfirm, theme }) => {
                     <div className="space-y-2">
                       {estoqueEventos.map((evento, idx) => (
                         <div key={idx} className="text-sm text-gray-700">
-                          <p className="font-bold">{evento.nome_evento}</p>
+                          <p className="font-bold">{getEventDisplayName(evento.nome_evento)}</p>
                           <p className="text-xs text-gray-600">
                             <strong>{evento.estoque}</strong> {evento.estoque === 1 ? 'unidade' : 'unidades'} disponível{evento.estoque === 1 ? '' : 's'}
                           </p>
@@ -503,6 +503,11 @@ const getStockCardStyle = (status) => {
   return 'bg-white/95'; // Default do chat normal
 };
 
+const getEventDisplayName = (nomeEvento) => {
+  if (!nomeEvento) return 'Evento';
+  return String(nomeEvento).split('-')[0].trim();
+};
+
 // Função para formatar a exibição de estoque por evento
 const formatStockDisplay = (estoque_eventos) => {
   if (!estoque_eventos || !Array.isArray(estoque_eventos) || estoque_eventos.length === 0) {
@@ -510,7 +515,7 @@ const formatStockDisplay = (estoque_eventos) => {
   }
 
   const disponibilidades = estoque_eventos.map(
-    e => `${e.nome_evento} (${e.estoque} ${e.estoque === 1 ? 'unidade' : 'unidades'})`
+    e => `${getEventDisplayName(e.nome_evento)} (${e.estoque} ${e.estoque === 1 ? 'unidade' : 'unidades'})`
   ).join(' e ');
 
   return {
@@ -952,7 +957,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
                            {stockInfo.status === 'available_here' && (
                              <div className="text-[9px] font-bold text-green-700 bg-green-100 inline-block px-1.5 py-0.5 rounded mb-1">
                                {item.estoque_eventos?.length === 1 
-                                 ? `${item.estoque_eventos[0].nome_evento}`
+                                 ? `${String(item.estoque_eventos[0].nome_evento || '').split('-')[0].trim()}`
                                  : `Disponível em ${item.estoque_eventos?.length || 0} evento(s)`
                                }
                              </div>
