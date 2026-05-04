@@ -952,7 +952,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
                            {stockInfo.status === 'available_here' && (
                              <div className="text-[9px] font-bold text-green-700 bg-green-100 inline-block px-1.5 py-0.5 rounded mb-1">
                                {item.estoque_eventos?.length === 1 
-                                 ? `${item.estoque_eventos[0].nome_evento} (${item.estoque_eventos[0].estoque} un.)`
+                                 ? `${item.estoque_eventos[0].nome_evento}`
                                  : `Disponível em ${item.estoque_eventos?.length || 0} evento(s)`
                                }
                              </div>
