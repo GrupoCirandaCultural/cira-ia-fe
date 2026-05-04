@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../api';
 import { Send, Search, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw, Trash2, MessageCircle, CheckCircle, AlertCircle, ChevronUp, ChevronDown, Eye } from 'lucide-react';
+
+// Mapeamento de ID do estande para código RPA
+const ESTANDE_TO_RPA = {
+  'estande_azul': '000324',
+  'estande_laranja': '000316',
+};
 import bgChat from '../assets/background-chat.png';
 import bgChatBett from '../assets/background-chat-bett.png';
 import iconeEscola from '../assets/icone_ciranda_escola.png';
@@ -776,9 +782,23 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
     // }
 
     try {
-      const { data } = await api.post('/chat', {
-        session_id: sessionId, message: apiMessage,
-      });
+      const payload = {
+        session_id: sessionId, 
+        message: apiMessage,
+      };
+
+      // Adiciona filtros de estoque se o modo é 'stock'
+      if (initialMode === 'stock') {
+        if (stockOnlyBooth) {
+          payload.only_local = true;
+          payload.booth_id = ESTANDE_TO_RPA[idEstande];
+        }
+        if (stockFilterGenre) {
+          payload.genre = stockFilterGenre;
+        }
+      }
+
+      const { data } = await api.post('/chat', payload);
       
       let responseContent = data.texto;
       let responseOptions = null;
@@ -1036,60 +1056,6 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
           {/* CONTROLES DE ESTOQUE (Se ativo) */}
           {initialMode === 'stock' && (
             <div className="w-full flex flex-col gap-2 animate-in slide-in-from-bottom-5 fade-in duration-300">
-               <div 
-                 ref={filtersRef}
-                 onMouseDown={startDragging}
-                 onMouseLeave={stopDragging}
-                 onMouseUp={stopDragging}
-                 onMouseMove={onDrag}
-                 className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide cursor-grab active:cursor-grabbing select-none"
-               >
-                 {genres.length === 0 && <span className="text-xs text-gray-400 p-2">Carregando filtros...</span>}
-                 {genres.map(genre => {
-                   const isSelected = stockFilterGenre === genre.nome;
-                   return (
-                    <button 
-                      key={genre.id}
-                      type="button"
-                      // Se estiver arrastando (flag isDragging.current true), não executa o filtro
-                      onClick={(e) => {
-                         if (isDragging.current) {
-                           e.preventDefault();
-                           e.stopPropagation();
-                           return;
-                         }
-                         setStockFilterGenre(prev => prev === genre.nome ? null : genre.nome);
-                         // Foca no input para abrir o teclado no mobile e facilitar a busca
-                         setTimeout(() => inputRef.current?.focus(), 50);
-                      }}
-                      className={`px-3 py-1 font-bold text-[10px] uppercase tracking-wide rounded-full whitespace-nowrap transition-colors border shadow-sm`}
-                      style={isSelected ? {
-                        backgroundColor: theme.primaryColor,
-                        color: 'white',
-                        borderColor: theme.primaryColor,
-                        boxShadow: `0 0 0 2px ${theme.primaryColor}30`
-                      } : {
-                        backgroundColor: 'white',
-                        color: 'rgb(71, 85, 105)',
-                        borderColor: 'rgb(226, 232, 240)'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isSelected) {
-                          e.target.style.backgroundColor = `${theme.primaryColor}15`;
-                          e.target.style.color = theme.primaryColor;
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isSelected) {
-                          e.target.style.backgroundColor = 'white';
-                          e.target.style.color = 'rgb(71, 85, 105)';
-                        }
-                      }}
-                    >
-                      {genre.nome}
-                    </button>
-                 )})}
-               </div>
                <div className="flex items-center gap-2 pl-1">
                  <input
                    type="checkbox"

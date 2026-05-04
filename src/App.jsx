@@ -298,7 +298,7 @@ function App() {
               userName={userLead?.nome} 
               userPhone={userLead?.telefone}
               cupom={userLead?.cupom} 
-              initialMode={target === 'chat_stock' ? 'stock' : 'chat'}
+              initialMode={target === 'chat_stock' ? 'stock' : 'stock'}
               idEstande={appState.selectedEstande}
               onBack={() => setStep(0)}
             />
