@@ -20,6 +20,9 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
   const secondaryColor = temaEstande.secondaryColor || primaryColor;
   const buttonColor = temaEstande.buttonColor || primaryColor;
 
+  // Botões amarelos para estande azul
+  const effectiveButtonColor = idEstande === 'estande_azul' ? '#FCD34D' : buttonColor;
+
   // QR link (apenas para Bienal)
   const qrLink = `https://bienal.example.com?estande=${idEstande}`;
 
@@ -79,7 +82,7 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
             <div className="flex flex-col items-center gap-2 sm:gap-3 animate-in fade-in slide-in-from-top-3 duration-700 delay-150">
               <h2 className="font-display text-xl sm:text-4xl font-black text-white leading-tight">
                 Cadastre-se e libere <br />
-                <span style={{ color: config.buttonColor }}>20% de desconto</span>
+                <span style={{ color: effectiveButtonColor }}>20% de desconto</span>
               </h2>
             </div>
 
@@ -147,7 +150,7 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
             <button
               onClick={() => onStart("checkin")}
               className="flex items-center gap-1.5 font-display font-black text-sm sm:text-base hover:scale-110 transition-transform duration-200"
-              style={{ color: config.buttonColor}}
+              style={{ color: effectiveButtonColor}}
             >
               <MapPin className="w-4 h-4 sm:w-5 sm:h-5" />
               Veja no mapa
