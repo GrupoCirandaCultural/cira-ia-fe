@@ -3,6 +3,12 @@ import { Check, Download } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { motion } from 'framer-motion';
 
+const dataUrlToFile = async (dataUrl, filename) => {
+  const response = await fetch(dataUrl);
+  const blob = await response.blob();
+  return new File([blob], filename, { type: 'image/png' });
+};
+
 export function CouponCard({ code, discount, validUntil, userName = 'Visitante', userPhone = '', isKiosk = false }) {
   const [downloaded, setDownloaded] = useState(false);
   const couponRef = useRef(null);
@@ -14,10 +20,26 @@ export function CouponCard({ code, discount, validUntil, userName = 'Visitante',
         pixelRatio: 3,
         cacheBust: true,
       });
-      const link = document.createElement('a');
-      link.download = `cupom-${code}.png`;
-      link.href = dataUrl;
-      link.click();
+      const fileName = `cupom-${code}.png`;
+
+      // Em mobile, tenta abrir o menu nativo para salvar a imagem na galeria.
+      if (navigator.share) {
+        const imageFile = await dataUrlToFile(dataUrl, fileName);
+        if (!navigator.canShare || navigator.canShare({ files: [imageFile] })) {
+          await navigator.share({ files: [imageFile], title: `Cupom ${code}` });
+        } else {
+          const link = document.createElement('a');
+          link.download = fileName;
+          link.href = dataUrl;
+          link.click();
+        }
+      } else {
+        const link = document.createElement('a');
+        link.download = fileName;
+        link.href = dataUrl;
+        link.click();
+      }
+
       setDownloaded(true);
       setTimeout(() => setDownloaded(false), 2000);
     } catch (e) {
