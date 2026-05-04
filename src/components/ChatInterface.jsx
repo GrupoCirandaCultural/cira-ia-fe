@@ -98,7 +98,7 @@ const BookDetailsModal = ({ book, isOpen, onClose, onConfirm, theme }) => {
                </div>
             ) : status === 'available_elsewhere' ? (
                 <div className="bg-yellow-50 border border-yellow-100 p-3 rounded-xl text-center">
-                  <p className="text-sm font-bold text-yellow-700 mb-1">Disponível em Outro Estande</p>
+                  <p className="text-sm font-bold text-yellow-700 mb-1">Disponível em <span className="text-sm font-bold text-red-500">Outro Estande</span></p>
                   <p className="text-xs text-yellow-600 mb-3">Localização: <strong>{book.location || 'Consultar Atendente'}</strong></p>
                   <div className="flex gap-2">
                     <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-colors">
