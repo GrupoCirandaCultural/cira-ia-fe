@@ -1,12 +1,12 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { MapPin } from 'lucide-react';
-import { getOutroEstande } from '../config/events.config';
+import { getEstandeConfig } from '../config/events.config';
 
 export function Stepper({ idEstande, eventoId, onViewMap }) {
-  const outroEstande = getOutroEstande(eventoId, idEstande);
-  const estandeName = outroEstande?.label || 'Ciranda na Escola';
-  const estandeNumero = outroEstande?.numero || 'B12';
+  const estandeAtual = getEstandeConfig(eventoId, idEstande);
+  const estandeName = estandeAtual?.label || 'Ciranda na Escola';
+  const estandeNumero = estandeAtual?.numero || 'B12';
 
   const steps = [
     {
