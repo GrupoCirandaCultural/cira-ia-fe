@@ -687,7 +687,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
   ];
 
   const tagOptions = [
-    { label: "Socioemocional", value: "Recomende livros sobre Socioemocional" },
+    { label: "Sentimentos", value: "Recomende livros sobre Sentimentos" },
     { label: "Inclusão", value: "Gostaria de conhecer livros sobre Inclusão" },
     { label: "Indígena", value: "Mostre-me livros com temática Indígena" },
     { label: "Alfabetização", value: "Procuro livros de Alfabetização" },
