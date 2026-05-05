@@ -43,6 +43,20 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
   // Helper para checar se campo é obrigatório
   const isCampoObrigatorio = (campo) => camposObrigatorios.includes(campo);
 
+  const normalizePhone = (value = '') => value.replace(/\D/g, '');
+
+  const findExistingLead = (responseData, phoneDigits, currentEventoId) => {
+    const candidatos = Array.isArray(responseData)
+      ? responseData
+      : (responseData ? [responseData] : []);
+
+    return candidatos.find((lead) => {
+      const samePhone = normalizePhone(lead?.telefone || '') === phoneDigits;
+      const sameEvent = !lead?.id_evento || lead.id_evento === currentEventoId;
+      return samePhone && sameEvent;
+    }) || null;
+  };
+
   const handlePhoneChange = (e) => {
     let value = e.target.value;
     value = value.replace(/\D/g, "");
@@ -63,9 +77,21 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
     setLoading(true);
 
     try {
+      const phoneDigits = normalizePhone(formData.telefone);
+
+      if (phoneDigits.length < 10) {
+        setCustomAlert({
+          title: "WhatsApp inválido",
+          message: "Digite um número de WhatsApp válido para continuar.",
+          type: "error"
+        });
+        setLoading(false);
+        return;
+      }
+
       if (isLoginMode) {
         const { data } = await api.post('/leads/check-in', {
-          telefone: formData.telefone,
+          telefone: phoneDigits,
           id_estande: idEstande,
           id_evento: eventoId
         });
@@ -81,7 +107,7 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
           
           if (!nomeUsuario) {
             try {
-              const resBusca = await api.get(`/leads?telefone=${formData.telefone}`);
+              const resBusca = await api.get(`/leads?telefone=${phoneDigits}`);
               const leadEncontrado = Array.isArray(resBusca.data) ? resBusca.data[0] : resBusca.data;
               if (leadEncontrado && leadEncontrado.nome) {
                 nomeUsuario = leadEncontrado.nome;
@@ -104,8 +130,38 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
              return;
         }
 
+        try {
+          const resExistente = await api.get(`/leads?telefone=${phoneDigits}&id_evento=${eventoId}`);
+          const leadExistente = findExistingLead(resExistente.data, phoneDigits, eventoId);
+
+          if (leadExistente) {
+            setCustomAlert({
+              title: "Cadastro já encontrado",
+              message: "Este WhatsApp já possui cadastro. Vamos continuar com seus dados já salvos.",
+              type: "info",
+              confirmLabel: "Continuar com meu cadastro",
+              onConfirm: () => onComplete(
+                {
+                  nome: leadExistente.nome || formData.nome || 'Visitante',
+                  telefone: formData.telefone,
+                  cupom: leadExistente.cupom
+                },
+                {
+                  id: leadExistente.id,
+                  cupom: leadExistente.cupom,
+                  status: 'ja_participou'
+                }
+              )
+            });
+            return;
+          }
+        } catch (lookupError) {
+          console.error('Falha ao validar duplicidade por telefone:', lookupError);
+        }
+
         const payload = { 
           ...formData, 
+          telefone: phoneDigits,
           nome: (formData.nome || '').replace(/[\n\t\r]/g, ' ').replace(/\s{2,}/g, ' ').trim(),
           id_estande: idEstande,
           id_evento: eventoId,
@@ -178,7 +234,13 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
                 <X size={20} />
               </button>
               <div className="flex flex-col items-center text-center space-y-3 pt-2">
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-2 shadow-inner ${customAlert.type === 'error' ? 'bg-red-100 text-red-500' : 'bg-pink-100 text-pink-500'}`}>
+                <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-2 shadow-inner ${
+                  customAlert.type === 'error'
+                    ? 'bg-red-100 text-red-500'
+                    : customAlert.type === 'info'
+                      ? 'bg-blue-100 text-blue-500'
+                      : 'bg-pink-100 text-pink-500'
+                }`}>
                   <AlertCircle size={32} />
                 </div>
                 <h3 className="text-xl font-black text-gray-800">{customAlert.title}</h3>
@@ -186,9 +248,15 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
                 
                 <button 
                   onClick={closeAlert}
-                  className={`w-full text-white font-black py-3 rounded-xl shadow-lg mt-4 active:scale-95 transition-all ${customAlert.type === 'error' ? 'bg-red-500 hover:bg-red-600' : 'bg-pink-500 hover:bg-pink-600'}`}
+                  className={`w-full text-white font-black py-3 rounded-xl shadow-lg mt-4 active:scale-95 transition-all ${
+                    customAlert.type === 'error'
+                      ? 'bg-red-500 hover:bg-red-600'
+                      : customAlert.type === 'info'
+                        ? 'bg-blue-500 hover:bg-blue-600'
+                        : 'bg-pink-500 hover:bg-pink-600'
+                  }`}
                 >
-                  {customAlert.type === 'error' ? 'Tentar Novamente' : 'Continuar'}
+                  {customAlert.confirmLabel || (customAlert.type === 'error' ? 'Tentar Novamente' : 'Continuar')}
                 </button>
               </div>
             </div>
