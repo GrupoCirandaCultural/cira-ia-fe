@@ -10,13 +10,13 @@ export function Stepper({ idEstande, eventoId, onViewMap }) {
 
   const steps = [
     {
-      title: 'Mostre o cupom no caixa',
-      description: 'Apresente o código acima.',
-    },
-    {
       title: `Vá até o estande ${estandeName}`,
       description: `Estande ${estandeNumero}`,
       action: { label: 'Ver no mapa', icon: MapPin },
+    },
+    {
+      title: 'Mostre o cupom no caixa',
+      description: 'Apresente o código acima.',
     },
     {
       title: 'Aproveite seus produtos com 20% off',
