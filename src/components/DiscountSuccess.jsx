@@ -104,7 +104,7 @@ export default function DiscountSuccess({ idEstande, eventoId, onExplore, onView
             transition={{ delay: 0.18 }}
             className="-mt-1 sm:-mt-3 text-[10px] sm:text-xs text-blue-200/80 italic"
           >
-            O desconto não é válido para itens promocionais.
+            O desconto não é válido para itens promocionais e produtos Panini.
           </motion.p>
 
           {/* Coupon Card */}
