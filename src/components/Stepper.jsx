@@ -15,13 +15,13 @@ export function Stepper({ idEstande, eventoId, onViewMap }) {
       action: { label: 'Ver no mapa', icon: MapPin },
     },
     {
-      title: 'Mostre o cupom no caixa',
-      description: 'Apresente o código acima.',
-    },
-    {
       title: 'Aproveite seus produtos com 20% off',
       description: 'Desconto aplicado direto no caixa.',
     },
+    {
+      title: 'Mostre o cupom no caixa',
+      description: 'Apresente o código acima.',
+    }
   ];
 
   return (
