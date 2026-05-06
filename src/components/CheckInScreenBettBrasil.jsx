@@ -13,7 +13,7 @@ const viewportStyle = `
   }
 `;
 
-export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande, fromDiscount, isKiosk = false }) {
+export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande, fromDiscount, isKiosk = false, userName = '', userPhone = '' }) {
   const [downloaded, setDownloaded] = useState(false);
   // Formata o ID do estande para exibição
   const estandeNome = idEstande ? idEstande.replace(/_/g, ' ').toUpperCase() : "GERAL";
@@ -74,6 +74,8 @@ export default function CheckInScreenBettBrasil({ onBack, eventoId, idEstande, f
                 visitados={[]} 
                 idEstandeAtual={idEstande}
                 eventoId={eventoId}
+              userName={userName}
+              userPhone={userPhone}
             />
           </div>
           

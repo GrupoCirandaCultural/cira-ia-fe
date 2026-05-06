@@ -242,6 +242,8 @@ function App() {
             <CheckInScreen 
               eventoId={appState.selectedEvento}
               idEstande={appState.selectedEstande}
+              userName={userLead?.nome}
+              userPhone={userLead?.telefone}
               fromDiscount={fromDiscount}
               isKiosk={isKiosk}
               onBack={() => {

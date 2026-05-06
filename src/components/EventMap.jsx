@@ -1,8 +1,46 @@
-import React from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { MapPin, Check } from 'lucide-react';
 import mapaBettBrasil from '../assets/mapa_bett_brasil.jpeg';
+import api from '../api';
 
-const EventMap = ({ visitados = [], idEstandeAtual, eventoId }) => {
+const EventMap = ({ visitados = [], idEstandeAtual, eventoId, userName = '', userPhone = '' }) => {
+  const hasTrackedEntry = useRef(false);
+  const sessionIdRef = useRef('');
+
+  const trackEvent = useCallback(async (eventName, label, metaData = {}) => {
+    try {
+      if (!sessionIdRef.current) {
+        sessionIdRef.current = Math.random().toString(36).substring(7);
+      }
+
+      const payload = {
+        event_name: eventName,
+        user_phone: userPhone || '',
+        user_name: userName || '',
+        session_id: sessionIdRef.current,
+        label,
+        metadata: JSON.stringify(metaData),
+        timestamp: new Date().toISOString(),
+      };
+
+      api.post('/api/analytics', payload).catch((err) => {
+        console.warn('Falha ao registrar analytics do mapa:', err);
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  }, [userName, userPhone]);
+
+  useEffect(() => {
+    if (hasTrackedEntry.current) return;
+    hasTrackedEntry.current = true;
+
+    trackEvent('map_enter', 'event_map', {
+      evento_id: eventoId || '',
+      id_estande: idEstandeAtual || '',
+    });
+  }, [eventoId, idEstandeAtual, trackEvent]);
+
   // Simulação dos estandes do evento (Pode ser parametrizado via props no futuro)
   const estandes = [
     { id: 'estande_laranja', label: 'Estande Laranja', x: '25%', y: '40%', color: '#FFB366' },
