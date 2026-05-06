@@ -104,6 +104,8 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
           });
         } else {
           let nomeUsuario = data.nome;
+          let estadoUsuario = data.estado || '';
+          let atividadeUsuario = data.atividade || '';
           
           if (!nomeUsuario) {
             try {
@@ -112,12 +114,27 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
               if (leadEncontrado && leadEncontrado.nome) {
                 nomeUsuario = leadEncontrado.nome;
               }
+              if (leadEncontrado?.estado) {
+                estadoUsuario = leadEncontrado.estado;
+              }
+              if (leadEncontrado?.atividade) {
+                atividadeUsuario = leadEncontrado.atividade;
+              }
             } catch (err) {
               console.error("Erro ao buscar nome:", err);
             }
           }
 
-          onComplete({ nome: nomeUsuario || 'Visitante', telefone: formData.telefone, cupom: data.cupom }, data);
+          onComplete(
+            {
+              nome: nomeUsuario || 'Visitante',
+              telefone: formData.telefone,
+              cupom: data.cupom,
+              estado: estadoUsuario,
+              atividade: atividadeUsuario
+            },
+            data
+          );
         }
       } else {
         if (formData.nome.trim().length < 3) {
@@ -144,7 +161,9 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
                 {
                   nome: leadExistente.nome || formData.nome || 'Visitante',
                   telefone: formData.telefone,
-                  cupom: leadExistente.cupom
+                  cupom: leadExistente.cupom,
+                  estado: leadExistente.estado || formData.estado || '',
+                  atividade: leadExistente.atividade || (formData.atividade === 'outro' ? formData.atividadeOutro : formData.atividade) || ''
                 },
                 {
                   id: leadExistente.id,
@@ -169,7 +188,16 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
           ...(formData.atividade === 'outro' && { atividade: formData.atividadeOutro })
         };
         const res = await api.post('/leads', payload);
-        onComplete(formData, res.data);
+        onComplete(
+          {
+            ...formData,
+            nome: payload.nome,
+            estado: payload.estado || '',
+            atividade: payload.atividade || '',
+            telefone: formData.telefone
+          },
+          res.data
+        );
       }
     } catch (error) {
       console.error("Erro ao processar:", error);

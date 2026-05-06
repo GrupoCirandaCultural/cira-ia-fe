@@ -244,6 +244,8 @@ function App() {
               idEstande={appState.selectedEstande}
               userName={userLead?.nome}
               userPhone={userLead?.telefone}
+              userState={userLead?.estado}
+              userActivity={userLead?.atividade}
               fromDiscount={fromDiscount}
               isKiosk={isKiosk}
               onBack={() => {

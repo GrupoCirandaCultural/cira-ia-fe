@@ -3,7 +3,7 @@ import { MapPin, Check } from 'lucide-react';
 import mapaBettBrasil from '../assets/mapa_bett_brasil.jpeg';
 import api from '../api';
 
-const EventMap = ({ visitados = [], idEstandeAtual, eventoId, userName = '', userPhone = '' }) => {
+const EventMap = ({ visitados = [], idEstandeAtual, eventoId, userName = '', userPhone = '', userState = '', userActivity = '' }) => {
   const hasTrackedEntry = useRef(false);
   const sessionIdRef = useRef('');
 
@@ -38,8 +38,10 @@ const EventMap = ({ visitados = [], idEstandeAtual, eventoId, userName = '', use
     trackEvent('map_enter', 'event_map', {
       evento_id: eventoId || '',
       id_estande: idEstandeAtual || '',
+      estado: userState || '',
+      atividade: userActivity || '',
     });
-  }, [eventoId, idEstandeAtual, trackEvent]);
+  }, [eventoId, idEstandeAtual, userState, userActivity, trackEvent]);
 
   // Simulação dos estandes do evento (Pode ser parametrizado via props no futuro)
   const estandes = [
