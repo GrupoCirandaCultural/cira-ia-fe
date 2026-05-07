@@ -118,11 +118,11 @@ function App() {
     setLeadId(serverResponse.id);
 
     // Se já participou, pula direto para o chat
-    if (serverResponse.status === 'ja_participou') {
-      setUserLead(prev => ({ ...prev, cupom: serverResponse.cupom }));
-      setStep(3); 
-      return;
-    }
+    // if (serverResponse.status === 'ja_participou') {
+    //   setUserLead(prev => ({ ...prev, cupom: serverResponse.cupom }));
+    //   setStep(3); 
+    //   return;
+    // }
 
     // Obtém config do evento para verificar se tem roleta
     const eventoConfig = getEventoConfig(appState.selectedEvento);

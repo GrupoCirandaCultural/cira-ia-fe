@@ -168,7 +168,7 @@ export default function Registration({ onComplete, idEstande, eventoId = 'bett_b
                 {
                   id: leadExistente.id,
                   cupom: leadExistente.cupom,
-                  status: 'ja_participou'
+                  status: 'ja_cadastrado'
                 }
               )
             });
