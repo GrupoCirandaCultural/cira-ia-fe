@@ -24,7 +24,7 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
   const effectiveButtonColor = idEstande === 'estande_azul' ? '#FCD34D' : buttonColor;
 
   // QR link (apenas para Bienal)
-  const qrLink = `https://bienal.example.com?estande=${idEstande}`;
+  const qrLink = `https://totem.cirandacultural.com.br/bienal_2026/bienal_geral`;
 
   // LAYOUT PARA BETT EDUCAR COM GLASSMORPHISM
   if (eventoId === 'bett_brasil') {
