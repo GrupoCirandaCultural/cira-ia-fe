@@ -12,6 +12,7 @@ import bgChatBett from '../assets/background-chat-bett.png';
 import iconeEscola from '../assets/logo_fundo_ciranda.png';
 import { getEstandeTheme } from '../theme';
 import { getEventoConfig } from '../config/events.config';
+import BienalMapModal from './BienalMapModal';
 
 const generateSessionId = () => Math.random().toString(36).substring(7);
 
@@ -46,73 +47,7 @@ const CouponModal = ({ code, isOpen, onClose, theme }) => {
   );
 };
 
-const BookMapModal = ({ isOpen, onClose, location, locations = [] }) => {
-  const [imageAvailable, setImageAvailable] = useState(true);
-
-  if (!isOpen) return null;
-
-  const mapLocations = locations.length ? locations : [location].filter(Boolean);
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl p-4 w-full max-w-2xl relative shadow-2xl animate-in zoom-in-95 duration-200">
-        <button onClick={onClose} className="absolute top-3 right-3 z-20 p-2 bg-white/90 rounded-full text-gray-500 hover:text-gray-700 shadow-md transition-colors">
-          <X size={20} />
-        </button>
-
-        <div className="pr-10 mb-3">
-          <h3 className="text-lg font-black text-gray-800">Mapa da Bienal</h3>
-          <p className="text-xs font-bold text-gray-500">
-            Vá até {location?.nome || 'o estande indicado'} {location?.estande ? `- ${location.estande}` : ''}
-          </p>
-        </div>
-
-        <div className="relative w-full aspect-[2/1] overflow-hidden rounded-2xl border border-gray-200 bg-slate-100">
-          {imageAvailable ? (
-            <img
-              src="/mapa-bienal.png"
-              alt="Mapa da Bienal"
-              className="absolute inset-0 h-full w-full object-cover"
-              onError={() => setImageAvailable(false)}
-            />
-          ) : (
-            <div className="absolute inset-0 bg-white">
-              <div className="absolute inset-x-0 bottom-0 h-12 bg-gray-100 border-t border-gray-200" />
-              <div className="absolute left-[2%] top-[10%] h-[70%] w-[60%] rounded-xl bg-slate-100 border border-slate-200" />
-              <div className="absolute right-[2%] top-[5%] h-[84%] w-[34%] rounded-xl bg-slate-50 border border-slate-200" />
-            </div>
-          )}
-
-          {mapLocations.map((item) => {
-            const isTarget = location?.nome === item.nome || location?.estande === item.estande || location?.codigo === item.codigo;
-
-            return (
-              <div
-                key={`${item.codigo || item.nome}-${item.estande}`}
-                className="absolute -translate-x-1/2 -translate-y-1/2"
-                style={{ left: item.x, top: item.y }}
-              >
-                {isTarget && (
-                  <div className="absolute inset-0 -m-3 rounded-xl border-4 border-red-500 bg-red-500/10 animate-[ping_2.5s_cubic-bezier(0,0,0.2,1)_infinite]" />
-                )}
-                <div
-                  className={`relative z-10 flex items-center gap-1 rounded-md px-2 py-1 text-[9px] font-black text-white shadow-[0_0_0_2px_rgba(255,255,255,0.85)] ${isTarget ? 'ring-4 ring-red-500 ring-offset-2 ring-offset-white animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite]' : ''}`}
-                  style={{ backgroundColor: isTarget ? '#DC2626' : item.color || '#F59E0B' }}
-                >
-                  {isTarget && <MapPin size={10} fill="currentColor" />}
-                  <span>{item.nome}</span>
-                  <span className="opacity-85">{item.estande}</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const BookDetailsModal = ({ book, isOpen, onClose, onConfirm, theme }) => {
+const BookDetailsModal = ({ book, isOpen, onClose, onConfirm, theme, getMapaInfoFromStockEvent }) => {
   if (!isOpen || !book) return null;
 
   const status = book.stockStatus;
@@ -167,11 +102,18 @@ const BookDetailsModal = ({ book, isOpen, onClose, onConfirm, theme }) => {
                   
                   {estoqueEventos.length > 0 ? (
                     <div className="space-y-2">
-                      {estoqueEventos.map((evento, idx) => (
-                        <div key={idx} className="text-sm text-gray-700">
-                          <p className="font-bold">{getEventDisplayName(getStockEventName(evento))}</p>
-                        </div>
-                      ))}
+                      {estoqueEventos.map((evento, idx) => {
+                        const mapaInfo = getMapaInfoFromStockEvent?.(evento);
+                        const label = mapaInfo
+                          ? `${mapaInfo.nome} - ${mapaInfo.estande}`
+                          : getEventDisplayName(getStockEventName(evento));
+
+                        return (
+                          <div key={idx} className="text-sm text-gray-700">
+                            <p className="font-bold">{label}</p>
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : (
                     <p className="text-sm text-gray-700">{stockDisplay}</p>
@@ -627,7 +569,8 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
   const mapaPorCodigoEvento = eventoConfig?.mapaPorCodigoEvento || {};
   const [selectedStockEventCode, setSelectedStockEventCode] = useState('');
   const [isStockEventSelectorOpen, setIsStockEventSelectorOpen] = useState(false);
-  const [selectedMapLocation, setSelectedMapLocation] = useState(null);
+  const [selectedMapLocations, setSelectedMapLocations] = useState([]);
+  const [isGeneralMapOpen, setIsGeneralMapOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const selectedStockEventLabel = selectedStockEventCode
@@ -656,11 +599,14 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
     return { codigo, ...mapaPorCodigoEvento[codigo] };
   };
 
-  const getMapaInfoFromBook = (book) => {
+  const getMapaInfosFromBook = (book) => {
     const estoque = book?.estoque_eventos || [];
-    const stockEvent = estoque.find((evento) => getMapaInfoFromStockEvent(evento));
+    const mapaInfos = estoque
+      .map((evento) => getMapaInfoFromStockEvent(evento))
+      .filter(Boolean);
 
-    return stockEvent ? getMapaInfoFromStockEvent(stockEvent) : null;
+    const uniqueByCodigo = new Map(mapaInfos.map((info) => [info.codigo, info]));
+    return Array.from(uniqueByCodigo.values());
   };
   
   // --- FUNÇÃO CENTRAL DE ANALYTICS ---
@@ -982,6 +928,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
         onConfirm={addToCart}
         onAnalytics={trackEvent}
         theme={theme}
+        getMapaInfoFromStockEvent={getMapaInfoFromStockEvent}
       />
       <CartModal 
         cart={cart}
@@ -995,10 +942,13 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
         onAnalytics={trackEvent}
         theme={theme}
       />
-      <BookMapModal
-        isOpen={!!selectedMapLocation}
-        onClose={() => setSelectedMapLocation(null)}
-        location={selectedMapLocation}
+      <BienalMapModal
+        isOpen={selectedMapLocations.length > 0 || isGeneralMapOpen}
+        onClose={() => {
+          setSelectedMapLocations([]);
+          setIsGeneralMapOpen(false);
+        }}
+        targets={selectedMapLocations}
         locations={Object.entries(mapaPorCodigoEvento).map(([codigo, info]) => ({ codigo, ...info }))}
       />
 
@@ -1020,7 +970,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
           </div>
         </div>
         <div className="flex gap-1">
-          <button className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors relative" title="Mapa">
+          <button onClick={() => setIsGeneralMapOpen(true)} className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors relative" title="Mapa">
             <MapPin size={20} />
           </button>
           <button onClick={handleResetChat} className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors" title="Novo Chat">
@@ -1096,7 +1046,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
                 <div className="grid grid-cols-1 gap-3 mt-4">
                   {msg.dados.map((item, iIdx) => {
                     const stockInfo = formatStockDisplay(item.estoque_eventos);
-                    const mapaInfo = getMapaInfoFromBook(item);
+                    const mapaInfos = getMapaInfosFromBook(item);
                     return (
                     <div key={iIdx} className={`rounded-xl overflow-hidden flex shadow-sm transition-all ${stockInfo.status ? getStockCardStyle(stockInfo.status) : 'bg-white/95 border'}`} style={!stockInfo.status ? { borderColor: `${theme.primaryColor}30` } : {}}>
                       <div className="w-24 min-w-[96px] bg-gray-300 flex items-center justify-center overflow-hidden">
@@ -1171,11 +1121,11 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
 
                             <button
                               type="button"
-                              onClick={() => mapaInfo && setSelectedMapLocation(mapaInfo)}
-                              disabled={!mapaInfo}
+                              onClick={() => mapaInfos.length > 0 && setSelectedMapLocations(mapaInfos)}
+                              disabled={mapaInfos.length === 0}
                               className="p-2 text-white rounded-lg shadow-sm active:scale-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                               style={{ backgroundColor: theme.primaryColor }}
-                              title={mapaInfo ? `Ver no mapa: ${mapaInfo.nome}` : 'Mapa indisponível'}
+                              title={mapaInfos.length > 0 ? `Ver no mapa: ${mapaInfos.map((info) => info.nome).join(', ')}` : 'Mapa indisponível'}
                             >
                               <MapPin size={14} />
                             </button>

@@ -4,7 +4,8 @@ import api from '../api';
 import { ArrowLeft, MapPin, CheckCircle2, AlertCircle, X } from 'lucide-react';
 import EventMap from './EventMap';
 import CheckInScreenBettBrasil from './CheckInScreenBettBrasil';
-import { getEstandeConfig } from '../config/events.config';
+import BienalMapModal from './BienalMapModal';
+import { getEstandeConfig, getEventoConfig } from '../config/events.config';
 
 export default function CheckInScreen({ onBack, eventoId, idEstande, onUserNotFound, fromDiscount, isKiosk = false, userName = '', userPhone = '', userState = '', userActivity = '' }) {
   const [phone, setPhone] = useState('');
@@ -88,25 +89,15 @@ export default function CheckInScreen({ onBack, eventoId, idEstande, onUserNotFo
   }
 
   if (eventoId === 'bienal_2026') {
+    const mapaPorCodigoEvento = getEventoConfig(eventoId)?.mapaPorCodigoEvento || {};
+
     return (
-      <div className="h-full w-full bg-gradient-to-b from-purple-600 to-pink-500 p-6 flex flex-col text-white animate-in fade-in duration-500">
-        <button onClick={onBack} className="flex items-center gap-2 text-sm font-bold mb-6 hover:opacity-80 transition-opacity">
-          <ArrowLeft size={20} /> Voltar para o Início
-        </button>
-
-        <div className="flex-1 flex flex-col items-center text-center min-h-0">
-          <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full mb-6 border border-white/30 text-[15px] font-black tracking-widest">
-            <MapPin size={28} />
-            MAPA
-          </div>
-
-          <EventMap
-            visitados={[]}
-            idEstandeAtual={null}
-            eventoId={eventoId}
-          />
-        </div>
-      </div>
+      <BienalMapModal
+        isOpen
+        onClose={onBack}
+        targets={[]}
+        locations={Object.entries(mapaPorCodigoEvento).map(([codigo, info]) => ({ codigo, ...info }))}
+      />
     );
   }
 

@@ -144,8 +144,8 @@ export const EVENTOS_CONFIG = {
     ],
 
     mapaPorCodigoEvento: {
-      '000356': { nome: 'Escolar', estande: '150 M Escolar', x: '2%', y: '72%', color: '#FACC15' },
-      '000357': { nome: 'Professor', estande: '125 M Professor', x: '91%', y: '42%', color: '#22D3EE' },
+      '000356': { nome: 'Escolar', estande: '150 M', x: '3%', y: '68%', color: '#FACC15', align: 'left' },
+      '000357': { nome: 'Professor', estande: '125 M', x: '91%', y: '42%', color: '#22D3EE', align: 'right' },
       '000358': { nome: 'Ciranda na Escola', estande: 'B20', x: '52%', y: '44%', color: '#FACC15' },
       '000359': { nome: 'Principis', estande: 'F30', x: '41%', y: '6%', color: '#008F78' },
       '000360': { nome: 'Mood', estande: 'C10', x: '60%', y: '34%', color: '#9D174D' },
