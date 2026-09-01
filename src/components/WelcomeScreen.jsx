@@ -3,7 +3,7 @@ import QRCode from 'react-qr-code';
 import { Sparkles, MessageCircle, Search, MapPin, BookOpen } from 'lucide-react';
 import { getEventoConfig, getEstandeConfig, getTemaEstande } from '../config/events.config';
 import ciraWelcomeLimpa from '../assets/cira-welcome.png';
-import logoFundo from '../assets/logo_fundo.png';
+import logoFundo from '../assets/logo_fundo_ciranda.png';
 import '../styles/WelcomeScreen.css';
 
 export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_brasil' }) {
@@ -180,17 +180,7 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
 
       <div className="relative z-10 flex flex-col items-center justify-center h-full w-full pb-12 px-8 gap-4">
         
-        {/* OPÇÃO 1: Roleta/Desconto */}
-        <button
-          onClick={() => onStart('wheel')}
-          className="w-full py-4 text-white font-black text-xl rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
-          style={{ background: `linear-gradient(to right, ${primaryColor}, ${secondaryColor})` }}
-        >
-          <Sparkles size={24} />
-          Ganhar Desconto e Brindes 🎡
-        </button>
-
-        {/* OPÇÃO 2: Chat/Curadoria */}
+        {/* OPÇÃO 1: Chat/Curadoria */}
         <button
           onClick={() => onStart('chat')}
           className="w-full py-4 bg-white/90 backdrop-blur-sm border-2 font-black text-xl rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
@@ -200,7 +190,7 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
           Qual Livro combina com Você
         </button>
 
-        {/* OPÇÃO 3: Consulta de Estoque */}
+        {/* OPÇÃO 2: Consulta de Estoque */}
         <button
           onClick={() => onStart('chat_stock')}
           className="w-full py-4 bg-white/90 backdrop-blur-sm border-2 font-black text-xl rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
@@ -210,7 +200,7 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
           Consulte nosso estoque
         </button>
 
-        {/* BOTÃO CHECK-IN (CENTRALIZADO EM BAIXO) */}
+        {/* BOTÃO MAPA (CENTRALIZADO EM BAIXO) */}
         <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20">
           <button 
             onClick={() => onStart('checkin')}
@@ -221,7 +211,7 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
               color: primaryColor
             }}
           >
-            <MapPin size={24} /> CHECK-IN (ROTA DE BRINDES)
+            <MapPin size={24} /> MAPA
           </button>
         </div>
 

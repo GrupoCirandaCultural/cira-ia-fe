@@ -2,6 +2,17 @@ import React, { useCallback, useEffect, useRef } from 'react';
 import { MapPin, Check } from 'lucide-react';
 import mapaBettBrasil from '../assets/mapa_bett_brasil.jpeg';
 import api from '../api';
+import { getEventoConfig } from '../config/events.config';
+
+const getReadableTextColor = (hexColor = '#000000') => {
+  const hex = hexColor.replace('#', '');
+  const red = parseInt(hex.slice(0, 2), 16);
+  const green = parseInt(hex.slice(2, 4), 16);
+  const blue = parseInt(hex.slice(4, 6), 16);
+  const brightness = (red * 299 + green * 587 + blue * 114) / 1000;
+
+  return brightness > 150 ? '#111827' : '#FFFFFF';
+};
 
 const EventMap = ({ visitados = [], idEstandeAtual, eventoId, userName = '', userPhone = '', userState = '', userActivity = '' }) => {
   const hasTrackedEntry = useRef(false);
@@ -43,11 +54,14 @@ const EventMap = ({ visitados = [], idEstandeAtual, eventoId, userName = '', use
     });
   }, [eventoId, idEstandeAtual, userState, userActivity, trackEvent]);
 
-  // Simulação dos estandes do evento (Pode ser parametrizado via props no futuro)
-  const estandes = [
-    { id: 'estande_laranja', label: 'Estande Laranja', x: '25%', y: '40%', color: '#FFB366' },
-    { id: 'estande_azul', label: 'Estande Azul', x: '75%', y: '60%', color: '#003D82' },
-  ];
+  const eventoConfig = getEventoConfig(eventoId);
+  const locaisMapa = eventoConfig?.mapaEstandes || eventoConfig?.estandes || [];
+  const estandes = locaisMapa.map((estande, index) => ({
+    ...estande,
+    x: `${25 + (index % 4) * 16.66}%`,
+    y: `${34 + Math.floor(index / 4) * 36}%`,
+    color: estande.cor,
+  }));
 
   // Layout especial para bett_brasil
   if (eventoId === 'bett_brasil') {
@@ -66,14 +80,15 @@ const EventMap = ({ visitados = [], idEstandeAtual, eventoId, userName = '', use
   }
 
   return (
-    <div className="relative w-full h-56 bg-white/10 rounded-3xl border border-white/20 mb-6 overflow-hidden shadow-inner">
+    <div className="relative w-full h-64 bg-white/10 rounded-3xl border border-white/20 mb-6 overflow-hidden shadow-inner">
         {/* Placeholder visual da planta do evento */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent opacity-50" />
         
-        {/* Simulação de caminhos/corredores */}
-        <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30 mt-4 ml-4">
-             <path d="M60 60 Q 180 120 300 190" stroke="white" strokeWidth="4" fill="none" strokeDasharray="8 8" />
-             <path d="M190 120 L 190 60" stroke="white" strokeWidth="4" fill="none" strokeDasharray="8 8" />
+           {/* Simulação de caminhos/corredores */}
+           <svg className="absolute inset-0 w-full h-full pointer-events-none opacity-30">
+             <path d="M40 88 H 320" stroke="white" strokeWidth="4" fill="none" strokeDasharray="8 8" />
+             <path d="M40 178 H 320" stroke="white" strokeWidth="4" fill="none" strokeDasharray="8 8" />
+             <path d="M180 58 V 212" stroke="white" strokeWidth="4" fill="none" strokeDasharray="8 8" />
         </svg>
 
         {estandes.map((local) => {
@@ -83,6 +98,7 @@ const EventMap = ({ visitados = [], idEstandeAtual, eventoId, userName = '', use
             
             let containerClass = "bg-white/90 text-gray-400 border-gray-200 saturate-0"; // Padrão: Não visitado (Cinza/Neutro)
             let iconColor = "text-gray-300";
+            let containerStyle = {};
 
             // Lógica ajustada: Se já visitou, PRIORIDADE para VERDE, mesmo que seja o atual
             if (isVisitado) {
@@ -93,21 +109,33 @@ const EventMap = ({ visitados = [], idEstandeAtual, eventoId, userName = '', use
                  }
                  iconColor = "text-white";
             } else if (isAtual) {
-                 containerClass = "bg-pink-500 text-white border-pink-300 ring-4 ring-pink-500/30 animate-pulse z-10"; // Atual (Rosa)
+                containerClass = "ring-4 animate-pulse z-10"; // Atual (cor do estande)
                  iconColor = "text-white";
+                containerStyle = {
+                backgroundColor: local.color,
+                borderColor: local.color,
+                color: getReadableTextColor(local.color),
+                '--tw-ring-color': `${local.color}55`,
+                };
             } else {
-                 containerClass = "bg-yellow-100 text-yellow-700 border-yellow-300"; // Disponível para visitar (Amarelo)
-                 iconColor = "text-yellow-600";
+                containerClass = "border-white/70"; // Disponível para visitar (cor do estande)
+                iconColor = "text-current";
+                containerStyle = {
+                backgroundColor: `${local.color}dd`,
+                borderColor: local.color,
+                color: getReadableTextColor(local.color),
+                };
             }
 
             return (
                 <div 
                     key={local.id}
-                    className={`absolute w-20 h-20 -ml-10 -mt-10 rounded-2xl flex flex-col items-center justify-center p-1 text-center transition-all duration-500 border-2 shadow-xl ${containerClass}`}
-                    style={{ left: local.x, top: local.y }}
+                  className={`absolute w-[72px] h-[72px] -ml-9 -mt-9 rounded-2xl flex flex-col items-center justify-center p-1 text-center transition-all duration-500 border-2 shadow-xl ${containerClass}`}
+                    style={{ left: local.x, top: local.y, ...containerStyle }}
                 >
-                    <MapPin size={20} className={`mb-1 ${iconColor}`} />
-                    <span className="text-[9px] font-black leading-none uppercase max-w-full px-1">{local.label}</span>
+                  <MapPin size={18} className={`mb-1 ${iconColor}`} />
+                  <span className="text-[8px] font-black leading-none uppercase max-w-full px-1">{local.label}</span>
+                  {local.numero && <span className="text-[8px] font-black leading-none mt-0.5 opacity-90">{local.numero}</span>}
                     
                     {isVisitado && (
                         <span className="absolute -top-2 -right-2 bg-white text-green-600 rounded-full p-1 border-2 border-green-500 shadow-sm transform scale-100 animate-in zoom-in">

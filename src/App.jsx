@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import WelcomeScreen from './components/WelcomeScreen';
 import Registration from './components/Registration';
 import PrizeWheel from './components/PrizeWheel';
@@ -7,9 +7,12 @@ import CheckInScreen from './components/CheckInScreen';
 import EventSelector from './components/EventSelector';
 import DiscountSuccess from './components/DiscountSuccess';
 import ConfigGate from './components/ConfigGate';
+import CiraCentralChat from './components/central/CiraCentralChat';
 import { MapPin, Check, ArrowLeft } from 'lucide-react';
 import { getEventoConfig, verificarEstandeValido } from './config/events.config';
 import { useKioskMode, useKioskInactivityReset } from './hooks/useKioskMode';
+
+const AUTH_STORAGE_KEY = 'cira_user_lead';
 
 function App() {
   // Estado consolidado com lazy initialization (parse URL apenas na carga inicial)
@@ -43,7 +46,15 @@ function App() {
 
   // Outros estados
   const [step, setStep] = useState(0);
-  const [userLead, setUserLead] = useState(null);
+  const [userLead, setUserLead] = useState(() => {
+    try {
+      const stored = window.localStorage.getItem(AUTH_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : null;
+    } catch (error) {
+      console.warn('Falha ao recuperar usuário autenticado:', error);
+      return null;
+    }
+  });
   const [leadId, setLeadId] = useState(null);
   const [target, setTarget] = useState(null);
   const [prefilledPhone, setPrefilledPhone] = useState('');
@@ -64,10 +75,33 @@ function App() {
   }, []);
   useKioskInactivityReset(isKiosk, handleKioskReset, 300000);
 
+  useEffect(() => {
+    if (!userLead) return;
+
+    try {
+      window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userLead));
+    } catch (error) {
+      console.warn('Falha ao manter usuário autenticado:', error);
+    }
+  }, [userLead]);
+
   // Função para selecionar evento
   const handleSelectEvento = (eventoId) => {
     const config = getEventoConfig(eventoId);
     if (config) {
+      // Evento com um único estande: pula a tela de seleção de estande
+      if (config.estandes.length === 1) {
+        const soloEstandeId = config.estandes[0].id;
+        window.history.pushState({}, '', `/${eventoId}/${soloEstandeId}`);
+        setAppState({
+          selectedEvento: eventoId,
+          selectedEstande: soloEstandeId,
+          estandeOptions: config.estandes,
+          isConfigured: true
+        });
+        return;
+      }
+
       // Apenas seleciona o evento, sem estande - vai mostrar o seletor
       window.history.pushState({}, '', `/${eventoId}`);
       setAppState({
@@ -108,7 +142,7 @@ function App() {
       // Guarda a escolha original (wheel/chat/chat_stock).
       // A validação de roleta acontece em handleRegistrationComplete.
       setTarget(choice);
-      setStep(1);         // Vai para o cadastro
+      setStep(userLead ? 3 : 1); // Usuário autenticado permanece logado e vai direto ao chat
     }
   };
 
@@ -206,11 +240,14 @@ function App() {
                        ? 'bg-blue-600 border-blue-500 shadow-lg scale-105' 
                        : 'bg-white/5 border-white/10 hover:bg-white/10'
                      }`}
-                     style={appState.selectedEstande === estande.id ? { backgroundColor: estande.cor, borderColor: estande.cor } : {}}
+                     style={{ borderColor: `${estande.cor}88`, backgroundColor: `${estande.cor}18` }}
                    >
-                      <div className="text-left">
+                      <div className="flex items-center gap-3 text-left">
+                        <span className="h-10 w-2 rounded-full shrink-0" style={{ backgroundColor: estande.cor }} />
+                        <div>
                         <span className="font-bold tracking-wide block">{estande.label}</span>
-                        {estande.numero && <span className="text-xs text-gray-300">Número: {estande.numero}</span>}
+                        {estande.numero && <span className="text-xs text-gray-300">Local: {estande.numero}</span>}
+                        </div>
                       </div>
                       {appState.selectedEstande === estande.id && <Check size={20} className="text-white" />}
                    </button>
@@ -264,10 +301,15 @@ function App() {
             />
           )}
 
+          {/* TAB "CENTRAL": referência de design, mock-only, sem cadastro/roleta */}
+          {appState.isConfigured && appState.selectedEvento === 'central' && appState.selectedEstande && (
+            <CiraCentralChat onBack={handleBackToEventSelection} />
+          )}
+
           {/* PASSO 0: BOAS-VINDAS (COM ESCOLHA) */}
-          {appState.isConfigured && appState.selectedEstande && step === 0 && (
-            <WelcomeScreen 
-              onStart={handleStart} 
+          {appState.isConfigured && appState.selectedEstande && step === 0 && appState.selectedEvento !== 'central' && (
+            <WelcomeScreen
+              onStart={handleStart}
               idEstande={appState.selectedEstande}
               eventoId={appState.selectedEvento}
             />
@@ -321,6 +363,7 @@ function App() {
               cupom={userLead?.cupom} 
               initialMode={target === 'chat_stock' ? 'stock' : 'stock'}
               idEstande={appState.selectedEstande}
+              eventoId={appState.selectedEvento}
               onBack={() => setStep(0)}
             />
           )}

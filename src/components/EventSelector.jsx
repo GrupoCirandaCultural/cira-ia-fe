@@ -33,7 +33,7 @@ export default function EventSelector({ onSelectEvent }) {
                   </h3>
                   <p className="text-gray-500 text-xs flex items-center gap-1 mb-2">
                     <MapPin size={14} />
-                    {evento.numEstandes} estandes disponíveis
+                    {evento.numEstandes} {evento.numEstandes === 1 ? 'estande disponível' : 'estandes disponíveis'}
                   </p>
                   <p className="text-gray-400 text-xs line-clamp-1">
                     {evento.descricao}

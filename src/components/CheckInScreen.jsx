@@ -4,6 +4,7 @@ import api from '../api';
 import { ArrowLeft, MapPin, CheckCircle2, AlertCircle, X } from 'lucide-react';
 import EventMap from './EventMap';
 import CheckInScreenBettBrasil from './CheckInScreenBettBrasil';
+import { getEstandeConfig } from '../config/events.config';
 
 export default function CheckInScreen({ onBack, eventoId, idEstande, onUserNotFound, fromDiscount, isKiosk = false, userName = '', userPhone = '', userState = '', userActivity = '' }) {
   const [phone, setPhone] = useState('');
@@ -11,8 +12,8 @@ export default function CheckInScreen({ onBack, eventoId, idEstande, onUserNotFo
   const [loading, setLoading] = useState(false);
   const [customAlert, setCustomAlert] = useState(null);
 
-  // Formata o ID do estande para exibição (ex: ciranda_bienal -> CIRANDA BIENAL)
-  const estandeNome = idEstande ? idEstande.replace(/_/g, ' ').toUpperCase() : "GERAL";
+  const estandeConfig = getEstandeConfig(eventoId, idEstande);
+  const estandeNome = estandeConfig?.label || (idEstande ? idEstande.replace(/_/g, ' ').toUpperCase() : "GERAL");
 
   const formatarTelefone = (valor) => {
     if (!valor) return "";
@@ -86,6 +87,29 @@ export default function CheckInScreen({ onBack, eventoId, idEstande, onUserNotFo
     return <CheckInScreenBettBrasil onBack={onBack} eventoId={eventoId} idEstande={idEstande} fromDiscount={fromDiscount} isKiosk={isKiosk} userName={userName} userPhone={userPhone} userState={userState} userActivity={userActivity} />;
   }
 
+  if (eventoId === 'bienal_2026') {
+    return (
+      <div className="h-full w-full bg-gradient-to-b from-purple-600 to-pink-500 p-6 flex flex-col text-white animate-in fade-in duration-500">
+        <button onClick={onBack} className="flex items-center gap-2 text-sm font-bold mb-6 hover:opacity-80 transition-opacity">
+          <ArrowLeft size={20} /> Voltar para o Início
+        </button>
+
+        <div className="flex-1 flex flex-col items-center text-center min-h-0">
+          <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full mb-6 border border-white/30 text-[15px] font-black tracking-widest">
+            <MapPin size={28} />
+            MAPA
+          </div>
+
+          <EventMap
+            visitados={[]}
+            idEstandeAtual={null}
+            eventoId={eventoId}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="h-full w-full bg-gradient-to-b from-purple-600 to-pink-500 p-6 flex flex-col text-white animate-in fade-in duration-500">
       
@@ -127,7 +151,7 @@ export default function CheckInScreen({ onBack, eventoId, idEstande, onUserNotFo
         {/* IDENTIFICAÇÃO DO ESTANDE ATUAL */}
         <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full mb-6 border border-white/30 text-[15px] font-black tracking-widest">
           <MapPin size={28} />
-          ESTANDE: {estandeNome}
+          ESTANDE: {estandeNome.toUpperCase()}
         </div>
 
         {/* MAPA INTERATIVO */}

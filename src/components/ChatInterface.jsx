@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../api';
-import { Send, Search, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw, Trash2, MessageCircle, CheckCircle, AlertCircle, ChevronUp, ChevronDown, Eye } from 'lucide-react';
+import { Send, Search, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw, Trash2, MessageCircle, CheckCircle, AlertCircle, ChevronUp, ChevronDown, Eye, MapPin } from 'lucide-react';
 
 // Mapeamento de ID do estande para código RPA
 const ESTANDE_TO_RPA = {
@@ -9,10 +9,13 @@ const ESTANDE_TO_RPA = {
 };
 import bgChat from '../assets/background-chat.png';
 import bgChatBett from '../assets/background-chat-bett.png';
-import iconeEscola from '../assets/icone_ciranda_escola.png';
+import iconeEscola from '../assets/logo_fundo_ciranda.png';
 import { getEstandeTheme } from '../theme';
+import { getEventoConfig } from '../config/events.config';
 
 const generateSessionId = () => Math.random().toString(36).substring(7);
+
+const RESULTS_PAGE_SIZE = 20;
 
 const CouponModal = ({ code, isOpen, onClose, theme }) => {
   if (!isOpen) return null;
@@ -37,6 +40,72 @@ const CouponModal = ({ code, isOpen, onClose, theme }) => {
           </div>
           
           <p className="text-[10px] text-gray-400 font-medium pt-2">Válido apenas para hoje. Um uso por pessoa.</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const BookMapModal = ({ isOpen, onClose, location, locations = [] }) => {
+  const [imageAvailable, setImageAvailable] = useState(true);
+
+  if (!isOpen) return null;
+
+  const mapLocations = locations.length ? locations : [location].filter(Boolean);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl p-4 w-full max-w-2xl relative shadow-2xl animate-in zoom-in-95 duration-200">
+        <button onClick={onClose} className="absolute top-3 right-3 z-20 p-2 bg-white/90 rounded-full text-gray-500 hover:text-gray-700 shadow-md transition-colors">
+          <X size={20} />
+        </button>
+
+        <div className="pr-10 mb-3">
+          <h3 className="text-lg font-black text-gray-800">Mapa da Bienal</h3>
+          <p className="text-xs font-bold text-gray-500">
+            Vá até {location?.nome || 'o estande indicado'} {location?.estande ? `- ${location.estande}` : ''}
+          </p>
+        </div>
+
+        <div className="relative w-full aspect-[2/1] overflow-hidden rounded-2xl border border-gray-200 bg-slate-100">
+          {imageAvailable ? (
+            <img
+              src="/mapa-bienal.png"
+              alt="Mapa da Bienal"
+              className="absolute inset-0 h-full w-full object-cover"
+              onError={() => setImageAvailable(false)}
+            />
+          ) : (
+            <div className="absolute inset-0 bg-white">
+              <div className="absolute inset-x-0 bottom-0 h-12 bg-gray-100 border-t border-gray-200" />
+              <div className="absolute left-[2%] top-[10%] h-[70%] w-[60%] rounded-xl bg-slate-100 border border-slate-200" />
+              <div className="absolute right-[2%] top-[5%] h-[84%] w-[34%] rounded-xl bg-slate-50 border border-slate-200" />
+            </div>
+          )}
+
+          {mapLocations.map((item) => {
+            const isTarget = location?.nome === item.nome || location?.estande === item.estande || location?.codigo === item.codigo;
+
+            return (
+              <div
+                key={`${item.codigo || item.nome}-${item.estande}`}
+                className="absolute -translate-x-1/2 -translate-y-1/2"
+                style={{ left: item.x, top: item.y }}
+              >
+                {isTarget && (
+                  <div className="absolute inset-0 -m-3 rounded-xl border-4 border-red-500 bg-red-500/10 animate-[ping_2.5s_cubic-bezier(0,0,0.2,1)_infinite]" />
+                )}
+                <div
+                  className={`relative z-10 flex items-center gap-1 rounded-md px-2 py-1 text-[9px] font-black text-white shadow-[0_0_0_2px_rgba(255,255,255,0.85)] ${isTarget ? 'ring-4 ring-red-500 ring-offset-2 ring-offset-white animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite]' : ''}`}
+                  style={{ backgroundColor: isTarget ? '#DC2626' : item.color || '#F59E0B' }}
+                >
+                  {isTarget && <MapPin size={10} fill="currentColor" />}
+                  <span>{item.nome}</span>
+                  <span className="opacity-85">{item.estande}</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -100,7 +169,7 @@ const BookDetailsModal = ({ book, isOpen, onClose, onConfirm, theme }) => {
                     <div className="space-y-2">
                       {estoqueEventos.map((evento, idx) => (
                         <div key={idx} className="text-sm text-gray-700">
-                          <p className="font-bold">{getEventDisplayName(evento.nome_evento)}</p>
+                          <p className="font-bold">{getEventDisplayName(getStockEventName(evento))}</p>
                         </div>
                       ))}
                     </div>
@@ -511,6 +580,10 @@ const getEventDisplayName = (nomeEvento) => {
   return String(nomeEvento).split('-')[0].trim();
 };
 
+const getStockEventCode = (evento) => String(evento?.evento || evento?.codigo || evento?.id_evento || evento?.code || '').trim();
+
+const getStockEventName = (evento) => String(evento?.nome_evento || evento?.nome || evento?.name || '').trim();
+
 const getBoothBadgeStyle = (eventoCodigo, nomeEvento) => {
   const codigo = String(eventoCodigo || '').trim();
   const nome = String(nomeEvento || '').toLowerCase();
@@ -533,7 +606,7 @@ const formatStockDisplay = (estoque_eventos) => {
   }
 
   const disponibilidades = estoque_eventos.map(
-    e => `${getEventDisplayName(e.nome_evento)} (${e.estoque} ${e.estoque === 1 ? 'unidade' : 'unidades'})`
+    e => `${getEventDisplayName(getStockEventName(e))} (${e.estoque} ${e.estoque === 1 ? 'unidade' : 'unidades'})`
   ).join(' e ');
 
   return {
@@ -543,10 +616,52 @@ const formatStockDisplay = (estoque_eventos) => {
   };
 };
 
+const getBookKey = (book) => String(book?.barras || book?.isbn || book?.id || book?.titulo || '').trim();
+
 export default function ChatInterface({ userName: userNameProp, userPhone, cupom, onBack, initialMode = 'chat', idEstande = 'estande_laranja', eventoId = 'bett_brasil' }) { // <--- Função principal começa aqui
   const userName = (userNameProp && String(userNameProp).trim()) ? String(userNameProp).trim().split(' ')[0] : 'Visitante';
   const theme = getEstandeTheme(idEstande);
+  const eventoConfig = getEventoConfig(eventoId);
+  const codigosEstoqueEvento = eventoConfig?.codigosEstoque || [];
+  const eventosEstoque = eventoConfig?.eventosEstoque || [];
+  const mapaPorCodigoEvento = eventoConfig?.mapaPorCodigoEvento || {};
+  const [selectedStockEventCode, setSelectedStockEventCode] = useState('');
+  const [isStockEventSelectorOpen, setIsStockEventSelectorOpen] = useState(false);
+  const [selectedMapLocation, setSelectedMapLocation] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const selectedStockEventLabel = selectedStockEventCode
+    ? eventosEstoque.find((evento) => evento.codigo === selectedStockEventCode)?.nome || selectedStockEventCode
+    : 'Todos os estandes';
+
+  const filtrarDadosPorEvento = (dados = []) => {
+    if (!codigosEstoqueEvento.length || !Array.isArray(dados)) return dados;
+
+    const allowedCodes = selectedStockEventCode ? [selectedStockEventCode] : codigosEstoqueEvento;
+
+    return dados
+      .map((book) => ({
+        ...book,
+        estoque_eventos: (book.estoque_eventos || []).filter((evento) => (
+          allowedCodes.includes(getStockEventCode(evento))
+        )),
+      }))
+      .filter((book) => book.estoque_eventos.length > 0);
+  };
+
+  const getMapaInfoFromStockEvent = (evento) => {
+    const codigo = getStockEventCode(evento);
+    if (!mapaPorCodigoEvento[codigo]) return null;
+
+    return { codigo, ...mapaPorCodigoEvento[codigo] };
+  };
+
+  const getMapaInfoFromBook = (book) => {
+    const estoque = book?.estoque_eventos || [];
+    const stockEvent = estoque.find((evento) => getMapaInfoFromStockEvent(evento));
+
+    return stockEvent ? getMapaInfoFromStockEvent(stockEvent) : null;
+  };
   
   // --- FUNÇÃO CENTRAL DE ANALYTICS ---
   const trackEvent = async (eventName, label, metaData = {}) => {
@@ -622,57 +737,8 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
   };
   
   // ESTADOS DO MODO ESTOQUE
-  const [genres, setGenres] = useState([]);
   const [stockFilterGenre, setStockFilterGenre] = useState(null);
   const [stockOnlyBooth, setStockOnlyBooth] = useState(false);
-  
-  // Refs para controle de drag sem re-renderização
-  const filtersRef = useRef(null);
-  const isDown = useRef(false);
-  const startX = useRef(0);
-  const scrollLeft = useRef(0);
-  const isDragging = useRef(false);
-
-  const startDragging = (e) => {
-    isDown.current = true;
-    isDragging.current = false;
-    startX.current = e.pageX - filtersRef.current.offsetLeft;
-    scrollLeft.current = filtersRef.current.scrollLeft;
-  };
-
-  const stopDragging = () => {
-    isDown.current = false;
-    // O flag isDragging será usado no click para prevenir seleção acidental
-    setTimeout(() => { isDragging.current = false; }, 0);
-  };
-
-  const onDrag = (e) => {
-    if (!isDown.current) return;
-    e.preventDefault();
-    const x = e.pageX - filtersRef.current.offsetLeft;
-    const walk = (x - startX.current) * 2; // Velocidade do scroll
-    
-    // Se moveu mais que 5 pixels, considera que está arrastando
-    if (Math.abs(walk) > 5) {
-      isDragging.current = true;
-    }
-    
-    filtersRef.current.scrollLeft = scrollLeft.current - walk;
-  };
-
-  useEffect(() => {
-    if (initialMode === 'stock') {
-      const fetchGenres = async () => {
-        try {
-          const response = await api.get('/api/genres');
-          setGenres(response.data);
-        } catch (error) {
-          console.error("Erro ao buscar gêneros:", error);
-        }
-      };
-      fetchGenres();
-    }
-  }, [initialMode]);
 
   const scrollRef = useRef(null);
   const lastMessageRef = useRef(null);
@@ -736,6 +802,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
   const [messages, setMessages] = useState(getInitialMessages());
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingMoreIndex, setLoadingMoreIndex] = useState(null);
   const [sessionId, setSessionId] = useState(generateSessionId());
   const [selectedAge, setSelectedAge] = useState(null);
 
@@ -797,11 +864,21 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
       const payload = {
         session_id: sessionId, 
         message: apiMessage,
+        id_evento: eventoId,
+        limit: RESULTS_PAGE_SIZE,
+        offset: 0,
       };
+
+      if (selectedStockEventCode) {
+        payload.event_codes = [selectedStockEventCode];
+        payload.stock_event_code = selectedStockEventCode;
+      } else if (codigosEstoqueEvento.length > 0) {
+        payload.event_codes = codigosEstoqueEvento;
+      }
 
       // Adiciona filtros de estoque se o modo é 'stock'
       if (initialMode === 'stock') {
-        if (stockOnlyBooth) {
+        if (stockOnlyBooth && ESTANDE_TO_RPA[idEstande]) {
           payload.only_local = true;
           payload.booth_id = ESTANDE_TO_RPA[idEstande];
         }
@@ -811,6 +888,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
       }
 
       const { data } = await api.post('/chat', payload);
+    const dadosFiltrados = filtrarDadosPorEvento(data.dados);
       
       let responseContent = data.texto;
       let responseOptions = null;
@@ -832,9 +910,12 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
       setMessages((prev) => [...prev, { 
         role: 'Cira IA', 
         content: responseContent, 
-        dados: data.dados, // Aqui é onde os livros entram
+        dados: dadosFiltrados, // Aqui é onde os livros entram
         tipo: data.tipo,
-        options: responseOptions
+        options: responseOptions,
+        canLoadMore: dadosFiltrados.length >= RESULTS_PAGE_SIZE,
+        nextOffset: dadosFiltrados.length,
+        searchPayload: payload,
       }]);
     } catch (error) {
       console.error("Erro na API:", error);
@@ -844,6 +925,49 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
       }]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleLoadMore = async (messageIndex, msg) => {
+    if (loadingMoreIndex !== null || !msg.searchPayload) return;
+
+    setLoadingMoreIndex(messageIndex);
+
+    try {
+      const payload = {
+        ...msg.searchPayload,
+        offset: msg.nextOffset || msg.dados?.length || 0,
+        limit: RESULTS_PAGE_SIZE,
+      };
+
+      const { data } = await api.post('/chat', payload);
+      const dadosFiltrados = filtrarDadosPorEvento(data.dados);
+
+      setMessages((prev) => prev.map((message, index) => {
+        if (index !== messageIndex) return message;
+
+        const existingKeys = new Set((message.dados || []).map(getBookKey));
+        const novosDados = dadosFiltrados.filter((book) => {
+          const key = getBookKey(book);
+          return key && !existingKeys.has(key);
+        });
+
+        return {
+          ...message,
+          dados: [...(message.dados || []), ...novosDados],
+          canLoadMore: novosDados.length >= RESULTS_PAGE_SIZE,
+          nextOffset: payload.offset + dadosFiltrados.length,
+        };
+      }));
+    } catch (error) {
+      console.error("Erro ao carregar mais livros:", error);
+      setMessages((prev) => prev.map((message, index) => (
+        index === messageIndex
+          ? { ...message, canLoadMore: false }
+          : message
+      )));
+    } finally {
+      setLoadingMoreIndex(null);
     }
   };
 
@@ -871,6 +995,12 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
         onAnalytics={trackEvent}
         theme={theme}
       />
+      <BookMapModal
+        isOpen={!!selectedMapLocation}
+        onClose={() => setSelectedMapLocation(null)}
+        location={selectedMapLocation}
+        locations={Object.entries(mapaPorCodigoEvento).map(([codigo, info]) => ({ codigo, ...info }))}
+      />
 
       <div className="absolute inset-0 z-0" style={{ backgroundImage: `url(${eventoId === 'bett_brasil' ? bgChatBett : bgChat})`, backgroundSize: 'cover', backgroundPosition: 'center top' }} />
 
@@ -883,16 +1013,15 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
           )}
           <img src={iconeEscola} alt="Escola" className="h-12 w-auto" />
           <div>
-            <h1 className="font-black text-lg text-gray-800 leading-none">Ciranda na Escola</h1>
+            <h1 className="font-black text-lg text-gray-800 leading-none">Grupo Ciranda Cultural</h1>
             <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
               {initialMode === 'stock' ? 'Consulta de Estoque' : 'Recomendador Literário'}
             </p>
           </div>
         </div>
         <div className="flex gap-1">
-          <button onClick={() => setIsCartOpen(true)} className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors relative" title="Carrinho">
-            <ShoppingCart size={20} />
-            {cart.length > 0 && <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold animate-pulse">{cart.reduce((acc, item) => acc + (item.quantity || 1), 0)}</span>}
+          <button className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors relative" title="Mapa">
+            <MapPin size={20} />
           </button>
           <button onClick={handleResetChat} className="p-2 hover:bg-gray-100 rounded-full text-gray-600 transition-colors" title="Novo Chat">
             <RotateCcw size={20} />
@@ -907,8 +1036,8 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
             ref={idx === messages.length - 1 ? lastMessageRef : null}
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
-            <div className={`max-w-[90%] p-5 rounded-[24px] shadow-lg rounded-tl-none border border-white/40 ${
-              msg.role === 'user' ? 'text-white rounded-tr-none' : 'bg-white/95 text-gray-800'
+            <div className={`max-w-[90%] p-5 rounded-[24px] shadow-lg border border-white/40 ${
+              msg.role === 'user' ? 'text-white rounded-tr-none' : 'bg-white/95 text-gray-800 rounded-tl-none'
             }`}
             style={msg.role === 'user' ? { backgroundColor: theme.primaryColor } : {}}>
               <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">
@@ -967,6 +1096,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
                 <div className="grid grid-cols-1 gap-3 mt-4">
                   {msg.dados.map((item, iIdx) => {
                     const stockInfo = formatStockDisplay(item.estoque_eventos);
+                    const mapaInfo = getMapaInfoFromBook(item);
                     return (
                     <div key={iIdx} className={`rounded-xl overflow-hidden flex shadow-sm transition-all ${stockInfo.status ? getStockCardStyle(stockInfo.status) : 'bg-white/95 border'}`} style={!stockInfo.status ? { borderColor: `${theme.primaryColor}30` } : {}}>
                       <div className="w-24 min-w-[96px] bg-gray-300 flex items-center justify-center overflow-hidden">
@@ -988,14 +1118,22 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
                         <div className="mb-2">
                            {stockInfo.status === 'available_here' && (
                              <div className="flex flex-col items-start gap-1 mb-1">
-                               {(item.estoque_eventos || []).map((evento, eventIdx) => (
-                                 <div
-                                   key={`${evento.evento || evento.nome_evento || 'evento'}-${eventIdx}`}
-                                   className={`text-[9px] font-bold inline-block px-1.5 py-0.5 rounded ${getBoothBadgeStyle(evento.evento, evento.nome_evento)}`}
-                                 >
-                                   {getEventDisplayName(evento.nome_evento)}
-                                 </div>
-                               ))}
+                               {(item.estoque_eventos || []).map((evento, eventIdx) => {
+                                 const mapaInfo = getMapaInfoFromStockEvent(evento);
+                                 const label = mapaInfo
+                                   ? `${mapaInfo.nome} - ${mapaInfo.estande}`
+                                   : getEventDisplayName(getStockEventName(evento));
+
+                                 return (
+                                   <div
+                                     key={`${getStockEventCode(evento) || getStockEventName(evento) || 'evento'}-${eventIdx}`}
+                                     className={`text-[9px] font-bold inline-flex items-center gap-1 px-1.5 py-0.5 rounded ${getBoothBadgeStyle(getStockEventCode(evento), getStockEventName(evento))}`}
+                                   >
+                                     <MapPin size={8} />
+                                     {label}
+                                   </div>
+                                 );
+                               })}
                              </div>
                            )}
                            {stockInfo.status === 'unavailable' && (
@@ -1031,22 +1169,42 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
                               <span className="text-[10px] font-black uppercase tracking-wide">DETALHE</span>
                             </button>
 
-                            {/* Botão de Adicionar ao Carrinho Direto */}
-                            <button 
-                              onClick={() => addToCart(item)} 
-                              className="p-2 text-white rounded-lg shadow-sm active:scale-90 transition-all"
+                            <button
+                              type="button"
+                              onClick={() => mapaInfo && setSelectedMapLocation(mapaInfo)}
+                              disabled={!mapaInfo}
+                              className="p-2 text-white rounded-lg shadow-sm active:scale-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                               style={{ backgroundColor: theme.primaryColor }}
-                              onMouseEnter={(e) => e.target.style.opacity = '0.9'}
-                              onMouseLeave={(e) => e.target.style.opacity = '1'}
-                              title="Adicionar ao Carrinho"
+                              title={mapaInfo ? `Ver no mapa: ${mapaInfo.nome}` : 'Mapa indisponível'}
                             >
-                              <ShoppingCart size={14} />
+                              <MapPin size={14} />
                             </button>
+
                           </div>
                         </div>
                       </div>
                     </div>
                   )})}
+
+                  {msg.canLoadMore && (
+                    <button
+                      onClick={() => handleLoadMore(idx, msg)}
+                      disabled={loadingMoreIndex !== null}
+                      className="w-full mt-1 py-3 rounded-xl border font-black text-xs uppercase tracking-wide transition-all active:scale-95 disabled:opacity-60 flex items-center justify-center gap-2"
+                      style={{
+                        color: theme.primaryColor,
+                        borderColor: `${theme.primaryColor}40`,
+                        backgroundColor: `${theme.primaryColor}10`,
+                      }}
+                    >
+                      {loadingMoreIndex === idx ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <ChevronDown size={16} />
+                      )}
+                      {loadingMoreIndex === idx ? 'Carregando...' : 'Mostrar mais'}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -1068,9 +1226,59 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
       <CartDrawer cart={cart} onRemove={removeFromCart} onUpdateQuantity={updateQuantity} onClear={clearCart} userPhone={userPhone} sessionId={sessionId} userName={userName} onAnalytics={trackEvent} theme={theme} />
       <footer className="relative z-10 p-4 bg-white/80 backdrop-blur-xl border-t border-white/20">
         <div className="max-w-4xl mx-auto flex flex-col gap-3">
+          {eventosEstoque.length > 0 && (
+            <div className="w-full rounded-2xl border bg-white/80 backdrop-blur-md overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-300" style={{ borderColor: `${theme.primaryColor}25` }}>
+              <button
+                type="button"
+                onClick={() => setIsStockEventSelectorOpen((isOpen) => !isOpen)}
+                className="w-full px-3 py-2.5 flex items-center justify-between gap-3 text-left active:scale-[0.99] transition-all"
+              >
+                <div className="min-w-0">
+                  <span className="block text-[10px] text-slate-500 font-black uppercase tracking-wider">
+                    Consultar estoque em <span className="text-xs font-black text-slate-800 truncate ml-1">{selectedStockEventLabel}</span>
+                  </span>
+                </div>
+                <span className="shrink-0 rounded-full p-1.5" style={{ color: theme.primaryColor, backgroundColor: `${theme.primaryColor}12` }}>
+                  {isStockEventSelectorOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                </span>
+              </button>
+
+              {isStockEventSelectorOpen && (
+                <div className="px-3 pb-3 grid grid-cols-1 gap-1.5 animate-in fade-in slide-in-from-top-1 duration-200">
+                  {[
+                    { codigo: '', nome: 'Todos os estandes' },
+                    ...eventosEstoque,
+                  ].map((evento) => {
+                    const isSelected = selectedStockEventCode === evento.codigo;
+
+                    return (
+                      <button
+                        key={evento.codigo || 'todos'}
+                        type="button"
+                        onClick={() => {
+                          setSelectedStockEventCode(evento.codigo);
+                          setMessages(getInitialMessages());
+                          setInput('');
+                          setIsStockEventSelectorOpen(false);
+                        }}
+                        className="w-full rounded-xl px-3 py-2 text-left text-xs font-bold transition-all active:scale-[0.99] border"
+                        style={{
+                          color: isSelected ? '#FFFFFF' : '#334155',
+                          backgroundColor: isSelected ? theme.primaryColor : `${theme.primaryColor}08`,
+                          borderColor: isSelected ? theme.primaryColor : `${theme.primaryColor}20`,
+                        }}
+                      >
+                        {evento.nome}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
           
           {/* CONTROLES DE ESTOQUE (Se ativo) */}
-          {initialMode === 'stock' && (
+          {initialMode === 'stock' && ESTANDE_TO_RPA[idEstande] && (
             <div className="w-full flex flex-col gap-2 animate-in slide-in-from-bottom-5 fade-in duration-300">
                <div className="flex items-center gap-2 pl-1">
                  <input

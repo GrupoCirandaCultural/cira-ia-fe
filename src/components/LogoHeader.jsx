@@ -1,5 +1,5 @@
 import React from 'react';
-import logoFundo from '../assets/logo_fundo.png';
+import logoFundo from '../assets/logo_fundo_ciranda.png';
 import logoFundoCirandaEscola from '../assets/ciranda_escola_sem_fundo_branco.png';
 
 export default function LogoHeader({ onClick, className = '' }) {

@@ -2,7 +2,7 @@
  * CONFIGURAÇÃO CENTRALIZADA DE EVENTOS
  * Define estandes, campos obrigatórios e regras por evento
  * URL Format: /{evento}/{estande}
- * Ex: /bett_brasil/estande_laranja, /bienal_2026/ciranda_bienal
+ * Ex: /bett_brasil/estande_laranja, /bienal_2026/bienal_geral
  */
 
 export const EVENTOS_CONFIG = {
@@ -66,28 +66,91 @@ export const EVENTOS_CONFIG = {
     nome: 'Bienal do Livro 2026',
     descricao: 'A maior festa do livro do Brasil',
     imagem: 'https://via.placeholder.com/400x300?text=Bienal+2026',
-    temRoleta: true, // Bienal tem roleta
+    temRoleta: false,
     
     estandes: [
       {
-        id: 'estande_norte',
-        label: 'Pavilhão Norte',
-        numero: 'Pavilhão Norte',
-        cor: '#4CAF50'
-      },
-      {
-        id: 'ciranda_bienal',
-        label: 'Estande Principal Ciranda',
-        numero: 'Estande Principal Ciranda',
-        cor: '#FF6B6B'
-      },
-      {
-        id: 'estande_sul',
-        label: 'Pavilhão Sul',
-        numero: 'Pavilhão Sul',
-        cor: '#2196F3'
+        id: 'bienal_geral',
+        label: 'Bienal 2026',
+        numero: null,
+        cor: '#005BAA'
       }
     ],
+
+    codigosEstoque: ['000356', '000357', '000358', '000359', '000360', '000361'],
+
+    mapaEstandes: [
+      {
+        id: 'ciranda_cultural',
+        label: 'Ciranda Cultural',
+        numero: 'A30/A88/DD11',
+        cor: '#005BAA',
+        codigosEstoque: ['000361']
+      },
+      {
+        id: 'grupo_magic',
+        label: 'Grupo Magic',
+        numero: 'C60/A89',
+        cor: '#FFE500'
+      },
+      {
+        id: 'w_books',
+        label: 'W. Books',
+        numero: 'B20',
+        cor: '#F51B13'
+      },
+      {
+        id: 'ciranda_na_escola',
+        label: 'Ciranda na Escola',
+        numero: 'B20',
+        cor: '#FF8200',
+        codigosEstoque: ['000358']
+      },
+      {
+        id: 'editora_kairos',
+        label: 'Editora Kairós',
+        numero: 'F30',
+        cor: '#FF7A3D'
+      },
+      {
+        id: 'trend_editora',
+        label: 'Trend Editora',
+        numero: 'F30',
+        cor: '#FFD900'
+      },
+      {
+        id: 'principis',
+        label: 'Principis',
+        numero: 'F30',
+        cor: '#008F78',
+        codigosEstoque: ['000359']
+      },
+      {
+        id: 'mood',
+        label: '_mood',
+        numero: 'C10',
+        cor: '#F04F98',
+        codigosEstoque: ['000360']
+      }
+    ],
+
+    eventosEstoque: [
+      { codigo: '000356', nome: 'BIENAL SP - 150 M ESCOLAR' },
+      { codigo: '000357', nome: 'BIENAL SP 125 M - PROFESSOR' },
+      { codigo: '000358', nome: 'BIENAL SP - CIRANDA NA ESCOLA' },
+      { codigo: '000359', nome: 'BIENAL SP - PRINCIPIS' },
+      { codigo: '000360', nome: 'BIENAL SP - MOOD' },
+      { codigo: '000361', nome: 'BIENAL SP - CIRANDA' }
+    ],
+
+    mapaPorCodigoEvento: {
+      '000356': { nome: 'Escolar', estande: '150 M Escolar', x: '2%', y: '72%', color: '#FACC15' },
+      '000357': { nome: 'Professor', estande: '125 M Professor', x: '91%', y: '42%', color: '#22D3EE' },
+      '000358': { nome: 'Ciranda na Escola', estande: 'B20', x: '52%', y: '44%', color: '#FACC15' },
+      '000359': { nome: 'Principis', estande: 'F30', x: '41%', y: '6%', color: '#008F78' },
+      '000360': { nome: 'Mood', estande: 'C10', x: '60%', y: '34%', color: '#9D174D' },
+      '000361': { nome: 'Ciranda', estande: 'A30/A88/DD11', x: '41%', y: '57%', color: '#EC0E8C' }
+    },
     
     // Campos obrigatórios da Registration (sem estado/atividade)
     camposObrigatorios: ['nome', 'telefone', 'email'],
@@ -101,23 +164,92 @@ export const EVENTOS_CONFIG = {
 
     // Temas por estande
     temaPorEstande: {
-      estande_norte: {
-        primaryColor: '#4CAF50',
-        secondaryColor: '#66BB6A',
-        accentColor: '#66BB6A',
-        darkColor: '#2E7D32'
+      bienal_geral: {
+        primaryColor: '#005BAA',
+        secondaryColor: '#FF8200',
+        accentColor: '#F04F98',
+        darkColor: '#003B73'
       },
-      ciranda_bienal: {
-        primaryColor: '#FF6B6B',
-        secondaryColor: '#EF5350',
-        accentColor: '#EF5350',
-        darkColor: '#C62828'
+      ciranda_cultural: {
+        primaryColor: '#005BAA',
+        secondaryColor: '#0074CC',
+        accentColor: '#36A3FF',
+        darkColor: '#003B73'
       },
-      estande_sul: {
-        primaryColor: '#2196F3',
-        secondaryColor: '#42A5F5',
-        accentColor: '#42A5F5',
-        darkColor: '#1565C0'
+      grupo_magic: {
+        primaryColor: '#FFE500',
+        secondaryColor: '#F5C400',
+        accentColor: '#005BAA',
+        darkColor: '#8A6D00',
+        buttonColor: '#005BAA'
+      },
+      w_books: {
+        primaryColor: '#F51B13',
+        secondaryColor: '#FF4A1C',
+        accentColor: '#FF8200',
+        darkColor: '#B5120D'
+      },
+      ciranda_na_escola: {
+        primaryColor: '#FF8200',
+        secondaryColor: '#FF9F1A',
+        accentColor: '#FFD166',
+        darkColor: '#B85600'
+      },
+      editora_kairos: {
+        primaryColor: '#FF7A3D',
+        secondaryColor: '#FF5A1F',
+        accentColor: '#FFD166',
+        darkColor: '#B43B0F'
+      },
+      trend_editora: {
+        primaryColor: '#FFD900',
+        secondaryColor: '#F5B800',
+        accentColor: '#111827',
+        darkColor: '#8A6500',
+        buttonColor: '#111827'
+      },
+      principis: {
+        primaryColor: '#008F78',
+        secondaryColor: '#00A98E',
+        accentColor: '#6EE7B7',
+        darkColor: '#005E4F'
+      },
+      mood: {
+        primaryColor: '#F04F98',
+        secondaryColor: '#F77AB4',
+        accentColor: '#F9A8D4',
+        darkColor: '#B91D63'
+      }
+    }
+  },
+
+  central: {
+    id: 'central',
+    nome: 'Central',
+    descricao: 'Ambiente de referência para validar o novo design do chat da Cira',
+    imagem: 'https://via.placeholder.com/400x300?text=Central',
+    temRoleta: false,
+
+    // Tab de referência de design: apenas 1 "estande" (auto-selecionado),
+    // sem cadastro/roleta — vai direto para a nova tela de chat mockada.
+    estandes: [
+      {
+        id: 'central_home',
+        label: 'Central',
+        numero: null,
+        cor: '#C9884D'
+      }
+    ],
+
+    camposObrigatorios: [],
+    opcoesAtividade: [],
+
+    temaPorEstande: {
+      central_home: {
+        primaryColor: '#C9884D',
+        secondaryColor: '#D9A15E',
+        accentColor: '#D9A15E',
+        darkColor: '#8F5F2F'
       }
     }
   }

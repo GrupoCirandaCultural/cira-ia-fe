@@ -1,0 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,500;6..12,600;6..12,700;6..12,800&display=swap');
+
+/* Design tokens do redesign "Central" da Cira — escopados ao container .cira-central
+   para não colidir com o restante do app (que usa temas por estande). */
+.cira-central {
+  --background: oklch(0.976 0.011 85);
+  --foreground: oklch(0.26 0.02 60);
+  --card: oklch(0.995 0.005 90);
+  --card-foreground: oklch(0.26 0.02 60);
+  --primary: oklch(0.62 0.13 62);
+  --primary-foreground: oklch(0.99 0.005 90);
+  --secondary: oklch(0.945 0.018 85);
+  --muted: oklch(0.945 0.014 85);
+  --muted-foreground: oklch(0.48 0.02 62);
+  --accent: oklch(0.93 0.035 80);
+  --accent-foreground: oklch(0.32 0.045 60);
+  --border: oklch(0.9 0.018 82);
+  --surface-ai: oklch(0.958 0.013 88);
+  --surface-user: oklch(0.925 0.045 78);
+  --surface-user-foreground: oklch(0.3 0.04 58);
+  --stock-in: oklch(0.46 0.09 150);
+  --stock-in-bg: oklch(0.93 0.04 150);
+  --stock-low: oklch(0.48 0.12 55);
+  --stock-low-bg: oklch(0.94 0.045 75);
+
+  --font-serif-editorial: 'Lora', Georgia, serif;
+  --font-sans-humanist: 'Nunito Sans', 'Segoe UI', sans-serif;
+
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans-humanist);
+}
+
+.cira-central .font-editorial {
+  font-family: var(--font-serif-editorial);
+}
+
+.cira-central .no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.cira-central .no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes cira-central-bounce-dot {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+.cira-central .typing-dot {
+  animation: cira-central-bounce-dot 1.2s infinite ease-in-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cira-central .typing-dot {
+    animation: none;
+  }
+}
