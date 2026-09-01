@@ -719,7 +719,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
     if (initialMode === 'stock') {
       msgs.push({
         role: 'Cira IA',
-        content: `Olá ${userName}! Estou pronta para consultar nosso estoque. 📚\n\nUse os filtros abaixo ou digite o nome do livro.`, options: tagOptions
+        content: `Olá, ${userName}! 📚 Como posso te ajudar a encontrar o livro ideal hoje?\n\nVocê pode me descrever o que está buscando (para você ou para presente!), perguntar sobre qualquer título do nosso estoque, ou simplesmente usar os filtros de temas abaixo para começar.`, options: tagOptions
       });
     } else {
       // Mostra tags apenas para bett_brasil
