@@ -104,9 +104,10 @@ const BookDetailsModal = ({ book, isOpen, onClose, onConfirm, theme, getMapaInfo
                     <div className="space-y-2">
                       {estoqueEventos.map((evento, idx) => {
                         const mapaInfo = getMapaInfoFromStockEvent?.(evento);
-                        const label = mapaInfo
+                        const eventLabel = mapaInfo
                           ? `${mapaInfo.nome} - ${mapaInfo.estande}`
-                          : getEventDisplayName(getStockEventName(evento));
+                          : getStockEventDisplayName(evento);
+                        const label = eventLabel;
 
                         return (
                           <div key={idx} className="text-sm text-gray-700">
@@ -526,6 +527,15 @@ const getStockEventCode = (evento) => String(evento?.evento || evento?.codigo ||
 
 const getStockEventName = (evento) => String(evento?.nome_evento || evento?.nome || evento?.name || '').trim();
 
+const STOCK_EVENT_DISPLAY_NAMES = {
+  '000111': 'Magic Kids 300M',
+  '000112': 'Magic Kids 100M',
+};
+
+const getStockEventDisplayName = (evento) => (
+  STOCK_EVENT_DISPLAY_NAMES[getStockEventCode(evento)] || getEventDisplayName(getStockEventName(evento))
+);
+
 const getBoothBadgeStyle = (eventoCodigo, nomeEvento) => {
   const codigo = String(eventoCodigo || '').trim();
   const nome = String(nomeEvento || '').toLowerCase();
@@ -548,7 +558,7 @@ const formatStockDisplay = (estoque_eventos) => {
   }
 
   const disponibilidades = estoque_eventos.map(
-    e => `${getEventDisplayName(getStockEventName(e))} (${e.estoque} ${e.estoque === 1 ? 'unidade' : 'unidades'})`
+    e => `${getStockEventDisplayName(e)} (${e.estoque} ${e.estoque === 1 ? 'unidade' : 'unidades'})`
   ).join(' e ');
 
   return {
@@ -574,7 +584,9 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const selectedStockEventLabel = selectedStockEventCode
-    ? eventosEstoque.find((evento) => evento.codigo === selectedStockEventCode)?.nome || selectedStockEventCode
+    ? getStockEventDisplayName(
+        eventosEstoque.find((evento) => evento.codigo === selectedStockEventCode) || { codigo: selectedStockEventCode }
+      )
     : 'Todos os estandes';
 
   const filtrarDadosPorEvento = (dados = []) => {
@@ -818,6 +830,10 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
       if (selectedStockEventCode) {
         payload.event_codes = [selectedStockEventCode];
         payload.stock_event_code = selectedStockEventCode;
+        const selectedStockEvent = eventosEstoque.find((evento) => evento.codigo === selectedStockEventCode);
+        if (selectedStockEvent?.empresa) {
+          payload.empresa = selectedStockEvent.empresa;
+        }
       } else if (codigosEstoqueEvento.length > 0) {
         payload.event_codes = codigosEstoqueEvento;
       }
@@ -1070,9 +1086,10 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
                              <div className="flex flex-col items-start gap-1 mb-1">
                                {(item.estoque_eventos || []).map((evento, eventIdx) => {
                                  const mapaInfo = getMapaInfoFromStockEvent(evento);
-                                 const label = mapaInfo
+                                 const eventLabel = mapaInfo
                                    ? `${mapaInfo.nome} - ${mapaInfo.estande}`
-                                   : getEventDisplayName(getStockEventName(evento));
+                                   : getStockEventDisplayName(evento);
+                                 const label = eventLabel;
 
                                  return (
                                    <div
@@ -1218,7 +1235,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
                           borderColor: isSelected ? theme.primaryColor : `${theme.primaryColor}20`,
                         }}
                       >
-                        {evento.nome}
+                        {evento.codigo ? getStockEventDisplayName(evento) : evento.nome}
                       </button>
                     );
                   })}

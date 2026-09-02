@@ -77,7 +77,7 @@ export const EVENTOS_CONFIG = {
       }
     ],
 
-    codigosEstoque: ['000356', '000357', '000358', '000359', '000360', '000361'],
+    codigosEstoque: ['000111', '000112', '000356', '000357', '000358', '000359', '000360', '000361'],
 
     mapaEstandes: [
       {
@@ -91,7 +91,8 @@ export const EVENTOS_CONFIG = {
         id: 'grupo_magic',
         label: 'Grupo Magic',
         numero: 'C60/A89',
-        cor: '#FFE500'
+        cor: '#FFE500',
+        codigosEstoque: ['000111', '000112']
       },
       {
         id: 'w_books',
@@ -135,6 +136,8 @@ export const EVENTOS_CONFIG = {
     ],
 
     eventosEstoque: [
+      { codigo: '000111', nome: 'MAGIC KIDS 300M', empresa: '07' },
+      { codigo: '000112', nome: 'MAGIC KIDS 100M', empresa: '07' },
       { codigo: '000356', nome: 'BIENAL SP - 150 M ESCOLAR' },
       { codigo: '000357', nome: 'BIENAL SP 125 M - PROFESSOR' },
       { codigo: '000358', nome: 'BIENAL SP - CIRANDA NA ESCOLA' },
@@ -144,6 +147,8 @@ export const EVENTOS_CONFIG = {
     ],
 
     mapaPorCodigoEvento: {
+      '000111': { nome: 'Magic Kids', estande: '300M', x: '20%', y: '35%', color: '#ea08db' },
+      '000112': { nome: 'Magic Kids', estande: '100M', x: '33%', y: '25%', color: '#08ea1b' },
       '000356': { nome: 'Escolar', estande: '150 M', x: '3%', y: '68%', color: '#FACC15', align: 'left' },
       '000357': { nome: 'Professor', estande: '125 M', x: '91%', y: '42%', color: '#22D3EE', align: 'right' },
       '000358': { nome: 'Ciranda na Escola', estande: 'B20', x: '52%', y: '44%', color: '#FACC15' },
