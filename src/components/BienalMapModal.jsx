@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, MapPin } from 'lucide-react';
+import { Download, X, MapPin } from 'lucide-react';
 
 // Mapa lúdico da Bienal com pins/etiquetas plotados via código sobre a imagem em public/mapa-bienal.png
 export default function BienalMapModal({ isOpen, onClose, targets = [], locations = [] }) {
@@ -89,6 +89,15 @@ export default function BienalMapModal({ isOpen, onClose, targets = [], location
             );
           })}
         </div>
+
+        <a
+          href="/mapa-bienal.png"
+          download="planta-bienal-completa.png"
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 py-3 text-sm font-black text-white transition-colors hover:bg-gray-700 active:scale-[0.99]"
+        >
+          <Download size={17} />
+          Baixar planta completa
+        </a>
       </div>
     </div>
   );

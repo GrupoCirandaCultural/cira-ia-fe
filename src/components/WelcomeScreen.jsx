@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import QRCode from 'react-qr-code';
-import { Sparkles, MessageCircle, Search, MapPin, BookOpen } from 'lucide-react';
+import { Sparkles, Search, MapPin, BookOpen, ChevronRight } from 'lucide-react';
 import { getEventoConfig, getEstandeConfig, getTemaEstande } from '../config/events.config';
 import ciraWelcomeLimpa from '../assets/cira-welcome.png';
 import logoFundo from '../assets/logo_fundo_ciranda.png';
@@ -17,7 +17,6 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
   }
 
   const primaryColor = temaEstande.primaryColor;
-  const secondaryColor = temaEstande.secondaryColor || primaryColor;
   const buttonColor = temaEstande.buttonColor || primaryColor;
 
   // Botões amarelos para estande azul
@@ -178,42 +177,49 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
       {/* Overlay gradiente na base para melhor leitura */}
       <div className="absolute inset-0 z-0 bg-gradient-to-t from-white/90 via-transparent to-transparent pointer-events-none" />
 
-      <div className="relative z-10 flex flex-col items-center justify-center h-full w-full pb-12 px-8 gap-4">
+      <div className="relative z-10 flex flex-col items-center justify-center h-full w-full pt-40 px-8 gap-4">
         
         {/* OPÇÃO 1: Chat/Curadoria */}
         <button
           onClick={() => onStart('chat')}
-          className="w-full py-4 bg-white/90 backdrop-blur-sm border-2 font-black text-xl rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
-          style={{ color: primaryColor, borderColor: primaryColor }}
+          className="w-full rounded-2xl shadow-lg flex items-center gap-4 p-4 text-left transition-all hover:scale-[1.02] active:scale-95"
+          style={{ background: 'linear-gradient(135deg, #F0532B, #D9401C)' }}
         >
-          <MessageCircle size={24} />
-          Qual Livro combina com Você
+          <div className="shrink-0 h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center">
+            <BookOpen size={24} className="text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-bold text-white/80 uppercase tracking-wide">Curadoria Cira IA</p>
+            <p className="text-lg font-black text-white leading-tight truncate">Descobrir meu livro</p>
+          </div>
+          <ChevronRight size={22} className="text-white/80 shrink-0" />
         </button>
 
         {/* OPÇÃO 2: Consulta de Estoque */}
         <button
           onClick={() => onStart('chat_stock')}
-          className="w-full py-4 bg-white/90 backdrop-blur-sm border-2 font-black text-xl rounded-full shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3"
-          style={{ color: primaryColor, borderColor: primaryColor }}
+          className="w-full rounded-2xl shadow-lg flex items-center gap-4 p-4 text-left transition-all hover:scale-[1.02] active:scale-95"
+          style={{ background: 'linear-gradient(135deg, #1B4F84, #123A63)' }}
         >
-          <Search size={24} />
-          Consulte nosso estoque
+          <div className="shrink-0 h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center">
+            <Search size={24} className="text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] font-bold text-white/80 uppercase tracking-wide">Preço e disponibilidade</p>
+            <p className="text-lg font-black text-white leading-tight truncate">Consultar estoque</p>
+          </div>
+          <ChevronRight size={22} className="text-white/80 shrink-0" />
         </button>
 
-        {/* BOTÃO MAPA (CENTRALIZADO EM BAIXO) */}
-        <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20">
-          <button 
-            onClick={() => onStart('checkin')}
-            className="backdrop-blur-md border-2 text-[12px] font-black px-10 py-2 rounded-full flex items-center gap-2 shadow-lg transition-all animate-[bounce_3s_infinite]"
-            style={{ 
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              borderColor: primaryColor,
-              color: primaryColor
-            }}
-          >
-            <MapPin size={24} /> MAPA
-          </button>
-        </div>
+        {/* OPÇÃO 3: Mapa da Bienal */}
+        <button
+          onClick={() => onStart('checkin')}
+          className="w-full rounded-2xl shadow-lg flex items-center justify-center gap-2 py-3.5 font-black text-white text-base transition-all hover:scale-[1.02] active:scale-95"
+          style={{ background: 'linear-gradient(135deg, #1C7A6E, #145F56)' }}
+        >
+          <MapPin size={22} />
+          Abrir mapa da Bienal
+        </button>
 
         {/* QR CODE (FIXO NO CANTO DIREITO) */}
         <div className="absolute bottom-4 right-4 bg-white p-2 rounded-xl shadow-xl border flex flex-col items-center z-20" style={{ borderColor: primaryColor }}>
