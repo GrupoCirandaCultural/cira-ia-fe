@@ -22,6 +22,7 @@ const RESULTS_PAGE_SIZE = 20;
 const BarcodeScannerModal = ({ isOpen, onClose, onDetected }) => {
   const videoRef = useRef(null);
   const readerRef = useRef(null);
+  const controlsRef = useRef(null);
   const onDetectedRef = useRef(onDetected);
   const [status, setStatus] = useState('Aponte a câmera para o código de barras do livro.');
 
@@ -32,26 +33,62 @@ const BarcodeScannerModal = ({ isOpen, onClose, onDetected }) => {
   useEffect(() => {
     if (!isOpen) return undefined;
 
+    let cancelled = false;
+    let hasDetected = false;
+
     const stopCamera = () => {
-      readerRef.current?.reset();
+      try {
+        controlsRef.current?.stop();
+      } catch (error) {
+        console.warn('Falha ao parar os controles do leitor:', error);
+      }
+      controlsRef.current = null;
+      try {
+        readerRef.current?.reset();
+      } catch (error) {
+        console.warn('Falha ao resetar o leitor:', error);
+      }
       readerRef.current = null;
+      const stream = videoRef.current?.srcObject;
+      stream?.getTracks().forEach((track) => {
+        try {
+          track.stop();
+        } catch (error) {
+          console.warn('Falha ao desligar a câmera:', error);
+        }
+      });
+      if (videoRef.current) {
+        try {
+          videoRef.current.pause();
+        } catch (error) {
+          console.warn('Falha ao pausar o vídeo do leitor:', error);
+        }
+        videoRef.current.srcObject = null;
+      }
     };
 
     const startScanner = async () => {
       try {
         const reader = new BrowserMultiFormatReader();
         readerRef.current = reader;
-        await reader.decodeFromConstraints(
+        const controls = await reader.decodeFromConstraints(
           { video: { facingMode: { ideal: 'environment' } }, audio: false },
           videoRef.current,
           (result) => {
             const value = result?.getText();
-            if (value) {
+            if (value && !hasDetected) {
+              hasDetected = true;
+              console.debug('Código de barras detectado:', value);
               stopCamera();
-              onDetectedRef.current(value);
+              window.requestAnimationFrame(() => onDetectedRef.current(value));
             }
           }
         );
+        if (cancelled) {
+          controls.stop();
+        } else {
+          controlsRef.current = controls;
+        }
       } catch (error) {
         if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
           setStatus('Permita o acesso à câmera para ler o código de barras.');
@@ -65,6 +102,7 @@ const BarcodeScannerModal = ({ isOpen, onClose, onDetected }) => {
 
     startScanner();
     return () => {
+      cancelled = true;
       stopCamera();
     };
   }, [isOpen]);
