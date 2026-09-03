@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from '../api';
+import { BrowserMultiFormatReader } from '@zxing/browser';
 import { Send, Search, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw, Trash2, MessageCircle, CheckCircle, AlertCircle, ChevronUp, ChevronDown, Eye, MapPin } from 'lucide-react';
 
 // Mapeamento de ID do estande para código RPA
@@ -20,7 +21,7 @@ const RESULTS_PAGE_SIZE = 20;
 
 const BarcodeScannerModal = ({ isOpen, onClose, onDetected }) => {
   const videoRef = useRef(null);
-  const streamRef = useRef(null);
+  const readerRef = useRef(null);
   const onDetectedRef = useRef(onDetected);
   const [status, setStatus] = useState('Aponte a câmera para o código de barras do livro.');
 
@@ -31,69 +32,39 @@ const BarcodeScannerModal = ({ isOpen, onClose, onDetected }) => {
   useEffect(() => {
     if (!isOpen) return undefined;
 
-    let cancelled = false;
-    let scanTimer;
-
     const stopCamera = () => {
-      if (scanTimer) window.clearInterval(scanTimer);
-      streamRef.current?.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
+      readerRef.current?.reset();
+      readerRef.current = null;
     };
 
     const startScanner = async () => {
-      if (!('BarcodeDetector' in window)) {
-        setStatus('Seu navegador não oferece leitura automática. Tente usar o Chrome no celular.');
-        return;
-      }
-
-      if (!navigator.mediaDevices?.getUserMedia) {
-        setStatus('Não foi possível acessar a câmera neste dispositivo.');
-        return;
-      }
-
       try {
-        const detector = new window.BarcodeDetector({
-          formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'],
-        });
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' } },
-          audio: false,
-        });
-
-        if (cancelled) {
-          stream.getTracks().forEach((track) => track.stop());
-          return;
-        }
-
-        streamRef.current = stream;
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        scanTimer = window.setInterval(async () => {
-          if (!videoRef.current || videoRef.current.readyState < 2) return;
-
-          try {
-            const barcodes = await detector.detect(videoRef.current);
-            const value = barcodes.find((barcode) => barcode.rawValue)?.rawValue;
+        const reader = new BrowserMultiFormatReader();
+        readerRef.current = reader;
+        await reader.decodeFromConstraints(
+          { video: { facingMode: { ideal: 'environment' } }, audio: false },
+          videoRef.current,
+          (result) => {
+            const value = result?.getText();
             if (value) {
               stopCamera();
               onDetectedRef.current(value);
             }
-          } catch {
-            setStatus('Não consegui ler este código. Ajuste o enquadramento e tente novamente.');
           }
-        }, 250);
+        );
       } catch (error) {
         if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
           setStatus('Permita o acesso à câmera para ler o código de barras.');
+        } else if (error.name === 'NotFoundError') {
+          setStatus('Nenhuma câmera foi encontrada neste dispositivo.');
         } else {
-          setStatus('Não foi possível iniciar a câmera.');
+          setStatus('Não foi possível iniciar a câmera. Verifique a permissão do navegador.');
         }
       }
     };
 
     startScanner();
     return () => {
-      cancelled = true;
       stopCamera();
     };
   }, [isOpen]);
