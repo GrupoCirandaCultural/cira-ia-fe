@@ -91,7 +91,7 @@ export default function BienalMapModal({ isOpen, onClose, targets = [], location
         </div>
 
         <a
-          href="/mapa-bienal.png"
+          href="/planta_completa_bienal.png"
           download="planta-bienal-completa.png"
           className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 px-4 py-3 text-sm font-black text-white transition-colors hover:bg-gray-700 active:scale-[0.99]"
         >

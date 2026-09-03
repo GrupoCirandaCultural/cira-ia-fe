@@ -11,12 +11,113 @@ import bgChat from '../assets/background-chat.png';
 import bgChatBett from '../assets/background-chat-bett.png';
 import iconeEscola from '../assets/logo_fundo_ciranda.png';
 import { getEstandeTheme } from '../theme';
-import { getEventoConfig } from '../config/events.config';
+import { getEventoConfig, getNomeExibicaoEstoque } from '../config/events.config';
 import BienalMapModal from './BienalMapModal';
 
 const generateSessionId = () => Math.random().toString(36).substring(7);
 
 const RESULTS_PAGE_SIZE = 20;
+
+const BarcodeScannerModal = ({ isOpen, onClose, onDetected }) => {
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+  const onDetectedRef = useRef(onDetected);
+  const [status, setStatus] = useState('Aponte a câmera para o código de barras do livro.');
+
+  useEffect(() => {
+    onDetectedRef.current = onDetected;
+  }, [onDetected]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    let cancelled = false;
+    let scanTimer;
+
+    const stopCamera = () => {
+      if (scanTimer) window.clearInterval(scanTimer);
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    };
+
+    const startScanner = async () => {
+      if (!('BarcodeDetector' in window)) {
+        setStatus('Seu navegador não oferece leitura automática. Tente usar o Chrome no celular.');
+        return;
+      }
+
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setStatus('Não foi possível acessar a câmera neste dispositivo.');
+        return;
+      }
+
+      try {
+        const detector = new window.BarcodeDetector({
+          formats: ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128'],
+        });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+          audio: false,
+        });
+
+        if (cancelled) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+
+        streamRef.current = stream;
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+        scanTimer = window.setInterval(async () => {
+          if (!videoRef.current || videoRef.current.readyState < 2) return;
+
+          try {
+            const barcodes = await detector.detect(videoRef.current);
+            const value = barcodes.find((barcode) => barcode.rawValue)?.rawValue;
+            if (value) {
+              stopCamera();
+              onDetectedRef.current(value);
+            }
+          } catch {
+            setStatus('Não consegui ler este código. Ajuste o enquadramento e tente novamente.');
+          }
+        }, 250);
+      } catch (error) {
+        if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+          setStatus('Permita o acesso à câmera para ler o código de barras.');
+        } else {
+          setStatus('Não foi possível iniciar a câmera.');
+        }
+      }
+    };
+
+    startScanner();
+    return () => {
+      cancelled = true;
+      stopCamera();
+    };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between p-4">
+          <h2 className="font-black text-gray-800">Ler código de barras</h2>
+          <button type="button" onClick={onClose} className="rounded-full bg-gray-100 p-2 text-gray-500" aria-label="Fechar leitor">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="relative aspect-[4/3] bg-gray-950">
+          <video ref={videoRef} className="h-full w-full object-cover" muted playsInline />
+          <div className="pointer-events-none absolute inset-x-8 top-1/2 border-t-2 border-red-400 shadow-[0_0_18px_rgba(248,113,113,0.8)]" />
+        </div>
+        <p className="p-4 text-center text-sm font-medium text-gray-600">{status}</p>
+      </div>
+    </div>
+  );
+};
 
 const CouponModal = ({ code, isOpen, onClose, theme }) => {
   if (!isOpen) return null;
@@ -518,22 +619,12 @@ const getStockCardStyle = (status) => {
   return 'bg-white/95'; // Default do chat normal
 };
 
-const getEventDisplayName = (nomeEvento) => {
-  if (!nomeEvento) return 'Evento';
-  return String(nomeEvento).split('-')[0].trim();
-};
-
 const getStockEventCode = (evento) => String(evento?.evento || evento?.codigo || evento?.id_evento || evento?.code || '').trim();
 
 const getStockEventName = (evento) => String(evento?.nome_evento || evento?.nome || evento?.name || '').trim();
 
-const STOCK_EVENT_DISPLAY_NAMES = {
-  '000111': 'Magic Kids 300M',
-  '000112': 'Magic Kids 100M',
-};
-
 const getStockEventDisplayName = (evento) => (
-  STOCK_EVENT_DISPLAY_NAMES[getStockEventCode(evento)] || getEventDisplayName(getStockEventName(evento))
+  getNomeExibicaoEstoque(getStockEventCode(evento), getStockEventName(evento))
 );
 
 const getBoothBadgeStyle = (eventoCodigo, nomeEvento) => {
@@ -763,6 +854,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
   const [loadingMoreIndex, setLoadingMoreIndex] = useState(null);
   const [sessionId, setSessionId] = useState(generateSessionId());
   const [selectedAge, setSelectedAge] = useState(null);
+  const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
 
   useEffect(() => {
     if (loading) {
@@ -890,6 +982,12 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
     }
   };
 
+  const handleBarcodeDetected = (barcode) => {
+    setIsBarcodeScannerOpen(false);
+    setInput(barcode);
+    handleSend(barcode);
+  };
+
   const handleLoadMore = async (messageIndex, msg) => {
     if (loadingMoreIndex !== null || !msg.searchPayload) return;
 
@@ -935,6 +1033,11 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
 
   return (
     <div className="flex flex-col h-full bg-[#87CEEB] relative overflow-hidden">
+      <BarcodeScannerModal
+        isOpen={isBarcodeScannerOpen}
+        onClose={() => setIsBarcodeScannerOpen(false)}
+        onDetected={handleBarcodeDetected}
+      />
       {cupom && <CouponModal code={cupom} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} theme={theme} />}
       
       <BookDetailsModal 
@@ -1280,6 +1383,16 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
             />
+            <button
+              type="button"
+              onClick={() => setIsBarcodeScannerOpen(true)}
+              disabled={loading}
+              className="rounded-2xl bg-white p-4 text-gray-600 shadow-sm transition-all hover:bg-gray-50 active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Ler código de barras com a câmera"
+              title="Ler código de barras"
+            >
+              <Camera size={22} />
+            </button>
           </div>
         </div>
       </footer>

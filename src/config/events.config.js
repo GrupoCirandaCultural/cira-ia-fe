@@ -136,19 +136,19 @@ export const EVENTOS_CONFIG = {
     ],
 
     eventosEstoque: [
-      { codigo: '000111', nome: 'MAGIC KIDS 300M', empresa: '07' },
-      { codigo: '000112', nome: 'MAGIC KIDS 100M', empresa: '07' },
-      { codigo: '000356', nome: 'BIENAL SP - 150 M ESCOLAR' },
-      { codigo: '000357', nome: 'BIENAL SP 125 M - PROFESSOR' },
-      { codigo: '000358', nome: 'BIENAL SP - CIRANDA NA ESCOLA' },
-      { codigo: '000359', nome: 'BIENAL SP - PRINCIPIS' },
-      { codigo: '000360', nome: 'BIENAL SP - MOOD' },
-      { codigo: '000361', nome: 'BIENAL SP - CIRANDA' }
+      { codigo: '000111', empresa: '07' },
+      { codigo: '000112', empresa: '07' },
+      { codigo: '000356' },
+      { codigo: '000357' },
+      { codigo: '000358' },
+      { codigo: '000359' },
+      { codigo: '000360' },
+      { codigo: '000361' }
     ],
 
     mapaPorCodigoEvento: {
-      '000111': { nome: 'Magic Kids', estande: '300M', x: '20%', y: '35%', color: '#ea08db' },
-      '000112': { nome: 'Magic Kids', estande: '100M', x: '33%', y: '25%', color: '#08ea1b' },
+      '000111': { nome: 'Magic Kids', estande: '300 M', x: '20%', y: '35%', color: '#ea08db' },
+      '000112': { nome: 'Magic Kids', estande: '100 M', x: '33%', y: '25%', color: '#08ea1b' },
       '000356': { nome: 'Escolar', estande: '150 M', x: '3%', y: '68%', color: '#FACC15', align: 'left' },
       '000357': { nome: 'Professor', estande: '125 M', x: '91%', y: '42%', color: '#22D3EE', align: 'right' },
       '000358': { nome: 'Ciranda na Escola', estande: 'B20', x: '52%', y: '44%', color: '#FACC15' },
@@ -266,6 +266,21 @@ export const EVENTOS_CONFIG = {
 
 export function getEventoConfig(eventoId) {
   return EVENTOS_CONFIG[eventoId] || null;
+}
+
+export function getNomeExibicaoEstoque(codigo, fallback = '') {
+  const codigoNormalizado = String(codigo || '').trim();
+  const evento = Object.values(EVENTOS_CONFIG).find((config) => (
+    config.mapaPorCodigoEvento?.[codigoNormalizado]
+  ));
+  const mapaInfo = evento?.mapaPorCodigoEvento?.[codigoNormalizado];
+
+  if (mapaInfo) {
+    return `${mapaInfo.nome} ${mapaInfo.estande}`.trim();
+  }
+
+  if (!fallback) return 'Evento';
+  return String(fallback).split('-')[0].trim();
 }
 
 export function getEstandeConfig(eventoId, estandeId) {
