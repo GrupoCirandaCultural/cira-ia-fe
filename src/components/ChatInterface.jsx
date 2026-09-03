@@ -110,19 +110,19 @@ const BarcodeScannerModal = ({ isOpen, onClose, onDetected }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-sm overflow-hidden rounded-3xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 p-3 sm:p-4">
+      <div className="flex max-h-[calc(100dvh-1.5rem)] w-full max-w-sm flex-col overflow-hidden rounded-3xl bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)]">
+        <div className="flex shrink-0 items-center justify-between p-4">
           <h2 className="font-black text-gray-800">Ler código de barras</h2>
           <button type="button" onClick={onClose} className="rounded-full bg-gray-100 p-2 text-gray-500" aria-label="Fechar leitor">
             <X size={20} />
           </button>
         </div>
-        <div className="relative aspect-[4/3] bg-gray-950">
-          <video ref={videoRef} className="h-full w-full object-cover" muted playsInline />
+        <div className="relative aspect-[4/3] max-h-[55dvh] shrink-1 bg-gray-950">
+          <video ref={videoRef} className="h-full w-full object-contain" muted playsInline />
           <div className="pointer-events-none absolute inset-x-8 top-1/2 border-t-2 border-red-400 shadow-[0_0_18px_rgba(248,113,113,0.8)]" />
         </div>
-        <p className="p-4 text-center text-sm font-medium text-gray-600">{status}</p>
+        <p className="shrink-0 p-4 text-center text-sm font-medium text-gray-600">{status}</p>
       </div>
     </div>
   );
