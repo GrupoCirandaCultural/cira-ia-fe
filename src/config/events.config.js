@@ -148,8 +148,8 @@ export const EVENTOS_CONFIG = {
 
     mapaPorCodigoEvento: {
       '000111': { nome: 'Magic Kids', estande: '300 M', x: '20%', y: '35%', color: '#ea08db' },
-      '000112': { nome: 'Magic Kids', estande: '100 M', x: '33%', y: '25%', color: '#08ea1b' },
-      '000356': { nome: 'Escolar', estande: '150 M', x: '3%', y: '68%', color: '#FACC15', align: 'left' },
+      '000112': { nome: 'Magic Kids', estande: '100 M', x: '2%', y: '65%', color: '#08ea1b', align: 'left' },
+      '000356': { nome: 'Escolar', estande: '150 M', x: '3%', y: '53%', color: '#5215fa', align: 'left' },
       '000357': { nome: 'Professor', estande: '125 M', x: '91%', y: '42%', color: '#22D3EE', align: 'right' },
       '000358': { nome: 'Ciranda na Escola', estande: 'B20', x: '52%', y: '44%', color: '#FACC15' },
       '000359': { nome: 'Principis', estande: 'F30', x: '41%', y: '6%', color: '#008F78' },
