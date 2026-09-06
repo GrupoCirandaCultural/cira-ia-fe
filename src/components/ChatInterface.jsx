@@ -157,7 +157,7 @@ const CouponModal = ({ code, isOpen, onClose, theme }) => {
   );
 };
 
-const BookDetailsModal = ({ book, isOpen, onClose, onConfirm, theme, getMapaInfoFromStockEvent }) => {
+const BookDetailsModal = ({ book, isOpen, onClose, theme, getMapaInfoFromStockEvent }) => {
   if (!isOpen || !book) return null;
 
   const status = book.stockStatus;
@@ -192,14 +192,11 @@ const BookDetailsModal = ({ book, isOpen, onClose, onConfirm, theme, getMapaInfo
             {status === 'unavailable' ? (
                <div className="bg-red-50 border border-red-100 p-3 rounded-xl text-center">
                  <p className="text-sm font-bold text-red-600 mb-1">Fora de estoque</p>
-                 <p className="text-xs text-gray-600 mb-3">Desculpe, este livro não está disponível no momento. Você pode adicionar à lista ou comprar online.</p>
+                 <p className="text-xs text-gray-600 mb-3">Desculpe, este livro não está disponível no momento.</p>
                  
-                 <div className="flex flex-col gap-2">
-                    <button onClick={() => onConfirm(book)} className="w-full py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 shadow-md active:scale-95 transition-all flex items-center justify-center gap-2">
-                        <ShoppingCart size={18} />
-                        Adicionar à Lista
-                    </button>
-                 </div>
+                 <button onClick={onClose} className="w-full py-3 rounded-xl bg-red-500 text-white font-bold hover:bg-red-600 shadow-md active:scale-95 transition-all">
+                    Entendi
+                 </button>
                </div>
             ) : (
               <>
@@ -231,15 +228,9 @@ const BookDetailsModal = ({ book, isOpen, onClose, onConfirm, theme, getMapaInfo
                   )}
                 </div>
 
-                <div className="flex gap-2">
-                    <button onClick={onClose} className="flex-1 py-3 rounded-xl border border-gray-200 text-gray-600 font-bold hover:bg-gray-50 transition-colors">
-                        Talvez depois
-                    </button>
-                    <button onClick={() => onConfirm(book)} className="flex-1 py-3 rounded-xl text-white font-bold shadow-md active:scale-95 transition-all flex items-center justify-center gap-2" style={{ backgroundColor: theme.primaryColor }}>
-                        <ShoppingCart size={18} />
-                        Sim, eu quero!
-                    </button>
-                </div>
+                <button onClick={onClose} className="w-full py-3 rounded-xl text-white font-bold shadow-md active:scale-95 transition-all" style={{ backgroundColor: theme.primaryColor }}>
+                    Entendi
+                </button>
               </>
             )}
         </div>
@@ -744,6 +735,8 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState(null);
 
+  // Carrinho desativado (sem entrada de UI); mantido para reativar depois.
+  // eslint-disable-next-line no-unused-vars
   const addToCart = (book) => {
     setCart(prev => {
         const existingIndex = prev.findIndex(item => (item.barras && item.barras === book.barras) || (item.titulo === book.titulo));
@@ -1053,7 +1046,6 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
         book={selectedBook} 
         isOpen={!!selectedBook} 
         onClose={() => setSelectedBook(null)} 
-        onConfirm={addToCart}
         onAnalytics={trackEvent}
         theme={theme}
         getMapaInfoFromStockEvent={getMapaInfoFromStockEvent}
