@@ -274,7 +274,9 @@ export function getNomeExibicaoEstoque(codigo, fallback = '') {
   if (fallback) {
     const texto = String(fallback);
     const hifenIndex = texto.indexOf('-');
-    const nomeEstande = (hifenIndex >= 0 ? texto.slice(hifenIndex + 1) : texto).trim();
+    if (hifenIndex < 0) return texto.trim();
+
+    const nomeEstande = texto.slice(hifenIndex + 1).trim();
     const codigoMatch = texto.match(/\(([^)]+)\)/);
     return codigoMatch ? `(${codigoMatch[1]}) ${nomeEstande}` : nomeEstande;
   }
