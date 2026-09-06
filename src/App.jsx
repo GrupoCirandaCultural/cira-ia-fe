@@ -1,6 +1,5 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import WelcomeScreen from './components/WelcomeScreen';
-import Registration from './components/Registration';
 import PrizeWheel from './components/PrizeWheel';
 import ChatInterface from './components/ChatInterface';
 import CheckInScreen from './components/CheckInScreen';
@@ -11,8 +10,6 @@ import CiraCentralChat from './components/central/CiraCentralChat';
 import { MapPin, Check, ArrowLeft } from 'lucide-react';
 import { getEventoConfig, verificarEstandeValido } from './config/events.config';
 import { useKioskMode, useKioskInactivityReset } from './hooks/useKioskMode';
-
-const AUTH_STORAGE_KEY = 'cira_user_lead';
 
 function App() {
   // Estado consolidado com lazy initialization (parse URL apenas na carga inicial)
@@ -46,18 +43,8 @@ function App() {
 
   // Outros estados
   const [step, setStep] = useState(0);
-  const [userLead, setUserLead] = useState(() => {
-    try {
-      const stored = window.localStorage.getItem(AUTH_STORAGE_KEY);
-      return stored ? JSON.parse(stored) : null;
-    } catch (error) {
-      console.warn('Falha ao recuperar usuário autenticado:', error);
-      return null;
-    }
-  });
-  const [leadId, setLeadId] = useState(null);
+  const [userLead, setUserLead] = useState(null);
   const [target, setTarget] = useState(null);
-  const [prefilledPhone, setPrefilledPhone] = useState('');
   const [fromDiscount, setFromDiscount] = useState(false);
 
   // Gate de configuração (senha) — sem persistência: exigida sempre que entrar na tela de config
@@ -68,22 +55,10 @@ function App() {
   const handleKioskReset = useCallback(() => {
     setStep(0);
     setUserLead(null);
-    setLeadId(null);
     setTarget(null);
-    setPrefilledPhone('');
     setFromDiscount(false);
   }, []);
   useKioskInactivityReset(isKiosk, handleKioskReset, 300000);
-
-  useEffect(() => {
-    if (!userLead) return;
-
-    try {
-      window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userLead));
-    } catch (error) {
-      console.warn('Falha ao manter usuário autenticado:', error);
-    }
-  }, [userLead]);
 
   // Função para selecionar evento
   const handleSelectEvento = (eventoId) => {
@@ -134,52 +109,25 @@ function App() {
     }));
   };
 
-  // 2. LOGICA DE INÍCIO CENTRALIZADA
+  // 2. LOGICA DE INÍCIO CENTRALIZADA — sem cadastro obrigatório, navega direto pra funcionalidade escolhida
   const handleStart = (choice) => {
     if (choice === 'checkin') {
       setStep('checkin'); // Vai para a tela de rota de brindes
-    } else {
-      // Guarda a escolha original (wheel/chat/chat_stock).
-      // A validação de roleta acontece em handleRegistrationComplete.
-      setTarget(choice);
-      setStep(userLead ? 3 : 1); // Usuário autenticado permanece logado e vai direto ao chat
+      return;
     }
-  };
 
-  // 3. PÓS-CADASTRO: VALIDAÇÃO E NAVEGAÇÃO
-  const handleRegistrationComplete = (userData, serverResponse) => {
-    setUserLead(userData);
-    setLeadId(serverResponse.id);
-
-    // Se já participou, pula direto para o chat
-    // if (serverResponse.status === 'ja_participou') {
-    //   setUserLead(prev => ({ ...prev, cupom: serverResponse.cupom }));
-    //   setStep(3); 
-    //   return;
-    // }
-
-    // Obtém config do evento para verificar se tem roleta
+    setTarget(choice);
     const eventoConfig = getEventoConfig(appState.selectedEvento);
-    
-    // Navega conforme escolha inicial e disponibilidade de roleta
-    if (target === 'wheel' && eventoConfig?.temRoleta) {
-      // Vai para roleta se tem e foi escolhido
+
+    if (choice === 'wheel' && eventoConfig?.temRoleta) {
       setStep(2);
-    } else if (target === 'checkin_redirect') {
-      // Retorna para o checkin
-      setStep('checkin');
-    } else if (target === 'chat_stock' || target === 'chat') {
-      // Usuário escolheu explicitamente chat ou consulta de estoque: vai direto
+    } else if (choice === 'chat_stock' || choice === 'chat') {
       setStep(3);
-    } else if (target === 'wheel' && !eventoConfig?.temRoleta && appState.selectedEvento === 'bett_brasil') {
+    } else if (!eventoConfig?.temRoleta && appState.selectedEvento === 'bett_brasil') {
       // Bett Educar sem roleta: usuário quis desconto, mostra tela de cupom
       setStep('discount-success');
-    } else if (!eventoConfig?.temRoleta && appState.selectedEvento === 'bett_brasil') {
-      // Bett Educar (fallback): Show discount success screen before chat
-      setStep('discount-success');
     } else {
-      // Chat direto (padrão ou se não tem roleta)
-      setStep(3); 
+      setStep(3);
     }
   };
 
@@ -293,11 +241,6 @@ function App() {
                   setStep(0);
                 }
               }}
-              onUserNotFound={(phone) => {
-                setPrefilledPhone(phone);
-                setTarget('checkin_redirect');
-                setStep(1); 
-              }}
             />
           )}
 
@@ -315,19 +258,7 @@ function App() {
             />
           )}
 
-          {/* PASSO 1: CADASTRO */}
-          {appState.isConfigured && step === 1 && (
-            <Registration 
-              idEstande={appState.selectedEstande}
-              eventoId={appState.selectedEvento}
-              initialPhone={prefilledPhone}
-              onBack={() => setStep(0)}
-              onComplete={(userData, res) => {
-                setPrefilledPhone('');
-                handleRegistrationComplete(userData, res);
-              }}
-            />
-          )}
+          {/* PASSO 1: CADASTRO removido — fluxo vai direto do WelcomeScreen para a funcionalidade escolhida */}
           
           {/* TELA DE SUCESSO - BETT EDUCAR */}
           {appState.isConfigured && step === 'discount-success' && (
@@ -349,7 +280,6 @@ function App() {
           {/* PASSO 2: ROLETA */}
           {appState.isConfigured && step === 2 && (
             <PrizeWheel 
-              userId={leadId} 
               idEstande={appState.selectedEstande}
               onFinish={handleWheelFinish} 
             />
