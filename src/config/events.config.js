@@ -136,14 +136,14 @@ export const EVENTOS_CONFIG = {
     ],
 
     eventosEstoque: [
-      { codigo: '000111', empresa: '07' },
-      { codigo: '000112', empresa: '07' },
-      { codigo: '000356' },
-      { codigo: '000357' },
-      { codigo: '000358' },
-      { codigo: '000359' },
-      { codigo: '000360' },
-      { codigo: '000361' }
+      { codigo: '000111', empresa: '07', nome: '(C60) Magic Kids 300M²' },
+      { codigo: '000112', empresa: '07', nome: '(A89) Magic Kids 100M²' },
+      { codigo: '000356', nome: '(A88) ESCOLAR 150M²' },
+      { codigo: '000357', nome: '(DD11) PROFESSOR 125M²' },
+      { codigo: '000358', nome: '(B20) CIRANDA NA ESCOLA 290M²' },
+      { codigo: '000359', nome: '(F30) PRINCIPIS 350M²' },
+      { codigo: '000360', nome: '(C10) MOOD 150M²' },
+      { codigo: '000361', nome: '(A30) CIRANDA 350M²' }
     ],
 
     mapaPorCodigoEvento: {
@@ -269,6 +269,16 @@ export function getEventoConfig(eventoId) {
 }
 
 export function getNomeExibicaoEstoque(codigo, fallback = '') {
+  // Prioriza o nome que vem do próprio banco (API de estoque); o mapa de código é só um fallback.
+  // Formato típico: "BIENAL SP 2026 (A89) - Magic Kids 100M²" -> "(A89) Magic Kids 100M²"
+  if (fallback) {
+    const texto = String(fallback);
+    const hifenIndex = texto.indexOf('-');
+    const nomeEstande = (hifenIndex >= 0 ? texto.slice(hifenIndex + 1) : texto).trim();
+    const codigoMatch = texto.match(/\(([^)]+)\)/);
+    return codigoMatch ? `(${codigoMatch[1]}) ${nomeEstande}` : nomeEstande;
+  }
+
   const codigoNormalizado = String(codigo || '').trim();
   const evento = Object.values(EVENTOS_CONFIG).find((config) => (
     config.mapaPorCodigoEvento?.[codigoNormalizado]
@@ -279,8 +289,7 @@ export function getNomeExibicaoEstoque(codigo, fallback = '') {
     return `${mapaInfo.nome} ${mapaInfo.estande}`.trim();
   }
 
-  if (!fallback) return 'Evento';
-  return String(fallback).split('-')[0].trim();
+  return 'Evento';
 }
 
 export function getEstandeConfig(eventoId, estandeId) {

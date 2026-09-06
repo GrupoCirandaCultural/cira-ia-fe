@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Download, X, MapPin } from 'lucide-react';
+import { getNomeExibicaoEstoque } from '../config/events.config';
 
 // Mapa lúdico da Bienal com pins/etiquetas plotados via código sobre a imagem em public/mapa-bienal.png
 export default function BienalMapModal({ isOpen, onClose, targets = [], locations = [] }) {
@@ -12,7 +13,7 @@ export default function BienalMapModal({ isOpen, onClose, targets = [], location
     target.codigo === item.codigo || (target.nome === item.nome && target.estande === item.estande)
   ));
   const targetLabel = targets.length
-    ? targets.map((target) => `${target.nome} - ${target.estande}`).join(', ')
+    ? targets.map((target) => getNomeExibicaoEstoque(target.codigo, target.nomeReal)).join(', ')
     : 'os estandes marcados no mapa';
 
   return (
@@ -81,8 +82,7 @@ export default function BienalMapModal({ isOpen, onClose, targets = [], location
                     style={{ backgroundColor: pinColor }}
                   >
                     {isTarget && <MapPin size={10} fill="currentColor" />}
-                    <span>{item.nome}</span>
-                    <span className="opacity-85">{item.estande}</span>
+                    <span>{getNomeExibicaoEstoque(item.codigo, item.nomeReal)}</span>
                   </div>
                 </div>
               </div>

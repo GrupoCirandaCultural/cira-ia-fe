@@ -157,7 +157,7 @@ const CouponModal = ({ code, isOpen, onClose, theme }) => {
   );
 };
 
-const BookDetailsModal = ({ book, isOpen, onClose, theme, getMapaInfoFromStockEvent }) => {
+const BookDetailsModal = ({ book, isOpen, onClose, theme }) => {
   if (!isOpen || !book) return null;
 
   const status = book.stockStatus;
@@ -210,11 +210,7 @@ const BookDetailsModal = ({ book, isOpen, onClose, theme, getMapaInfoFromStockEv
                   {estoqueEventos.length > 0 ? (
                     <div className="space-y-2">
                       {estoqueEventos.map((evento, idx) => {
-                        const mapaInfo = getMapaInfoFromStockEvent?.(evento);
-                        const eventLabel = mapaInfo
-                          ? `${mapaInfo.nome} - ${mapaInfo.estande}`
-                          : getStockEventDisplayName(evento);
-                        const label = eventLabel;
+                        const label = getStockEventDisplayName(evento);
 
                         return (
                           <div key={idx} className="text-sm text-gray-700">
@@ -673,10 +669,32 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
   const [selectedMapLocations, setSelectedMapLocations] = useState([]);
   const [isGeneralMapOpen, setIsGeneralMapOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // Nomes reais dos estandes, descobertos a partir das buscas já feitas (sem endpoint de listagem).
+  const [nomesEstoquePorCodigo, setNomesEstoquePorCodigo] = useState({});
+
+  const getEventoComNomeReal = (evento) => {
+    const codigo = getStockEventCode(evento);
+    const nomeReal = nomesEstoquePorCodigo[codigo];
+    return nomeReal ? { ...evento, nome: nomeReal } : evento;
+  };
+
+  const registrarNomesReaisDoEstoque = (livros = []) => {
+    const encontrados = {};
+    livros.forEach((livro) => {
+      (livro.estoque_eventos || []).forEach((evento) => {
+        const codigo = getStockEventCode(evento);
+        const nome = getStockEventName(evento);
+        if (codigo && nome) encontrados[codigo] = nome;
+      });
+    });
+    if (Object.keys(encontrados).length > 0) {
+      setNomesEstoquePorCodigo((prev) => ({ ...prev, ...encontrados }));
+    }
+  };
 
   const selectedStockEventLabel = selectedStockEventCode
     ? getStockEventDisplayName(
-        eventosEstoque.find((evento) => evento.codigo === selectedStockEventCode) || { codigo: selectedStockEventCode }
+        getEventoComNomeReal(eventosEstoque.find((evento) => evento.codigo === selectedStockEventCode) || { codigo: selectedStockEventCode })
       )
     : 'Todos os estandes';
 
@@ -699,7 +717,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
     const codigo = getStockEventCode(evento);
     if (!mapaPorCodigoEvento[codigo]) return null;
 
-    return { codigo, ...mapaPorCodigoEvento[codigo] };
+    return { codigo, ...mapaPorCodigoEvento[codigo], nomeReal: nomesEstoquePorCodigo[codigo] };
   };
 
   const getMapaInfosFromBook = (book) => {
@@ -945,6 +963,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
 
       const { data } = await api.post('/chat', payload);
     const dadosFiltrados = filtrarDadosPorEvento(data.dados);
+      registrarNomesReaisDoEstoque(data.dados);
       
       let responseContent = data.texto;
       let responseOptions = null;
@@ -1004,6 +1023,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
 
       const { data } = await api.post('/chat', payload);
       const dadosFiltrados = filtrarDadosPorEvento(data.dados);
+      registrarNomesReaisDoEstoque(data.dados);
 
       setMessages((prev) => prev.map((message, index) => {
         if (index !== messageIndex) return message;
@@ -1048,7 +1068,6 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
         onClose={() => setSelectedBook(null)} 
         onAnalytics={trackEvent}
         theme={theme}
-        getMapaInfoFromStockEvent={getMapaInfoFromStockEvent}
       />
       <CartModal 
         cart={cart}
@@ -1069,7 +1088,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
           setIsGeneralMapOpen(false);
         }}
         targets={selectedMapLocations}
-        locations={Object.entries(mapaPorCodigoEvento).map(([codigo, info]) => ({ codigo, ...info }))}
+        locations={Object.entries(mapaPorCodigoEvento).map(([codigo, info]) => ({ codigo, ...info, nomeReal: nomesEstoquePorCodigo[codigo] }))}
       />
 
       <div className="absolute inset-0 z-0" style={{ backgroundImage: `url(${eventoId === 'bett_brasil' ? bgChatBett : bgChat})`, backgroundSize: 'cover', backgroundPosition: 'center top' }} />
@@ -1189,11 +1208,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
                            {stockInfo.status === 'available_here' && (
                              <div className="flex flex-col items-start gap-1 mb-1">
                                {(item.estoque_eventos || []).map((evento, eventIdx) => {
-                                 const mapaInfo = getMapaInfoFromStockEvent(evento);
-                                 const eventLabel = mapaInfo
-                                   ? `${mapaInfo.nome} - ${mapaInfo.estande}`
-                                   : getStockEventDisplayName(evento);
-                                 const label = eventLabel;
+                                 const label = getStockEventDisplayName(evento);
 
                                  return (
                                    <div
@@ -1339,7 +1354,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
                           borderColor: isSelected ? theme.primaryColor : `${theme.primaryColor}20`,
                         }}
                       >
-                        {evento.codigo ? getStockEventDisplayName(evento) : evento.nome}
+                        {evento.codigo ? getStockEventDisplayName(getEventoComNomeReal(evento)) : evento.nome}
                       </button>
                     );
                   })}
