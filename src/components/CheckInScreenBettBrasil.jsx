@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import { ArrowLeft, MapPin, Download, Check } from 'lucide-react';
 import EventMap from './EventMap';
 import { EVENTOS_CONFIG } from '../config/events.config';
-import mapaBettBrasil from '../assets/mapa_bett_brasil.jpeg';
+import mapaBettBrasil from '../assets/mapa_bett_brasil.webp';
 
 const viewportStyle = `
   .checkin-container {

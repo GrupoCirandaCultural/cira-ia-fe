@@ -8,11 +8,12 @@ const ESTANDE_TO_RPA = {
   'estande_azul': '000324',
   'estande_laranja': '000316',
 };
-import bgChat from '../assets/background-chat.png';
-import bgChatBett from '../assets/background-chat-bett.png';
+import bgChat from '../assets/background-chat.webp';
+import bgChatBett from '../assets/background-chat-bett.webp';
 import iconeEscola from '../assets/logo_fundo_ciranda.png';
 import { getEstandeTheme } from '../theme';
 import { getEventoConfig, getNomeExibicaoEstoque } from '../config/events.config';
+import { useImagePreload } from '../hooks/useImagePreload';
 import BienalMapModal from './BienalMapModal';
 
 const generateSessionId = () => Math.random().toString(36).substring(7);
@@ -660,6 +661,7 @@ const getBookKey = (book) => String(book?.barras || book?.isbn || book?.id || bo
 export default function ChatInterface({ userName: userNameProp, userPhone, cupom, onBack, initialMode = 'chat', idEstande = 'estande_laranja', eventoId = 'bett_brasil' }) { // <--- Função principal começa aqui
   const userName = (userNameProp && String(userNameProp).trim()) ? String(userNameProp).trim().split(' ')[0] : 'Visitante';
   const theme = getEstandeTheme(idEstande);
+  const isBgLoaded = useImagePreload(eventoId === 'bett_brasil' ? bgChatBett : bgChat);
   const eventoConfig = getEventoConfig(eventoId);
   const codigosEstoqueEvento = eventoConfig?.codigosEstoque || [];
   const eventosEstoque = eventoConfig?.eventosEstoque || [];
@@ -1091,7 +1093,11 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
         locations={Object.entries(mapaPorCodigoEvento).map(([codigo, info]) => ({ codigo, ...info, nomeReal: nomesEstoquePorCodigo[codigo] }))}
       />
 
-      <div className="absolute inset-0 z-0" style={{ backgroundImage: `url(${eventoId === 'bett_brasil' ? bgChatBett : bgChat})`, backgroundSize: 'cover', backgroundPosition: 'center top' }} />
+      <div className="absolute inset-0 z-0" style={{ backgroundColor: theme.primaryColor }} />
+      <div
+        className={`absolute inset-0 z-0 transition-opacity duration-500 ${isBgLoaded ? 'opacity-100' : 'opacity-0'}`}
+        style={{ backgroundImage: `url(${eventoId === 'bett_brasil' ? bgChatBett : bgChat})`, backgroundSize: 'cover', backgroundPosition: 'center top' }}
+      />
 
       <header className="relative z-10 bg-white/90 backdrop-blur-md p-4 flex justify-between items-center shadow-sm" style={{ borderBottomColor: `${theme.primaryColor}20`, borderBottomWidth: '1px' }}>
         <div className="flex items-center gap-2">

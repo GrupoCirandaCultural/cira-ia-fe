@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import api from '../api';
-import bgImage from '../assets/background-roleta.png';
+import bgImage from '../assets/background-roleta.webp';
 import { getEstandeTheme } from '../theme';
+import { useImagePreload } from '../hooks/useImagePreload';
 
 const getRandomExtraDegrees = () => Math.floor(Math.random() * 360);
 
 export default function PrizeWheel({ userId, onFinish, idEstande }) {
   const theme = getEstandeTheme(idEstande);
+  const isBgLoaded = useImagePreload(bgImage);
   const [isSpinning, setIsSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
 
@@ -53,7 +55,7 @@ export default function PrizeWheel({ userId, onFinish, idEstande }) {
   return (
     <div className="flex flex-col items-center justify-start h-full bg-[#87CEEB] overflow-hidden">
       <div 
-        className="absolute inset-0 z-0 bg-no-repeat bg-top"
+        className={`absolute inset-0 z-0 bg-no-repeat bg-top transition-opacity duration-500 ${isBgLoaded ? 'opacity-100' : 'opacity-0'}`}
         style={{ 
           backgroundImage: `url(${bgImage})`,
           backgroundSize: 'cover', 

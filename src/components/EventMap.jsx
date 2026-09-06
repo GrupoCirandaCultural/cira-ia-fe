@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { MapPin, Check } from 'lucide-react';
-import mapaBettBrasil from '../assets/mapa_bett_brasil.jpeg';
+import mapaBettBrasil from '../assets/mapa_bett_brasil.webp';
 import api from '../api';
 import { getEventoConfig } from '../config/events.config';
 

@@ -2,11 +2,13 @@ import React, { useMemo } from 'react';
 import QRCode from 'react-qr-code';
 import { Sparkles, Search, MapPin, BookOpen, ChevronRight } from 'lucide-react';
 import { getEventoConfig, getEstandeConfig, getTemaEstande } from '../config/events.config';
-import ciraWelcomeLimpa from '../assets/cira-welcome.png';
+import ciraWelcomeLimpa from '../assets/cira-welcome.webp';
 import logoFundo from '../assets/logo_fundo_ciranda.png';
+import { useImagePreload } from '../hooks/useImagePreload';
 import '../styles/WelcomeScreen.css';
 
 export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_brasil' }) {
+  const isBgLoaded = useImagePreload(ciraWelcomeLimpa);
   const eventoConfig = useMemo(() => getEventoConfig(eventoId), [eventoId]);
   const estandeConfig = useMemo(() => getEstandeConfig(eventoId, idEstande), [eventoId, idEstande]);
   const temaEstande = useMemo(() => getTemaEstande(eventoId, idEstande), [eventoId, idEstande]);
@@ -165,8 +167,9 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
   return (
     <div className="relative h-full w-full flex flex-col items-center overflow-hidden">
       {/* Imagem de Fundo */}
+      <div className="absolute inset-0 z-0" style={{ backgroundColor: primaryColor }} />
       <div 
-        className="absolute inset-0 z-0 bg-no-repeat"
+        className={`absolute inset-0 z-0 bg-no-repeat transition-opacity duration-500 ${isBgLoaded ? 'opacity-100' : 'opacity-0'}`}
         style={{ 
           backgroundImage: `url(${ciraWelcomeLimpa})`,
           backgroundSize: 'cover',
