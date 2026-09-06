@@ -206,7 +206,7 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-bold text-white/80 uppercase tracking-wide">Preço e disponibilidade</p>
-            <p className="text-lg font-black text-white leading-tight truncate">Consultar estoque</p>
+            <p className="text-lg font-black text-white leading-tight truncate">Consultar preço</p>
           </div>
           <ChevronRight size={22} className="text-white/80 shrink-0" />
         </button>
