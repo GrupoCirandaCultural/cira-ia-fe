@@ -4,11 +4,9 @@ import { Sparkles, Search, MapPin, BookOpen, ChevronRight } from 'lucide-react';
 import { getEventoConfig, getEstandeConfig, getTemaEstande } from '../config/events.config';
 import ciraWelcomeLimpa from '../assets/cira-welcome.webp';
 import logoFundo from '../assets/logo_fundo_ciranda.png';
-import { useImagePreload } from '../hooks/useImagePreload';
 import '../styles/WelcomeScreen.css';
 
 export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_brasil' }) {
-  const isBgLoaded = useImagePreload(ciraWelcomeLimpa);
   const eventoConfig = useMemo(() => getEventoConfig(eventoId), [eventoId]);
   const estandeConfig = useMemo(() => getEstandeConfig(eventoId, idEstande), [eventoId, idEstande]);
   const temaEstande = useMemo(() => getTemaEstande(eventoId, idEstande), [eventoId, idEstande]);
@@ -169,7 +167,7 @@ export default function WelcomeScreen({ onStart, idEstande, eventoId = 'bett_bra
       {/* Imagem de Fundo */}
       <div className="absolute inset-0 z-0" style={{ backgroundColor: primaryColor }} />
       <div 
-        className={`absolute inset-0 z-0 bg-no-repeat transition-opacity duration-500 ${isBgLoaded ? 'opacity-100' : 'opacity-0'}`}
+        className="absolute inset-0 z-0 bg-no-repeat"
         style={{ 
           backgroundImage: `url(${ciraWelcomeLimpa})`,
           backgroundSize: 'cover',
