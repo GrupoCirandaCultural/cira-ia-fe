@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import api from '../api';
+import api, { getBookByIsbn } from '../api';
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import { Send, Search, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw, Trash2, MessageCircle, CheckCircle, AlertCircle, ChevronUp, ChevronDown, Eye, MapPin } from 'lucide-react';
 
@@ -161,7 +161,7 @@ const BookDetailsModal = ({ book, isOpen, onClose, theme }) => {
   if (!isOpen || !book) return null;
 
   const status = book.stockStatus;
-  const stockDisplay = book.stockDisplay || 'Fora de estoque';
+  const stockDisplay = book.stockDisplay || book.locationHint || 'Estoque não informado';
   const estoqueEventos = book.estoqueEventos || [];
 
   return (
@@ -198,6 +198,14 @@ const BookDetailsModal = ({ book, isOpen, onClose, theme }) => {
                     Entendi
                  </button>
                </div>
+            ) : status === null ? (
+              <div className="bg-gray-50 border border-gray-100 p-3 rounded-xl text-center">
+                <p className="text-sm font-bold text-gray-600 mb-1">Estoque não informado</p>
+                <p className="text-xs text-gray-500">A consulta de preço não retornou a disponibilidade deste livro.</p>
+                <button onClick={onClose} className="w-full mt-3 py-3 rounded-xl text-white font-bold shadow-md active:scale-95 transition-all" style={{ backgroundColor: theme.primaryColor }}>
+                  Entendi
+                </button>
+              </div>
             ) : (
               <>
                 {/* Exibe os eventos onde o livro está disponível */}
@@ -620,7 +628,44 @@ const getStockEventCode = (evento) => String(evento?.evento || evento?.codigo ||
 const getStockEventName = (evento) => String(evento?.nome_evento || evento?.nome || evento?.name || '').trim();
 
 const getStockEventDisplayName = (evento) => (
-  getNomeExibicaoEstoque(getStockEventCode(evento), getStockEventName(evento))
+  (() => {
+    const nome = getNomeExibicaoEstoque(getStockEventCode(evento), getStockEventName(evento));
+    const nomeNormalizado = String(nome || '').trim().match(/^.*?(\([^)]*\))\s*(?:-\s*)?(.*)$/);
+    return nomeNormalizado ? `${nomeNormalizado[1]} ${nomeNormalizado[2]}`.trim() : nome;
+  })()
+);
+
+const normalizeLocationHint = (locationHint) => {
+  if (Array.isArray(locationHint)) {
+    return locationHint.map((location) => normalizeLocationHint(location)).filter(Boolean).join(', ');
+  }
+
+  if (!locationHint) return '';
+
+  return String(locationHint)
+    .split(/\s*,\s*/)
+    .map((location) => {
+      const normalized = location.trim().match(/^.*?(\([^)]*\))\s*(?:-\s*)?(.*)$/);
+      return normalized ? `${normalized[1]} ${normalized[2]}`.trim() : location.trim();
+    })
+    .filter(Boolean)
+    .join(', ');
+};
+
+const getLocationHints = (locationHint) => (
+  String(locationHint || '')
+    .split(/\s*,\s*/)
+    .map((location) => location.trim())
+    .filter(Boolean)
+);
+
+const locationHintToEvents = (locationHint) => (
+  getLocationHints(locationHint).map((location) => {
+    const codeMatch = location.match(/\(([^)]+)\)/);
+    return codeMatch
+      ? { codigo: codeMatch[1], nome: location }
+      : null;
+  }).filter(Boolean)
 );
 
 const getBoothBadgeStyle = (eventoCodigo, nomeEvento) => {
@@ -657,13 +702,59 @@ const formatStockDisplay = (estoque_eventos) => {
 
 const getBookKey = (book) => String(book?.barras || book?.isbn || book?.id || book?.titulo || '').trim();
 
+const normalizeBookResponse = (data, fallbackBarcode) => {
+  const books = data?.dados || data?.books || data?.livros || data?.book || data?.livro || data?.data || data;
+  return (Array.isArray(books) ? books : [books])
+    .filter(Boolean)
+    .map((book) => {
+      const stockEvents = book.estoque_eventos || book.stock_events || book.stock_in || book.location_hint;
+      const estoqueEventos = typeof stockEvents === 'string'
+        ? locationHintToEvents(stockEvents)
+        : Array.isArray(stockEvents)
+        ? stockEvents.flatMap((event) => typeof event === 'string' ? locationHintToEvents(event) : [event])
+        : stockEvents && typeof stockEvents === 'object'
+          ? [stockEvents]
+          : [];
+
+      return {
+        ...book,
+        titulo: book.titulo || book.title || book.nome,
+        barras: book.barras || book.isbn || book.ean || fallbackBarcode,
+        preco_capa: book.preco_capa ?? book.preco ?? book.price ?? book.valor,
+        capa_url: book.capa_url || book.cover_url || book.cover || book.imagem,
+        sinopse: book.sinopse || book.description || book.descricao,
+        location_hint: normalizeLocationHint(book.location_hint),
+        estoque_eventos: estoqueEventos,
+      };
+    });
+};
+
+const getBookStockInfo = (book) => {
+  if (Array.isArray(book.estoque_eventos) && book.estoque_eventos.length > 0) {
+    return formatStockDisplay(book.estoque_eventos);
+  }
+
+  if (book.status || book.stock_status || book.location_hint || book.stock_integration || book.stock_in) {
+    return {
+      status: book.status || book.stock_status || null,
+      locationHint: normalizeLocationHint(book.location_hint || (typeof book.stock_in === 'string' ? book.stock_in : undefined)),
+    };
+  }
+
+  return { status: null };
+};
+
 export default function ChatInterface({ userName: userNameProp, userPhone, cupom, onBack, initialMode = 'chat', idEstande = 'estande_laranja', eventoId = 'bett_brasil' }) { // <--- Função principal começa aqui
   const userName = (userNameProp && String(userNameProp).trim()) ? String(userNameProp).trim().split(' ')[0] : 'Visitante';
   const theme = getEstandeTheme(idEstande);
   const eventoConfig = getEventoConfig(eventoId);
+  const bienalStockConfig = getEventoConfig('bienal_2026');
   const codigosEstoqueEvento = eventoConfig?.codigosEstoque || [];
   const eventosEstoque = eventoConfig?.eventosEstoque || [];
+  const codigosEstoqueBienal = bienalStockConfig?.codigosEstoque || [];
+  const eventosEstoqueBienal = bienalStockConfig?.eventosEstoque || [];
   const mapaPorCodigoEvento = eventoConfig?.mapaPorCodigoEvento || {};
+  const mapaPorCodigoBienal = bienalStockConfig?.mapaPorCodigoEvento || {};
   const [selectedStockEventCode, setSelectedStockEventCode] = useState('');
   const [isStockEventSelectorOpen, setIsStockEventSelectorOpen] = useState(false);
   const [selectedMapLocations, setSelectedMapLocations] = useState([]);
@@ -713,17 +804,29 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
       .filter((book) => book.estoque_eventos.length > 0);
   };
 
-  const getMapaInfoFromStockEvent = (evento) => {
+  const getMapaInfoFromStockEvent = (evento, useBienalMap = false) => {
     const codigo = getStockEventCode(evento);
-    if (!mapaPorCodigoEvento[codigo]) return null;
+    const mapa = useBienalMap ? mapaPorCodigoBienal : mapaPorCodigoEvento;
+    let mapaCodigo = codigo;
 
-    return { codigo, ...mapaPorCodigoEvento[codigo], nomeReal: nomesEstoquePorCodigo[codigo] };
+    if (useBienalMap && !mapa[mapaCodigo]) {
+      const eventoBienal = eventosEstoqueBienal.find((item) => (
+        item.codigo === codigo
+        || item.nome?.includes(`(${codigo})`)
+        || item.nome?.toLowerCase().includes(String(codigo).toLowerCase())
+      ));
+      mapaCodigo = eventoBienal?.codigo || codigo;
+    }
+
+    if (!mapa[mapaCodigo]) return null;
+
+    return { codigo: mapaCodigo, ...mapa[mapaCodigo], nomeReal: nomesEstoquePorCodigo[mapaCodigo] };
   };
 
-  const getMapaInfosFromBook = (book) => {
+  const getMapaInfosFromBook = (book, useBienalMap = false) => {
     const estoque = book?.estoque_eventos || [];
     const mapaInfos = estoque
-      .map((evento) => getMapaInfoFromStockEvent(evento))
+      .map((evento) => getMapaInfoFromStockEvent(evento, useBienalMap))
       .filter(Boolean);
 
     const uniqueByCodigo = new Map(mapaInfos.map((info) => [info.codigo, info]));
@@ -786,14 +889,14 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
   const clearCart = () => setCart([]);
   
   const handleBookSelection = (book) => {
-    // Abre o modal com as informações de estoque já vindo da resposta inicial
-    const stockInfo = formatStockDisplay(book.estoque_eventos);
+    const stockInfo = getBookStockInfo(book);
     
     setSelectedBook({
       ...book,
       checkingStock: false,
       stockStatus: stockInfo.status,
-      stockDisplay: stockInfo.text,
+      stockDisplay: stockInfo.text || stockInfo.locationHint,
+      locationHint: stockInfo.locationHint,
       estoqueEventos: book.estoque_eventos || []
     });
 
@@ -893,10 +996,13 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
     setStockOnlyBooth(false);
   };
 
-  const handleSend = async (overrideMessage = null) => {
+  const handleSend = async (overrideMessage = null, options = {}) => {
     let messageToSend = overrideMessage || input; 
     
     if (!messageToSend.trim() && !stockFilterGenre) return;
+
+    const normalizedBarcode = messageToSend.trim().replace(/[\s-]/g, '');
+    const isBarcodeLookup = options.quickLookup || /^\d{8,14}$/.test(normalizedBarcode);
 
     // Adaptação para filtros de estoque interagirem com a IA
     let displayMsg = messageToSend;
@@ -931,6 +1037,77 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
     // }
 
     try {
+      if (isBarcodeLookup) {
+        const { data } = await getBookByIsbn(normalizedBarcode, idEstande, false);
+        console.log('[consulta rápida por código] resposta da API', {
+          endpoint: `/api/books/${normalizedBarcode}`,
+          params: { booth_id: ESTANDE_TO_RPA[idEstande] || undefined, include_stock: false },
+          response: data,
+        });
+        console.log('[consulta rápida por código] JSON', JSON.stringify(data, null, 2));
+        const dados = normalizeBookResponse(data, normalizedBarcode);
+        console.table(dados);
+        const responseContent = data?.texto || data?.message || (dados.length
+          ? 'Encontrei este livro:'
+          : 'Não encontrei um livro para esse código de barras.');
+        const quickLookupMessageId = `quick-${normalizedBarcode}-${Date.now()}`;
+        const allStockEventCodes = codigosEstoqueBienal.length > 0
+          ? codigosEstoqueBienal
+          : eventosEstoqueBienal.map((evento) => evento.codigo).filter(Boolean);
+        const stockEvents = selectedStockEventCode
+          ? eventosEstoqueBienal.filter((evento) => evento.codigo === selectedStockEventCode)
+          : eventosEstoqueBienal.filter((evento) => allStockEventCodes.includes(evento.codigo));
+        const stockFilters = {
+          event_codes: selectedStockEventCode
+            ? [selectedStockEventCode]
+            : allStockEventCodes,
+          empresa: [...new Set(stockEvents.map((evento) => evento.empresa).filter(Boolean))].join(','),
+        };
+
+        setMessages((prev) => [...prev, {
+          id: quickLookupMessageId,
+          role: 'Cira IA',
+          content: responseContent,
+          dados,
+          tipo: data?.tipo || 'book_lookup',
+          isQuickLookup: true,
+          canLoadMore: false,
+          searchPayload: null,
+        }]);
+
+        // Completa preço/localizacao em segundo plano sem atrasar a primeira resposta.
+        console.log('[consulta rápida por código] filtros de estoque', stockFilters);
+        getBookByIsbn(normalizedBarcode, idEstande, true, stockFilters)
+          .then(({ data: stockData }) => {
+            console.log('[consulta rápida por código] resposta de estoque', stockData);
+            const stockBooks = normalizeBookResponse(stockData, normalizedBarcode);
+
+            setMessages((prev) => prev.map((message) => {
+              if (message.id !== quickLookupMessageId) return message;
+
+              const updatedBooks = message.dados.map((book) => {
+                const stockBook = stockBooks.find((candidate) => getBookKey(candidate) === getBookKey(book));
+                return stockBook ? { ...book, ...stockBook } : book;
+              });
+
+              return {
+                ...message,
+                dados: updatedBooks,
+                isQuickLookup: false,
+                stockLoaded: true,
+              };
+            }));
+          })
+          .catch((error) => {
+            console.error('[consulta rápida por código] erro ao carregar estoque', {
+              message: error.message,
+              status: error.response?.status,
+              response: error.response?.data,
+            });
+          });
+        return;
+      }
+
       const payload = {
         session_id: sessionId, 
         message: apiMessage,
@@ -993,7 +1170,12 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
         searchPayload: payload,
       }]);
     } catch (error) {
-      console.error("Erro na API:", error);
+      console.error("Erro na API:", {
+        message: error.message,
+        status: error.response?.status,
+        response: error.response?.data,
+        error,
+      });
       setMessages((prev) => [...prev, { 
         role: 'Cira IA', 
         content: "Ops! Tive um pequeno problema de conexão ou não entendi bem. Poderia tentar perguntar novamente? 😓",
@@ -1006,7 +1188,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
   const handleBarcodeDetected = (barcode) => {
     setIsBarcodeScannerOpen(false);
     setInput(barcode);
-    handleSend(barcode);
+    handleSend(barcode, { quickLookup: true });
   };
 
   const handleLoadMore = async (messageIndex, msg) => {
@@ -1088,7 +1270,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
           setIsGeneralMapOpen(false);
         }}
         targets={selectedMapLocations}
-        locations={Object.entries(mapaPorCodigoEvento).map(([codigo, info]) => ({ codigo, ...info, nomeReal: nomesEstoquePorCodigo[codigo] }))}
+        locations={Object.entries(mapaPorCodigoBienal).map(([codigo, info]) => ({ codigo, ...info, nomeReal: nomesEstoquePorCodigo[codigo] }))}
       />
 
       <div className="absolute inset-0 z-0" style={{ backgroundColor: theme.primaryColor }} />
@@ -1188,8 +1370,8 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
               {msg.dados && msg.dados.length > 0 && (
                 <div className="grid grid-cols-1 gap-3 mt-4">
                   {msg.dados.map((item, iIdx) => {
-                    const stockInfo = formatStockDisplay(item.estoque_eventos);
-                    const mapaInfos = getMapaInfosFromBook(item);
+                    const stockInfo = msg.isQuickLookup ? { status: null } : getBookStockInfo(item);
+                    const mapaInfos = getMapaInfosFromBook(item, msg.isQuickLookup || msg.stockLoaded);
                     return (
                     <div key={iIdx} className={`rounded-xl overflow-hidden flex shadow-sm transition-all ${stockInfo.status ? getStockCardStyle(stockInfo.status) : 'bg-white/95 border'}`} style={!stockInfo.status ? { borderColor: `${theme.primaryColor}30` } : {}}>
                       <div className="w-24 min-w-[96px] bg-gray-300 flex items-center justify-center overflow-hidden">
@@ -1229,6 +1411,15 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
                            {stockInfo.status === 'unavailable' && (
                              <p className="text-[10px] font-black text-red-700 uppercase bg-red-100 inline-block px-1 rounded">Fora de estoque</p>
                            )}
+                           {stockInfo.locationHint && (
+                             <div className="flex flex-col items-start gap-1 mb-1">
+                               {getLocationHints(stockInfo.locationHint).map((location) => (
+                                 <div key={location} className="text-[9px] font-bold inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-green-700 bg-green-100">
+                                   <MapPin size={14} /> {location}
+                                 </div>
+                               ))}
+                             </div>
+                           )}
                            <p className="text-[9px] text-gray-400 mb-1 ml-1 font-bold">ISBN: {item.barras}</p>
                         </div>
 
@@ -1261,11 +1452,17 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
 
                             <button
                               type="button"
-                              onClick={() => mapaInfos.length > 0 && setSelectedMapLocations(mapaInfos)}
-                              disabled={mapaInfos.length === 0}
+                              onClick={() => {
+                                if (mapaInfos.length > 0) {
+                                  setSelectedMapLocations(mapaInfos);
+                                } else {
+                                  setIsGeneralMapOpen(true);
+                                }
+                              }}
+                              disabled={msg.stockLoaded ? false : (msg.isQuickLookup || mapaInfos.length === 0)}
                               className="p-2 text-white rounded-lg shadow-sm active:scale-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                               style={{ backgroundColor: theme.primaryColor }}
-                              title={mapaInfos.length > 0 ? `Ver no mapa: ${mapaInfos.map((info) => info.nome).join(', ')}` : 'Mapa indisponível'}
+                              title={msg.stockLoaded ? (mapaInfos.length > 0 ? `Ver no mapa: ${mapaInfos.map((info) => info.nome).join(', ')}` : 'Mapa carregado') : 'Carregando localização'}
                             >
                               <MapPin size={14} />
                             </button>
