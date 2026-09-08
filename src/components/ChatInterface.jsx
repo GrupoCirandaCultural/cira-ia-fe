@@ -1087,7 +1087,17 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
 
               const updatedBooks = message.dados.map((book) => {
                 const stockBook = stockBooks.find((candidate) => getBookKey(candidate) === getBookKey(book));
-                return stockBook ? { ...book, ...stockBook } : book;
+                if (!stockBook) return book;
+
+                return {
+                  ...book,
+                  estoque_eventos: stockBook.estoque_eventos,
+                  location_hint: stockBook.location_hint,
+                  status: stockBook.status,
+                  stock_status: stockBook.stock_status,
+                  stock_integration: stockBook.stock_integration,
+                  stock_in: stockBook.stock_in,
+                };
               });
 
               return {
