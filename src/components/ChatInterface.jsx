@@ -804,6 +804,13 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
       .filter((book) => book.estoque_eventos.length > 0);
   };
 
+  // Mesmo nome usado no seletor de estande (footer): prioriza o nome real já descoberto via estoque,
+  // caindo para o nome cadastrado em eventosEstoque quando o código ainda não foi buscado.
+  const getNomeEstoquePadrao = (codigo, useBienalMap = false) => {
+    const listaEventos = useBienalMap ? eventosEstoqueBienal : eventosEstoque;
+    return nomesEstoquePorCodigo[codigo] || listaEventos.find((evento) => evento.codigo === codigo)?.nome;
+  };
+
   const getMapaInfoFromStockEvent = (evento, useBienalMap = false) => {
     const codigo = getStockEventCode(evento);
     const mapa = useBienalMap ? mapaPorCodigoBienal : mapaPorCodigoEvento;
@@ -820,7 +827,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
 
     if (!mapa[mapaCodigo]) return null;
 
-    return { codigo: mapaCodigo, ...mapa[mapaCodigo], nomeReal: nomesEstoquePorCodigo[mapaCodigo] };
+    return { codigo: mapaCodigo, ...mapa[mapaCodigo], nomeReal: getNomeEstoquePadrao(mapaCodigo, useBienalMap) };
   };
 
   const getMapaInfosFromBook = (book, useBienalMap = false) => {
@@ -1280,7 +1287,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
           setIsGeneralMapOpen(false);
         }}
         targets={selectedMapLocations}
-        locations={Object.entries(mapaPorCodigoBienal).map(([codigo, info]) => ({ codigo, ...info, nomeReal: nomesEstoquePorCodigo[codigo] }))}
+        locations={Object.entries(mapaPorCodigoBienal).map(([codigo, info]) => ({ codigo, ...info, nomeReal: getNomeEstoquePadrao(codigo, true) }))}
       />
 
       <div className="absolute inset-0 z-0" style={{ backgroundColor: theme.primaryColor }} />
