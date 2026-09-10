@@ -26,4 +26,6 @@ export const getBookByIsbn = (isbn, idEstande = null, includeStock = true, stock
   return api.get(`/api/books/${isbn}`, { params });
 };
 
+export const getBookDetails = (isbn) => api.get(`/api/books/${isbn}/details`);
+
 export default api;

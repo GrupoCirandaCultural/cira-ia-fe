@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import api, { getBookByIsbn } from '../api';
+import api, { getBookByIsbn, getBookDetails } from '../api';
 import { BrowserMultiFormatReader } from '@zxing/browser';
 import { Send, Search, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw, Trash2, MessageCircle, CheckCircle, AlertCircle, ChevronUp, ChevronDown, Eye, MapPin, Mic, Square } from 'lucide-react';
 
@@ -199,6 +199,22 @@ const BookDetailsModal = ({ book, isOpen, onClose, theme }) => {
   const status = book.stockStatus;
   const stockDisplay = book.stockDisplay || book.locationHint || 'Estoque não informado';
   const estoqueEventos = book.estoqueEventos || [];
+  const formatDetailValue = (value) => {
+    if (value && typeof value === 'object') return value.nome || value.name || value.label || value.descricao || '';
+    return value;
+  };
+  const formatReferenceDetail = (value) => (
+    book.isLoadingDetails ? 'Carregando...' : formatDetailValue(value)
+  );
+  const details = [
+    ['Autor', formatDetailValue(book.autor || book.author)],
+    ['Categoria', formatReferenceDetail(book.categoria || book.category || book.genero || book.genre || book.bisac_categoria)],
+    ['Faixa etária', formatReferenceDetail(book.faixa_etaria || book.faixaEtaria || book.age_range || book.idade_recomendada)],
+    ['Editora', formatReferenceDetail(book.editora || book.publisher)],
+    ['Páginas', formatDetailValue(book.paginas || book.numero_paginas || book.pages)],
+    ['Idioma', formatReferenceDetail(book.idioma || book.language)],
+    ['ISBN', formatDetailValue(book.barras || book.isbn || book.ean)],
+  ].filter(([, value]) => value !== undefined && value !== null && String(value).trim());
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -219,6 +235,17 @@ const BookDetailsModal = ({ book, isOpen, onClose, theme }) => {
             <h3 className="text-lg font-black text-gray-800 leading-tight mb-1">{book.titulo}</h3>
             {book.preco_capa && <p className="text-xl font-bold" style={{ color: theme.primaryColor }}>R$ {book.preco_capa.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>}
         </div>
+
+        {details.length > 0 && (
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-2 rounded-xl bg-gray-50 px-3 py-3 text-sm">
+            {details.map(([label, value]) => (
+              <div key={label} className="min-w-0">
+                <dt className="text-[10px] font-black uppercase tracking-wide text-gray-400">{label}</dt>
+                <dd className="truncate font-semibold text-gray-700" title={String(value)}>{String(value)}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
         
         <div className="max-h-24 overflow-y-auto text-sm text-gray-600 text-center px-2 scrollbar-thin">
             {book.sinopse}
@@ -956,17 +983,18 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
 
   const clearCart = () => setCart([]);
   
-  const handleBookSelection = (book) => {
+  const handleBookSelection = async (book) => {
     const stockInfo = getBookStockInfo(book);
-    
-    setSelectedBook({
+    const selectedBookData = {
       ...book,
       checkingStock: false,
       stockStatus: stockInfo.status,
       stockDisplay: stockInfo.text || stockInfo.locationHint,
       locationHint: stockInfo.locationHint,
-      estoqueEventos: book.estoque_eventos || []
-    });
+      estoqueEventos: book.estoque_eventos || [],
+      isLoadingDetails: true,
+    };
+    setSelectedBook(selectedBookData);
 
     // Registra a visualização do detalhe do livro
     trackEvent('stock_check', book.barras || 'SEM_ISBN', { 
@@ -974,6 +1002,20 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
       status: stockInfo.status,
       eventos_disponiveis: book.estoque_eventos?.length || 0
     });
+
+    try {
+      const { data } = await getBookDetails(book.barras || book.isbn);
+      setSelectedBook((current) => current && current.barras === selectedBookData.barras
+        ? { ...current, ...data, isLoadingDetails: false }
+        : current
+      );
+    } catch (error) {
+      console.warn('Não foi possível carregar os detalhes do livro:', error);
+      setSelectedBook((current) => current && current.barras === selectedBookData.barras
+        ? { ...current, isLoadingDetails: false }
+        : current
+      );
+    }
   };
   
   // ESTADOS DO MODO ESTOQUE
