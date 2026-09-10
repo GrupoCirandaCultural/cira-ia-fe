@@ -620,7 +620,7 @@ const getStockCardStyle = (status) => {
   if (status === 'available_here') return 'border-l-4 border-l-green-500 bg-green-50';
   if (status === 'available_elsewhere') return 'border-l-4 border-l-yellow-500 bg-yellow-50';
   if (status === 'unavailable') return 'border-l-4 border-l-red-500 bg-red-50 opacity-75';
-  return 'bg-white/95'; // Default do chat normal
+  return 'bg-white/100'; // Default do chat normal
 };
 
 const getStockEventCode = (evento) => String(evento?.evento || evento?.codigo || evento?.id_evento || evento?.code || '').trim();
@@ -1005,6 +1005,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
 
   const [messages, setMessages] = useState(getInitialMessages());
   const [input, setInput] = useState('');
+  const [isInputFocused, setIsInputFocused] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadingMoreIndex, setLoadingMoreIndex] = useState(null);
   const [sessionId, setSessionId] = useState(generateSessionId());
@@ -1471,7 +1472,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
             className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             <div className={`max-w-[90%] p-5 rounded-[24px] shadow-lg border border-white/40 ${
-              msg.role === 'user' ? 'text-white rounded-tr-none' : 'bg-white/95 text-gray-800 rounded-tl-none'
+              msg.role === 'user' ? 'text-white rounded-tr-none' : 'bg-white/100 text-gray-800 rounded-tl-none'
             }`}
             style={msg.role === 'user' ? { backgroundColor: theme.primaryColor } : {}}>
               <p className="text-sm leading-relaxed whitespace-pre-wrap font-medium">
@@ -1682,7 +1683,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
 
       <div className="relative z-20">
       <CartDrawer cart={cart} onRemove={removeFromCart} onUpdateQuantity={updateQuantity} onClear={clearCart} userPhone={userPhone} sessionId={sessionId} userName={userName} onAnalytics={trackEvent} theme={theme} />
-      <footer className="relative z-10 p-4 bg-white/80 backdrop-blur-xl border-t border-white/20">
+      <footer className="relative z-10 px-3 py-4 sm:p-4 bg-white/80 backdrop-blur-xl border-t border-white/20">
         <div className="max-w-4xl mx-auto flex flex-col gap-3">
           {eventosEstoque.length > 0 && (
             <div className="w-full rounded-2xl border bg-white/80 backdrop-blur-md overflow-hidden animate-in slide-in-from-bottom-5 fade-in duration-300" style={{ borderColor: `${theme.primaryColor}25` }}>
@@ -1760,15 +1761,19 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
             </div>
           )}
 
-          <div className="flex gap-2 w-full">
+          <div className="flex gap-1.5 sm:gap-2 w-full">
             <input ref={audioInputRef} type="file" accept="audio/*" className="sr-only" onChange={(event) => { setAudioFile(event.target.files?.[0]); event.target.value = ''; }} />
-            <button type="button" onClick={isRecording ? () => recorderRef.current?.stop() : startRecording} disabled={loading || Boolean(audioAttachment)} className={`rounded-2xl p-4 shadow-sm transition-all active:scale-90 disabled:cursor-not-allowed disabled:opacity-50 ${isRecording ? 'bg-red-600 text-white animate-pulse' : 'bg-white text-gray-600 hover:bg-gray-50'}`} aria-label={isRecording ? 'Parar e ouvir gravação' : 'Gravar áudio'} title={isRecording ? 'Parar e ouvir gravação' : 'Gravar áudio'}>
-              {isRecording ? <Square size={19} fill="currentColor" /> : <Mic size={22} />}
-            </button>
+            <div className={`grid transition-[grid-template-columns,opacity] duration-200 ease-out ${isInputFocused ? 'grid-cols-[0fr] opacity-0 pointer-events-none' : 'grid-cols-[1fr] opacity-100'}`}>
+              <div className="overflow-hidden">
+                <button type="button" onClick={isRecording ? () => recorderRef.current?.stop() : startRecording} disabled={loading || Boolean(audioAttachment)} className={`h-12 w-12 shrink-0 rounded-2xl flex items-center justify-center shadow-sm transition-all active:scale-90 disabled:cursor-not-allowed disabled:opacity-50 ${isRecording ? 'bg-red-600 text-white animate-pulse' : 'bg-white text-gray-600 hover:bg-gray-50'}`} aria-label={isRecording ? 'Parar e ouvir gravação' : 'Gravar áudio'} title={isRecording ? 'Parar e ouvir gravação' : 'Gravar áudio'}>
+                  {isRecording ? <Square size={19} fill="currentColor" /> : <Mic size={22} />}
+                </button>
+              </div>
+            </div>
             <input
               ref={inputRef}
               type="text"
-              className="flex-1 bg-white rounded-2xl px-5 py-4 text-base outline-none shadow-sm border focus:ring-4 transition-all"
+              className="min-w-0 flex-1 bg-white rounded-2xl px-3 sm:px-5 py-3.5 sm:py-4 text-base outline-none shadow-sm border focus:ring-4 transition-all"
               style={{
                 borderColor: `${theme.primaryColor}30`,
                 '--tw-ring-color': `${theme.primaryColor}20`
@@ -1776,21 +1781,27 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
               placeholder={initialMode === 'stock' ? "Busque por título, autor ou ISBN..." : "Qual livro vamos encontrar hoje?"}
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              onFocus={() => setIsInputFocused(true)}
+              onBlur={() => setIsInputFocused(false)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
             />
-            <button onClick={() => handleSend()} disabled={loading} className="text-white p-4 rounded-2xl shadow-lg active:scale-90 disabled:opacity-50 transition-all" style={{ backgroundColor: theme.primaryColor }} aria-label="Enviar mensagem" title="Enviar mensagem">
+            <button onClick={() => handleSend()} disabled={loading} className="h-12 w-12 shrink-0 text-white rounded-2xl flex items-center justify-center shadow-lg active:scale-90 disabled:opacity-50 transition-all" style={{ backgroundColor: theme.primaryColor }} aria-label="Enviar mensagem" title="Enviar mensagem">
               <Send size={22} />
             </button>
-            <button
-              type="button"
-              onClick={() => setIsBarcodeScannerOpen(true)}
-              disabled={loading}
-              className="rounded-2xl bg-white p-4 text-gray-600 shadow-sm transition-all hover:bg-gray-50 active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
-              aria-label="Ler código de barras com a câmera"
-              title="Ler código de barras"
-            >
-              <Camera size={22} />
-            </button>
+            <div className={`grid transition-[grid-template-columns,opacity] duration-200 ease-out ${isInputFocused ? 'grid-cols-[0fr] opacity-0 pointer-events-none' : 'grid-cols-[1fr] opacity-100'}`}>
+              <div className="overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setIsBarcodeScannerOpen(true)}
+                  disabled={loading}
+                  className="h-12 w-12 shrink-0 rounded-2xl bg-white flex items-center justify-center text-gray-600 shadow-sm transition-all hover:bg-gray-50 active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label="Ler código de barras com a câmera"
+                  title="Ler código de barras"
+                >
+                  <Camera size={22} />
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </footer>
