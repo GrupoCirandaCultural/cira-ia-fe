@@ -88,18 +88,29 @@ export default function CiraCentralChat({ onBack }) {
     setCartIsbns((prev) => (prev.includes(book.isbn) ? prev : [...prev, book.isbn]));
   };
 
-  const handleSend = async (rawText) => {
-    const text = (rawText ?? input).trim();
-    if (!text) return;
+  const handleSend = async (payload) => {
+    const isComposerSubmission = typeof payload === 'object' && payload !== null;
+    const text = (isComposerSubmission ? payload.text : payload ?? input).trim();
+    const attachments = isComposerSubmission ? payload.attachments : [];
+    if (!text && attachments.length === 0) return;
 
-    const userMsg = { id: nextId(), role: 'user', phase: 'done', text };
+    const userMsg = { id: nextId(), role: 'user', phase: 'done', text, attachments };
     const aiId = nextId();
 
     setMessages((prev) => [...prev, userMsg, { id: aiId, role: 'ai', phase: 'typing' }]);
     setInput('');
 
     try {
-      const { data } = await api.post('/chat', { session_id: sessionId, message: text });
+      const requestData = attachments.length
+        ? (() => {
+            const formData = new FormData();
+            formData.append('session_id', sessionId);
+            formData.append('message', text);
+            attachments.forEach((attachment) => formData.append('attachments', attachment.file));
+            return formData;
+          })()
+        : { session_id: sessionId, message: text };
+      const { data } = await api.post('/chat', requestData);
       const books = (data.dados || []).map(mapApiBook);
       const result = {
         text: data.texto || 'Encontrei algumas informações para você.',
@@ -126,7 +137,7 @@ export default function CiraCentralChat({ onBack }) {
       <main className="flex-1 min-h-0 overflow-y-auto px-4 py-4 flex flex-col gap-4">
         {messages.map((msg) => {
           if (msg.role === 'user') {
-            return <MessageBubble key={msg.id} role="user" text={msg.text} />;
+                return <MessageBubble key={msg.id} role="user" text={msg.text} attachments={msg.attachments} />;
           }
 
           if (msg.phase === 'typing') {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api, { getBookByIsbn } from '../api';
 import { BrowserMultiFormatReader } from '@zxing/browser';
-import { Send, Search, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw, Trash2, MessageCircle, CheckCircle, AlertCircle, ChevronUp, ChevronDown, Eye, MapPin } from 'lucide-react';
+import { Send, Search, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw, Trash2, MessageCircle, CheckCircle, AlertCircle, ChevronUp, ChevronDown, Eye, MapPin, Mic, Square } from 'lucide-react';
 
 // Mapeamento de ID do estande para código RPA
 const ESTANDE_TO_RPA = {
@@ -729,6 +729,29 @@ const normalizeBookResponse = (data, fallbackBarcode) => {
     });
 };
 
+const parseJsonValue = (value) => {
+  if (typeof value !== 'string') return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+};
+
+const normalizeChatResponse = (response) => {
+  const parsedResponse = parseJsonValue(response);
+  const payload = parsedResponse?.data && typeof parsedResponse.data === 'object' && !Array.isArray(parsedResponse.data)
+    ? parsedResponse.data
+    : parsedResponse || {};
+  const rawBooks = parseJsonValue(payload.dados ?? payload.books ?? payload.livros ?? []);
+
+  return {
+    payload,
+    books: normalizeBookResponse(rawBooks),
+    text: payload.texto || payload.message || payload.response || payload.content || '',
+  };
+};
+
 const getBookStockInfo = (book) => {
   if (Array.isArray(book.estoque_eventos) && book.estoque_eventos.length > 0) {
     return formatStockDisplay(book.estoque_eventos);
@@ -794,14 +817,16 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
 
     const allowedCodes = selectedStockEventCode ? [selectedStockEventCode] : codigosEstoqueEvento;
 
-    return dados
+    const livrosFiltrados = dados
       .map((book) => ({
         ...book,
         estoque_eventos: (book.estoque_eventos || []).filter((evento) => (
           allowedCodes.includes(getStockEventCode(evento))
         )),
       }))
-      .filter((book) => book.estoque_eventos.length > 0);
+      .filter((book, index) => !dados[index].estoque_eventos?.length || book.estoque_eventos.length > 0);
+
+    return livrosFiltrados;
   };
 
   // Mesmo nome usado no seletor de estande (footer): prioriza o nome real já descoberto via estoque,
@@ -985,6 +1010,17 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
   const [sessionId, setSessionId] = useState(generateSessionId());
   const [selectedAge, setSelectedAge] = useState(null);
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
+  const [audioAttachment, setAudioAttachment] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const [audioLevel, setAudioLevel] = useState(0);
+  const audioInputRef = useRef(null);
+  const recorderRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const audioStreamRef = useRef(null);
+  const animationFrameRef = useRef(null);
+  const recordingTimerRef = useRef(null);
+  const discardRecordingRef = useRef(false);
 
   useEffect(() => {
     if (loading) {
@@ -1003,10 +1039,90 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
     setStockOnlyBooth(false);
   };
 
+  const setAudioFile = (file) => {
+    if (!file) return;
+    setAudioAttachment((current) => {
+      if (current) URL.revokeObjectURL(current.previewUrl);
+      return {
+      id: `${file.name}-${file.lastModified}-${Math.random().toString(36).slice(2)}`,
+      file,
+      type: 'audio',
+      previewUrl: URL.createObjectURL(file),
+      };
+    });
+  };
+
+  const removeAudio = () => {
+    setAudioAttachment((current) => {
+      if (current) URL.revokeObjectURL(current.previewUrl);
+      return null;
+    });
+  };
+
+  const stopAudioMonitoring = () => {
+    window.cancelAnimationFrame(animationFrameRef.current);
+    window.clearInterval(recordingTimerRef.current);
+    audioStreamRef.current?.getTracks().forEach((track) => track.stop());
+    audioStreamRef.current = null;
+    audioContextRef.current?.close();
+    audioContextRef.current = null;
+    setAudioLevel(0);
+  };
+
+  const formatRecordingTime = (seconds) => `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+
+  const startRecording = async () => {
+    if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+      audioInputRef.current?.click();
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const chunks = [];
+      const recorder = new MediaRecorder(stream);
+      const audioContext = new AudioContext();
+      const analyser = audioContext.createAnalyser();
+      const source = audioContext.createMediaStreamSource(stream);
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.55;
+      const audioData = new Uint8Array(analyser.fftSize);
+      source.connect(analyser);
+      recorderRef.current = recorder;
+      audioStreamRef.current = stream;
+      audioContextRef.current = audioContext;
+      discardRecordingRef.current = false;
+      setRecordingSeconds(0);
+      recorder.ondataavailable = (event) => chunks.push(event.data);
+      recorder.onstop = () => {
+        stopAudioMonitoring();
+        setIsRecording(false);
+        const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+        if (blob.size && !discardRecordingRef.current) setAudioFile(new File([blob], `gravacao-${Date.now()}.webm`, { type: blob.type }));
+      };
+      recorder.start();
+      setIsRecording(true);
+      recordingTimerRef.current = window.setInterval(() => setRecordingSeconds((seconds) => seconds + 1), 1000);
+      const updateAudioLevel = () => {
+        analyser.getByteTimeDomainData(audioData);
+        const rms = Math.sqrt(
+          audioData.reduce((sum, value) => sum + ((value - 128) / 128) ** 2, 0) / audioData.length
+        );
+        setAudioLevel(Math.min(1, rms * 8));
+        animationFrameRef.current = window.requestAnimationFrame(updateAudioLevel);
+      };
+      updateAudioLevel();
+    } catch (error) {
+      console.error('Não foi possível acessar o microfone:', error);
+      audioInputRef.current?.click();
+    }
+  };
+
   const handleSend = async (overrideMessage = null, options = {}) => {
     let messageToSend = overrideMessage || input; 
+    const attachmentsToSend = overrideMessage === null && audioAttachment ? [audioAttachment] : [];
     
-    if (!messageToSend.trim() && !stockFilterGenre) return;
+    if (!messageToSend.trim() && !stockFilterGenre && attachmentsToSend.length === 0) return;
 
     const normalizedBarcode = messageToSend.trim().replace(/[\s-]/g, '');
     const isBarcodeLookup = options.quickLookup || /^\d{8,14}$/.test(normalizedBarcode);
@@ -1018,9 +1134,10 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
        displayMsg = `Categoria: ${stockFilterGenre}`;
     }
 
-    const userMsg = { role: 'user', content: displayMsg };
+    const userMsg = { role: 'user', content: displayMsg || '🔊 Áudio enviado', attachments: attachmentsToSend };
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
+    setAudioAttachment(null);
     setLoading(true);
 
     // Verifica se a mensagem enviada foi uma seleção de idade
@@ -1155,11 +1272,36 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
         }
       }
 
-      const { data } = await api.post('/chat', payload);
-    const dadosFiltrados = filtrarDadosPorEvento(data.dados);
-      registrarNomesReaisDoEstoque(data.dados);
+      const requestData = attachmentsToSend.length
+        ? (() => {
+            const formData = new FormData();
+            Object.entries(payload).forEach(([key, value]) => {
+              if (Array.isArray(value)) {
+                value.forEach((item) => formData.append(key, String(item)));
+                formData.append(`${key}_json`, JSON.stringify(value));
+              } else {
+                formData.append(key, value);
+              }
+            });
+            attachmentsToSend.forEach((attachment) => formData.append('attachments', attachment.file));
+            return formData;
+          })()
+        : payload;
+      if (requestData instanceof FormData) {
+        console.log('[chat] envio de áudio', Object.fromEntries(requestData.entries()));
+      }
+      const { data } = await api.post('/chat', requestData);
+      const response = normalizeChatResponse(data);
+      const dadosFiltrados = filtrarDadosPorEvento(response.books);
+      registrarNomesReaisDoEstoque(response.books);
+      console.log('[chat] resposta da API', {
+        respostaBruta: data,
+        respostaNormalizada: response.payload,
+        livrosRecebidos: response.books,
+        livrosExibidos: dadosFiltrados,
+      });
       
-      let responseContent = data.texto;
+      let responseContent = response.text || (dadosFiltrados.length ? 'Encontrei estas opções para você.' : 'Recebi seu áudio, mas não encontrei resultados para exibir.');
       let responseOptions = null;
 
       // Se foi seleção de idade, adiciona pergunta de filtro e opções
@@ -1180,7 +1322,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
         role: 'Cira IA', 
         content: responseContent, 
         dados: dadosFiltrados, // Aqui é onde os livros entram
-        tipo: data.tipo,
+        tipo: response.payload.tipo,
         options: responseOptions,
         canLoadMore: dadosFiltrados.length >= RESULTS_PAGE_SIZE,
         nextOffset: dadosFiltrados.length,
@@ -1347,6 +1489,18 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
                   msg.content
                 )}
               </p>
+
+              {msg.role === 'user' && msg.attachments?.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {msg.attachments.map((attachment) => (
+                    attachment.type === 'image' ? (
+                      <img key={attachment.id} src={attachment.previewUrl} alt={`Imagem enviada: ${attachment.file.name}`} className="max-h-52 w-48 max-w-full rounded-xl object-cover" />
+                    ) : (
+                      <audio key={attachment.id} controls src={attachment.previewUrl} aria-label={`Áudio enviado: ${attachment.file.name}`} className="max-w-full" />
+                    )
+                  ))}
+                </div>
+              )}
 
               {/* BOTÕES DE OPÇÕES (IDADE / TEMAS) */}
               {msg.options && msg.options.length > 0 && (
@@ -1600,9 +1754,16 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
             </div>
           )}
 
-          <div className="flex gap-3 w-full">
-            <button onClick={() => handleSend()} disabled={loading} className="text-white p-4 rounded-2xl shadow-lg active:scale-90 disabled:opacity-50 transition-all" style={{ backgroundColor: theme.primaryColor }}>
-              {initialMode === 'stock' ? <Search size={22} /> : <Send size={22} />}
+          {(isRecording || audioAttachment) && (
+            <div className="mb-3 flex items-center gap-3 rounded-2xl border bg-white px-3 py-2 shadow-sm" style={{ borderColor: `${theme.primaryColor}25` }}>
+              {isRecording ? <><div className="flex h-10 flex-1 items-center justify-center gap-1" role="img" aria-label="Nível do áudio sendo gravado">{Array.from({ length: 15 }, (_, index) => { const intensity = Math.max(0.18, audioLevel * (0.7 + (index % 4) * 0.13)); return <span key={index} className="w-1 rounded-full transition-transform duration-100" style={{ height: `${14 + (index % 5) * 5}px`, backgroundColor: theme.primaryColor, transform: `scaleY(${intensity})` }} />; })}</div><span className="shrink-0 font-mono text-sm font-black text-red-600" aria-live="polite">{formatRecordingTime(recordingSeconds)}</span><button type="button" onClick={() => { discardRecordingRef.current = true; recorderRef.current?.stop(); }} className="rounded-full p-2 text-gray-500 hover:bg-gray-100 focus-visible:outline-2" style={{ outlineColor: theme.primaryColor }} aria-label="Cancelar gravação" title="Cancelar gravação"><X size={18} /></button></> : <><Mic size={20} className="shrink-0" style={{ color: theme.primaryColor }} aria-hidden="true" /><audio controls src={audioAttachment.previewUrl} aria-label={`Prévia de áudio: ${audioAttachment.file.name}`} className="min-w-0 flex-1" /><button type="button" onClick={removeAudio} className="rounded-full p-2 text-gray-500 hover:bg-gray-100 focus-visible:outline-2" style={{ outlineColor: theme.primaryColor }} aria-label="Remover áudio" title="Remover áudio"><X size={18} /></button></>}
+            </div>
+          )}
+
+          <div className="flex gap-2 w-full">
+            <input ref={audioInputRef} type="file" accept="audio/*" className="sr-only" onChange={(event) => { setAudioFile(event.target.files?.[0]); event.target.value = ''; }} />
+            <button type="button" onClick={isRecording ? () => recorderRef.current?.stop() : startRecording} disabled={loading || Boolean(audioAttachment)} className={`rounded-2xl p-4 shadow-sm transition-all active:scale-90 disabled:cursor-not-allowed disabled:opacity-50 ${isRecording ? 'bg-red-600 text-white animate-pulse' : 'bg-white text-gray-600 hover:bg-gray-50'}`} aria-label={isRecording ? 'Parar e ouvir gravação' : 'Gravar áudio'} title={isRecording ? 'Parar e ouvir gravação' : 'Gravar áudio'}>
+              {isRecording ? <Square size={19} fill="currentColor" /> : <Mic size={22} />}
             </button>
             <input
               ref={inputRef}
@@ -1617,6 +1778,9 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={(e) => e.key === 'Enter' && handleSend()}
             />
+            <button onClick={() => handleSend()} disabled={loading} className="text-white p-4 rounded-2xl shadow-lg active:scale-90 disabled:opacity-50 transition-all" style={{ backgroundColor: theme.primaryColor }} aria-label="Enviar mensagem" title="Enviar mensagem">
+              <Send size={22} />
+            </button>
             <button
               type="button"
               onClick={() => setIsBarcodeScannerOpen(true)}

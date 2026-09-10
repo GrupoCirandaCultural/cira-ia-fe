@@ -29,7 +29,7 @@ function buildTruncation(text) {
   return { shortText, canTruncate: remaining.length > MIN_REMAINING_TO_TRUNCATE };
 }
 
-export default function MessageBubble({ role, text, expanded, onToggleExpand }) {
+export default function MessageBubble({ role, text, attachments = [], expanded, onToggleExpand }) {
   const isUser = role === 'user';
   const { shortText, canTruncate } = isUser ? { shortText: text, canTruncate: false } : buildTruncation(text);
   const displayText = !canTruncate || expanded ? text : shortText;
@@ -43,7 +43,18 @@ export default function MessageBubble({ role, text, expanded, onToggleExpand }) 
             : 'bg-[var(--surface-ai)] text-[var(--foreground)] rounded-tl-sm'
         }`}
       >
-        <p>{displayText}</p>
+        {displayText && <p>{displayText}</p>}
+        {isUser && attachments.length > 0 && (
+          <div className={`flex flex-wrap gap-2 ${displayText ? 'mt-2' : ''}`}>
+            {attachments.map((attachment) =>
+              attachment.type === 'image' ? (
+                <img key={attachment.id} src={attachment.previewUrl} alt={`Imagem enviada: ${attachment.file.name}`} className="max-w-full w-48 max-h-52 rounded-lg object-cover" />
+              ) : (
+                <audio key={attachment.id} controls src={attachment.previewUrl} aria-label={`Áudio enviado: ${attachment.file.name}`} className="max-w-full" />
+              )
+            )}
+          </div>
+        )}
         {canTruncate && (
           <button
             type="button"
