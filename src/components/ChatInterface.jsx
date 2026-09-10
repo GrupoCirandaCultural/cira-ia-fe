@@ -25,10 +25,20 @@ const BarcodeScannerModal = ({ isOpen, onClose, onDetected }) => {
   const controlsRef = useRef(null);
   const onDetectedRef = useRef(onDetected);
   const [status, setStatus] = useState('Aponte a câmera para o código de barras do livro.');
+  const [cameras, setCameras] = useState([]);
+  const [selectedCameraId, setSelectedCameraId] = useState('');
 
   useEffect(() => {
     onDetectedRef.current = onDetected;
   }, [onDetected]);
+
+  useEffect(() => {
+    if (!isOpen || !navigator.mediaDevices?.enumerateDevices) return;
+
+    navigator.mediaDevices.enumerateDevices()
+      .then((devices) => setCameras(devices.filter((device) => device.kind === 'videoinput')))
+      .catch((error) => console.warn('Não foi possível listar as câmeras:', error));
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -72,7 +82,12 @@ const BarcodeScannerModal = ({ isOpen, onClose, onDetected }) => {
         const reader = new BrowserMultiFormatReader();
         readerRef.current = reader;
         const controls = await reader.decodeFromConstraints(
-          { video: { facingMode: { ideal: 'environment' } }, audio: false },
+          {
+            video: selectedCameraId
+              ? { deviceId: { exact: selectedCameraId } }
+              : { facingMode: { ideal: 'environment' } },
+            audio: false,
+          },
           videoRef.current,
           (result) => {
             const value = result?.getText();
@@ -89,6 +104,9 @@ const BarcodeScannerModal = ({ isOpen, onClose, onDetected }) => {
         } else {
           controlsRef.current = controls;
         }
+        navigator.mediaDevices?.enumerateDevices?.()
+          .then((devices) => setCameras(devices.filter((device) => device.kind === 'videoinput')))
+          .catch(() => {});
       } catch (error) {
         if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
           setStatus('Permita o acesso à câmera para ler o código de barras.');
@@ -105,16 +123,34 @@ const BarcodeScannerModal = ({ isOpen, onClose, onDetected }) => {
       cancelled = true;
       stopCamera();
     };
-  }, [isOpen]);
+  }, [isOpen, selectedCameraId]);
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 p-3 sm:p-4">
       <div className="flex max-h-[calc(100dvh-1.5rem)] w-full max-w-sm flex-col overflow-hidden rounded-3xl bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)]">
-        <div className="flex shrink-0 items-center justify-between p-4">
-          <h2 className="font-black text-gray-800">Ler código de barras</h2>
-          <button type="button" onClick={onClose} className="rounded-full bg-gray-100 p-2 text-gray-500" aria-label="Fechar leitor">
+        <div className="flex shrink-0 items-center gap-3 p-4">
+          <div className="min-w-0 flex-1">
+            <h2 className="font-black text-gray-800">Ler código de barras</h2>
+            {cameras.length > 1 && (
+              <select
+                value={selectedCameraId}
+                onChange={(event) => setSelectedCameraId(event.target.value)}
+                className="mt-1 w-full truncate rounded-lg border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-semibold text-gray-600 outline-none focus:ring-2"
+                style={{ '--tw-ring-color': '#005BAA40' }}
+                aria-label="Selecionar câmera"
+              >
+                <option value="">Câmera traseira automática</option>
+                {cameras.map((camera, index) => (
+                  <option key={camera.deviceId} value={camera.deviceId}>
+                    {camera.label || `Câmera ${index + 1}`}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+          <button type="button" onClick={onClose} className="shrink-0 rounded-full bg-gray-100 p-2 text-gray-500" aria-label="Fechar leitor">
             <X size={20} />
           </button>
         </div>
@@ -1022,6 +1058,7 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
   const animationFrameRef = useRef(null);
   const recordingTimerRef = useRef(null);
   const discardRecordingRef = useRef(false);
+  const pendingAudioSendRef = useRef(false);
 
   useEffect(() => {
     if (loading) {
@@ -1099,7 +1136,22 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
         stopAudioMonitoring();
         setIsRecording(false);
         const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
-        if (blob.size && !discardRecordingRef.current) setAudioFile(new File([blob], `gravacao-${Date.now()}.webm`, { type: blob.type }));
+        if (blob.size && !discardRecordingRef.current) {
+          const file = new File([blob], `gravacao-${Date.now()}.webm`, { type: blob.type });
+          const attachment = {
+            id: `${file.name}-${file.lastModified}-${Math.random().toString(36).slice(2)}`,
+            file,
+            type: 'audio',
+            previewUrl: URL.createObjectURL(file),
+          };
+          setAudioAttachment(attachment);
+          if (pendingAudioSendRef.current) {
+            pendingAudioSendRef.current = false;
+            handleSend(null, { audioAttachment: attachment });
+          }
+        } else {
+          pendingAudioSendRef.current = false;
+        }
       };
       recorder.start();
       setIsRecording(true);
@@ -1120,8 +1172,17 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
   };
 
   const handleSend = async (overrideMessage = null, options = {}) => {
+    if (isRecording) {
+      if (!pendingAudioSendRef.current) {
+        pendingAudioSendRef.current = true;
+        recorderRef.current?.stop();
+      }
+      return;
+    }
+
     let messageToSend = overrideMessage || input; 
-    const attachmentsToSend = overrideMessage === null && audioAttachment ? [audioAttachment] : [];
+    const audioToSend = options.audioAttachment || audioAttachment;
+    const attachmentsToSend = overrideMessage === null && audioToSend ? [audioToSend] : [];
     
     if (!messageToSend.trim() && !stockFilterGenre && attachmentsToSend.length === 0) return;
 
