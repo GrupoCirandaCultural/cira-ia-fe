@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api, { getBookByIsbn, getBookDetails } from '../api';
 import { BrowserMultiFormatReader } from '@zxing/browser';
-import { Send, Search, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw, Trash2, MessageCircle, CheckCircle, AlertCircle, ChevronUp, ChevronDown, Eye, MapPin, Mic, Square } from 'lucide-react';
+import { Send, Search, BookOpen, Ticket, ShoppingCart, Loader2, Sparkles, X, Download, Camera, ArrowLeft, RotateCcw, Trash2, MessageCircle, CheckCircle, AlertCircle, ChevronUp, ChevronDown, Eye, MapPin, Mic, Square, ScanBarcode, ImagePlus } from 'lucide-react';
 
 // Mapeamento de ID do estande para código RPA
 const ESTANDE_TO_RPA = {
@@ -159,6 +159,158 @@ const BarcodeScannerModal = ({ isOpen, onClose, onDetected }) => {
           <div className="pointer-events-none absolute inset-x-8 top-1/2 border-t-2 border-red-400 shadow-[0_0_18px_rgba(248,113,113,0.8)]" />
         </div>
         <p className="shrink-0 p-4 text-center text-sm font-medium text-gray-600">{status}</p>
+      </div>
+    </div>
+  );
+};
+
+const PhotoCaptureModal = ({ isOpen, onClose, onCapture, theme }) => {
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+  const [status, setStatus] = useState('Posicione o que deseja fotografar.');
+  const [cameras, setCameras] = useState([]);
+  const [selectedCameraId, setSelectedCameraId] = useState('');
+
+  useEffect(() => {
+    if (!isOpen || !navigator.mediaDevices?.enumerateDevices) return;
+
+    navigator.mediaDevices.enumerateDevices()
+      .then((devices) => setCameras(devices.filter((device) => device.kind === 'videoinput')))
+      .catch((error) => console.warn('Não foi possível listar as câmeras:', error));
+  }, [isOpen]);
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => {
+        try {
+          track.stop();
+        } catch (error) {
+          console.warn('Falha ao desligar a câmera:', error);
+        }
+      });
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      try {
+        videoRef.current.pause();
+      } catch (error) {
+        console.warn('Falha ao pausar o vídeo:', error);
+      }
+      videoRef.current.srcObject = null;
+    }
+  };
+
+  useEffect(() => {
+    if (!isOpen) {
+      stopCamera();
+      return undefined;
+    }
+
+    let cancelled = false;
+
+    const startCamera = async () => {
+      stopCamera();
+      try {
+        const constraints = {
+          video: selectedCameraId
+            ? { deviceId: { exact: selectedCameraId } }
+            : { facingMode: { ideal: 'environment' } },
+          audio: false,
+        };
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        if (cancelled) {
+          stream.getTracks().forEach((track) => track.stop());
+          return;
+        }
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => {});
+        }
+        setStatus('');
+        navigator.mediaDevices?.enumerateDevices?.()
+          .then((devices) => setCameras(devices.filter((device) => device.kind === 'videoinput')))
+          .catch(() => {});
+      } catch (error) {
+        if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+          setStatus('Permita o acesso à câmera para tirar fotos.');
+        } else if (error.name === 'NotFoundError') {
+          setStatus('Nenhuma câmera encontrada neste dispositivo.');
+        } else {
+          setStatus('Não foi possível iniciar a câmera. Verifique as permissões.');
+        }
+      }
+    };
+
+    startCamera();
+
+    return () => {
+      cancelled = true;
+      stopCamera();
+    };
+  }, [isOpen, selectedCameraId]);
+
+  const handleTakePhoto = () => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const file = new File([blob], `foto-${Date.now()}.jpg`, { type: 'image/jpeg' });
+      onCapture(file);
+      onClose();
+    }, 'image/jpeg', 0.92);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/70 p-3 sm:p-4">
+      <div className="flex max-h-[calc(100dvh-1.5rem)] w-full max-w-sm flex-col overflow-hidden rounded-3xl bg-white shadow-2xl sm:max-h-[calc(100dvh-2rem)]">
+        <div className="flex shrink-0 items-center gap-3 p-4">
+          <div className="min-w-0 flex-1">
+            <h2 className="font-black text-gray-800">Tirar Foto</h2>
+            {cameras.length > 1 && (
+              <select
+                value={selectedCameraId}
+                onChange={(event) => setSelectedCameraId(event.target.value)}
+                className="mt-1 w-full truncate rounded-lg border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-semibold text-gray-600 outline-none focus:ring-2"
+                style={{ '--tw-ring-color': '#005BAA40' }}
+                aria-label="Selecionar câmera"
+              >
+                <option value="">Câmera traseira automática</option>
+                {cameras.map((camera, index) => (
+                  <option key={camera.deviceId} value={camera.deviceId}>
+                    {camera.label || `Câmera ${index + 1}`}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+          <button type="button" onClick={onClose} className="shrink-0 rounded-full bg-gray-100 p-2 text-gray-500 hover:bg-gray-200 transition-colors" aria-label="Fechar câmera">
+            <X size={20} />
+          </button>
+        </div>
+        <div className="relative aspect-[4/3] max-h-[55dvh] shrink-1 bg-gray-950 flex items-center justify-center overflow-hidden">
+          <video ref={videoRef} className="h-full w-full object-contain" autoPlay muted playsInline />
+          {status && <p className="absolute p-4 text-center text-sm font-medium text-white/90 bg-black/40 rounded-xl m-2">{status}</p>}
+        </div>
+        <div className="flex shrink-0 items-center justify-center p-4 bg-gray-50 border-t border-gray-100">
+          <button
+            type="button"
+            onClick={handleTakePhoto}
+            className="flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg active:scale-95 transition-all hover:opacity-95"
+            style={{ backgroundColor: theme?.primaryColor || '#005BAA' }}
+            aria-label="Capturar foto"
+            title="Capturar foto"
+          >
+            <Camera size={26} />
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1089,11 +1241,15 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
   const [sessionId, setSessionId] = useState(generateSessionId());
   const [selectedAge, setSelectedAge] = useState(null);
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
+  const [isPhotoCaptureOpen, setIsPhotoCaptureOpen] = useState(false);
   const [audioAttachment, setAudioAttachment] = useState(null);
+  const [imageAttachment, setImageAttachment] = useState(null);
+  const [isPhotoMenuOpen, setIsPhotoMenuOpen] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recordingSeconds, setRecordingSeconds] = useState(0);
   const [audioLevel, setAudioLevel] = useState(0);
   const audioInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
   const recorderRef = useRef(null);
   const audioContextRef = useRef(null);
   const audioStreamRef = useRef(null);
@@ -1117,10 +1273,36 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
     setSelectedAge(null);
     setStockFilterGenre(null);
     setStockOnlyBooth(false);
+    setAudioAttachment(null);
+    setImageAttachment(null);
+  };
+
+  const setImageFile = (file) => {
+    if (!file) return;
+    // Áudio e imagem são mutuamente exclusivos: um substitui o outro.
+    removeAudio();
+    setImageAttachment((current) => {
+      if (current) URL.revokeObjectURL(current.previewUrl);
+      return {
+        id: `${file.name}-${file.lastModified}-${Math.random().toString(36).slice(2)}`,
+        file,
+        type: 'image',
+        previewUrl: URL.createObjectURL(file),
+      };
+    });
+  };
+
+  const removeImage = () => {
+    setImageAttachment((current) => {
+      if (current) URL.revokeObjectURL(current.previewUrl);
+      return null;
+    });
   };
 
   const setAudioFile = (file) => {
     if (!file) return;
+    // Áudio e imagem são mutuamente exclusivos: um substitui o outro.
+    removeImage();
     setAudioAttachment((current) => {
       if (current) URL.revokeObjectURL(current.previewUrl);
       return {
@@ -1152,6 +1334,8 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
   const formatRecordingTime = (seconds) => `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 
   const startRecording = async () => {
+    if (imageAttachment) return;
+
     if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
       audioInputRef.current?.click();
       return;
@@ -1224,7 +1408,8 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
 
     let messageToSend = overrideMessage || input; 
     const audioToSend = options.audioAttachment || audioAttachment;
-    const attachmentsToSend = overrideMessage === null && audioToSend ? [audioToSend] : [];
+    const imageToSend = options.imageAttachment || imageAttachment;
+    const attachmentsToSend = overrideMessage === null ? [audioToSend, imageToSend].filter(Boolean) : [];
     
     if (!messageToSend.trim() && !stockFilterGenre && attachmentsToSend.length === 0) return;
 
@@ -1238,10 +1423,16 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
        displayMsg = `Categoria: ${stockFilterGenre}`;
     }
 
-    const userMsg = { role: 'user', content: displayMsg || '🔊 Áudio enviado', attachments: attachmentsToSend };
+    let defaultContent = 'Anexo enviado';
+    if (audioToSend && imageToSend) defaultContent = '📷 Imagem e 🔊 Áudio enviados';
+    else if (audioToSend) defaultContent = '🔊 Áudio enviado';
+    else if (imageToSend) defaultContent = '📷 Imagem enviada';
+
+    const userMsg = { role: 'user', content: displayMsg || defaultContent, attachments: attachmentsToSend };
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
     setAudioAttachment(null);
+    setImageAttachment(null);
     setLoading(true);
 
     // Verifica se a mensagem enviada foi uma seleção de idade
@@ -1504,6 +1695,12 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
         isOpen={isBarcodeScannerOpen}
         onClose={() => setIsBarcodeScannerOpen(false)}
         onDetected={handleBarcodeDetected}
+      />
+      <PhotoCaptureModal
+        isOpen={isPhotoCaptureOpen}
+        onClose={() => setIsPhotoCaptureOpen(false)}
+        onCapture={setImageFile}
+        theme={theme}
       />
       {cupom && <CouponModal code={cupom} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} theme={theme} />}
       
@@ -1858,18 +2055,107 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
             </div>
           )}
 
-          {(isRecording || audioAttachment) && (
-            <div className="mb-3 flex items-center gap-3 rounded-2xl border bg-white px-3 py-2 shadow-sm" style={{ borderColor: `${theme.primaryColor}25` }}>
-              {isRecording ? <><div className="flex h-10 flex-1 items-center justify-center gap-1" role="img" aria-label="Nível do áudio sendo gravado">{Array.from({ length: 15 }, (_, index) => { const intensity = Math.max(0.18, audioLevel * (0.7 + (index % 4) * 0.13)); return <span key={index} className="w-1 rounded-full transition-transform duration-100" style={{ height: `${14 + (index % 5) * 5}px`, backgroundColor: theme.primaryColor, transform: `scaleY(${intensity})` }} />; })}</div><span className="shrink-0 font-mono text-sm font-black text-red-600" aria-live="polite">{formatRecordingTime(recordingSeconds)}</span><button type="button" onClick={() => { discardRecordingRef.current = true; recorderRef.current?.stop(); }} className="rounded-full p-2 text-gray-500 hover:bg-gray-100 focus-visible:outline-2" style={{ outlineColor: theme.primaryColor }} aria-label="Cancelar gravação" title="Cancelar gravação"><X size={18} /></button></> : <><Mic size={20} className="shrink-0" style={{ color: theme.primaryColor }} aria-hidden="true" /><audio controls src={audioAttachment.previewUrl} aria-label={`Prévia de áudio: ${audioAttachment.file.name}`} className="min-w-0 flex-1" /><button type="button" onClick={removeAudio} className="rounded-full p-2 text-gray-500 hover:bg-gray-100 focus-visible:outline-2" style={{ outlineColor: theme.primaryColor }} aria-label="Remover áudio" title="Remover áudio"><X size={18} /></button></>}
+          {(isRecording || audioAttachment || imageAttachment) && (
+            <div className="mb-3 flex flex-wrap items-center gap-2.5 rounded-2xl border bg-white p-2 sm:px-3 sm:py-2 shadow-sm" style={{ borderColor: `${theme.primaryColor}25` }}>
+              {isRecording ? (
+                <>
+                  <div className="flex h-10 flex-1 items-center justify-center gap-1" role="img" aria-label="Nível do áudio sendo gravado">
+                    {Array.from({ length: 15 }, (_, index) => {
+                      const intensity = Math.max(0.18, audioLevel * (0.7 + (index % 4) * 0.13));
+                      return <span key={index} className="w-1 rounded-full transition-transform duration-100" style={{ height: `${14 + (index % 5) * 5}px`, backgroundColor: theme.primaryColor, transform: `scaleY(${intensity})` }} />;
+                    })}
+                  </div>
+                  <span className="shrink-0 font-mono text-sm font-black text-red-600" aria-live="polite">{formatRecordingTime(recordingSeconds)}</span>
+                  <button type="button" onClick={() => { discardRecordingRef.current = true; recorderRef.current?.stop(); }} className="rounded-full p-2 text-gray-500 hover:bg-gray-100 focus-visible:outline-2" style={{ outlineColor: theme.primaryColor }} aria-label="Cancelar gravação" title="Cancelar gravação">
+                    <X size={18} />
+                  </button>
+                </>
+              ) : imageAttachment ? (
+                <div className="flex w-full items-center gap-3">
+                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-gray-200 shadow-sm">
+                    <img src={imageAttachment.previewUrl} alt={imageAttachment.file.name} className="h-full w-full object-cover" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-black uppercase tracking-wide text-gray-400">Foto anexada</p>
+                    <p className="truncate text-sm font-bold text-gray-700" title={imageAttachment.file.name}>{imageAttachment.file.name}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="shrink-0 rounded-full bg-gray-100 p-2 text-gray-500 hover:bg-gray-200 hover:text-gray-700 focus-visible:outline-2"
+                    style={{ outlineColor: theme.primaryColor }}
+                    aria-label="Remover foto"
+                    title="Remover foto"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              ) : audioAttachment ? (
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <Mic size={20} className="shrink-0" style={{ color: theme.primaryColor }} aria-hidden="true" />
+                  <audio controls src={audioAttachment.previewUrl} aria-label={`Prévia de áudio: ${audioAttachment.file.name}`} className="min-w-0 flex-1" />
+                  <button type="button" onClick={removeAudio} className="rounded-full p-2 text-gray-500 hover:bg-gray-100 focus-visible:outline-2" style={{ outlineColor: theme.primaryColor }} aria-label="Remover áudio" title="Remover áudio">
+                    <X size={18} />
+                  </button>
+                </div>
+              ) : null}
             </div>
           )}
 
-          <div className="flex gap-1.5 sm:gap-2 w-full">
+          <div className="flex gap-1.5 sm:gap-2 w-full relative">
             <input ref={audioInputRef} type="file" accept="audio/*" className="sr-only" onChange={(event) => { setAudioFile(event.target.files?.[0]); event.target.value = ''; }} />
+            {/* Input para galeria */}
+            <input ref={galleryInputRef} type="file" accept="image/*" className="sr-only" onChange={(event) => { setImageFile(event.target.files?.[0]); event.target.value = ''; setIsPhotoMenuOpen(false); }} />
+
+            {/* Menu Popover para escolha de Câmera / Galeria */}
+            {isPhotoMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setIsPhotoMenuOpen(false)} />
+                <div className="absolute bottom-full left-10 mb-2.5 z-50 flex flex-col gap-1 rounded-2xl border border-gray-100 bg-white p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-150 min-w-[170px]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPhotoMenuOpen(false);
+                      setIsPhotoCaptureOpen(true);
+                    }}
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-bold text-gray-700 hover:bg-gray-100 active:scale-95 transition-all text-left"
+                  >
+                    <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
+                      <Camera size={16} />
+                    </div>
+                    <span>Tirar Foto</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsPhotoMenuOpen(false);
+                      galleryInputRef.current?.click();
+                    }}
+                    className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-xs font-bold text-gray-700 hover:bg-gray-100 active:scale-95 transition-all text-left"
+                  >
+                    <div className="p-1.5 rounded-lg bg-orange-50 text-orange-600">
+                      <ImagePlus size={16} />
+                    </div>
+                    <span>Escolher da Galeria</span>
+                  </button>
+                </div>
+              </>
+            )}
+
             <div className={`grid transition-[grid-template-columns,opacity] duration-200 ease-out ${isInputFocused ? 'grid-cols-[0fr] opacity-0 pointer-events-none' : 'grid-cols-[1fr] opacity-100'}`}>
-              <div className="overflow-hidden">
-                <button type="button" onClick={isRecording ? () => recorderRef.current?.stop() : startRecording} disabled={loading || Boolean(audioAttachment)} className={`h-12 w-12 shrink-0 rounded-2xl flex items-center justify-center shadow-sm transition-all active:scale-90 disabled:cursor-not-allowed disabled:opacity-50 ${isRecording ? 'bg-red-600 text-white animate-pulse' : 'bg-white text-gray-600 hover:bg-gray-50'}`} aria-label={isRecording ? 'Parar e ouvir gravação' : 'Gravar áudio'} title={isRecording ? 'Parar e ouvir gravação' : 'Gravar áudio'}>
+              <div className="overflow-hidden flex gap-1.5 sm:gap-2">
+                <button type="button" onClick={isRecording ? () => recorderRef.current?.stop() : startRecording} disabled={loading || Boolean(audioAttachment) || Boolean(imageAttachment)} className={`h-12 w-12 shrink-0 rounded-2xl flex items-center justify-center shadow-sm transition-all active:scale-90 disabled:cursor-not-allowed disabled:opacity-50 ${isRecording ? 'bg-red-600 text-white animate-pulse' : 'bg-white text-gray-600 hover:bg-gray-50'}`} aria-label={isRecording ? 'Parar e ouvir gravação' : 'Gravar áudio'} title={imageAttachment ? 'Remova a foto para gravar um áudio' : isRecording ? 'Parar e ouvir gravação' : 'Gravar áudio'}>
                   {isRecording ? <Square size={19} fill="currentColor" /> : <Mic size={22} />}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsPhotoMenuOpen((prev) => !prev)}
+                  disabled={loading || Boolean(audioAttachment) || isRecording}
+                  className={`h-12 w-12 shrink-0 rounded-2xl flex items-center justify-center shadow-sm transition-all active:scale-90 disabled:cursor-not-allowed disabled:opacity-50 ${isPhotoMenuOpen ? 'bg-blue-50 text-blue-600 ring-2 ring-blue-300' : 'bg-white text-gray-600 hover:bg-gray-50'}`}
+                  aria-label="Opções de foto"
+                  title={audioAttachment || isRecording ? 'Remova o áudio para anexar uma foto' : 'Tirar foto ou escolher da galeria'}
+                >
+                  <Camera size={22} />
                 </button>
               </div>
             </div>
@@ -1898,10 +2184,10 @@ export default function ChatInterface({ userName: userNameProp, userPhone, cupom
                   onClick={() => setIsBarcodeScannerOpen(true)}
                   disabled={loading}
                   className="h-12 w-12 shrink-0 rounded-2xl bg-white flex items-center justify-center text-gray-600 shadow-sm transition-all hover:bg-gray-50 active:scale-90 disabled:cursor-not-allowed disabled:opacity-50"
-                  aria-label="Ler código de barras com a câmera"
+                  aria-label="Ler código de barras"
                   title="Ler código de barras"
                 >
-                  <Camera size={22} />
+                  <ScanBarcode size={22} />
                 </button>
               </div>
             </div>
